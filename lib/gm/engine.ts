@@ -6,10 +6,11 @@ import type { Usage } from "@/lib/meta/structured";
 import type { Photo } from "@/lib/photo";
 import { getStore } from "@/lib/store";
 import type { TargetOverlay } from "@/lib/types";
+import { activateNextBeat, makeBeats, replan, updateBeats } from "./beats";
 import { getBrain } from "./brain";
 import { questCardPrompt } from "./card";
 import type { QuestOut } from "./outputs";
-import type { Beat, QuestState, StoryState, TurnRecord } from "./state";
+import type { QuestState, StoryState, TurnRecord } from "./state";
 
 export class GameRuleError extends Error {}
 
@@ -21,32 +22,8 @@ function logUsage(label: string, usage: Usage) {
   );
 }
 
-function makeBeats(goals: string[], startIndex: number): Beat[] {
-  return goals
-    .map((goal) => goal.trim())
-    .filter(Boolean)
-    .map((goal, i) => ({ id: `b${startIndex + i + 1}`, goal, status: "pending" as const }));
-}
-
-function activateNextBeat(beats: Beat[]): Beat[] {
-  if (beats.some((beat) => beat.status === "active")) return beats;
-  const index = beats.findIndex((beat) => beat.status === "pending");
-  return index === -1 ? beats : beats.map((beat, i) => (i === index ? { ...beat, status: "active" } : beat));
-}
-
 function activeBeatId(state: StoryState): string | null {
   return state.skeleton.beats.find((beat) => beat.status === "active")?.id ?? null;
-}
-
-function completeActiveBeat(beats: Beat[]): Beat[] {
-  return activateNextBeat(beats.map((beat) => (beat.status === "active" ? { ...beat, status: "done" } : beat)));
-}
-
-function replan(beats: Beat[], goals: string[] | null): Beat[] {
-  if (!goals || goals.length === 0) return beats;
-  const kept = beats.filter((beat) => beat.status === "done" || beat.status === "skipped");
-  const highest = beats.reduce((max, beat) => Math.max(max, Number(beat.id.slice(1)) || 0), 0);
-  return activateNextBeat([...kept, ...makeBeats(goals, highest)]);
 }
 
 function makeQuest(out: QuestOut, state: StoryState, turn: number, previous?: QuestState): QuestState {
@@ -221,14 +198,15 @@ export async function completeQuest(state: StoryState, photo: Photo) {
     if (!state.inventory.some((owned) => lower(owned) === lower(item))) state.inventory.push(item);
   }
 
-  if (data.planChange === "replan") state.skeleton.beats = replan(state.skeleton.beats, data.revisedBeats);
-
   const passed = data.verdict !== "fail";
   if (passed) {
     state.questsCompleted += 1;
     state.walk.questsDone += 1;
-    if (data.beatComplete) state.skeleton.beats = completeActiveBeat(state.skeleton.beats);
   }
+  state.skeleton.beats = updateBeats(state.skeleton.beats, {
+    beatComplete: passed && data.beatComplete,
+    replanWith: data.planChange === "replan" ? data.revisedBeats : null,
+  });
 
   const storyOver = passed && data.storyComplete;
   const chapterOver = storyOver || (passed && (data.chapterComplete || data.quest === null));
