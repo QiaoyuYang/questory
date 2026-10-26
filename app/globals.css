@@ -1,0 +1,100 @@
+@import "tailwindcss";
+
+/*
+ * Street paint on asphalt. The game layer (quest titles, target outlines, the main
+ * action) is lane-line yellow; success and misses borrow the pedestrian signal:
+ * the white-green walking figure and the orange hand.
+ */
+@theme {
+  --color-asphalt: #1e2227;
+  --color-kerb: #2a2f36;
+  --color-seam: #3b424b;
+  --color-paint: #edeff1;
+  --color-concrete: #9ba2ab;
+  --color-lane: #f4bc1c;
+  --color-walk: #8be0c8;
+  --color-hand: #ff7a1a;
+
+  --font-sans: var(--font-barlow), ui-sans-serif, system-ui, sans-serif;
+  --font-sign: var(--font-barlow-condensed), var(--font-barlow), ui-sans-serif, sans-serif;
+  --font-story: var(--font-literata), Georgia, "Times New Roman", serif;
+}
+
+html {
+  background: var(--color-asphalt);
+  color: var(--color-paint);
+  color-scheme: dark;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--color-asphalt);
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  line-height: 1.5;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-paint);
+  outline-offset: 3px;
+}
+
+/* A dashed lane line: the wordmark's underline and the "working" indicator. */
+.lane-line {
+  height: 4px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--color-lane) 0 22px,
+    transparent 22px 36px
+  );
+}
+
+.lane-line-moving {
+  animation: lane-scroll 0.9s linear infinite;
+}
+
+@keyframes lane-scroll {
+  from {
+    background-position-x: 0;
+  }
+  to {
+    background-position-x: 36px;
+  }
+}
+
+/* The game master traces the target: the outline draws itself once, then holds. */
+.target-trace {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: trace 1.4s cubic-bezier(0.65, 0, 0.35, 1) 0.25s forwards;
+}
+
+@keyframes trace {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.fade-in {
+  animation: fade-in 0.6s ease-out both;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lane-line-moving,
+  .target-trace,
+  .fade-in {
+    animation: none;
+  }
+  .target-trace {
+    stroke-dashoffset: 0;
+  }
+}

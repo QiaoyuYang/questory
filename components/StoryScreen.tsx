@@ -1,0 +1,364 @@
+/* eslint-disable @next/next/no-img-element */
+"use client";
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { api, type TurnResult } from "@/lib/client/api";
+import type { PhotoUpload, QuestView, StoryView, TurnView, Verdict } from "@/lib/types";
+import { CaptureButton } from "./CaptureButton";
+import { QuestCard } from "./QuestCard";
+import { Working } from "./Working";
+
+type Loaded = { story: StoryView; turns: TurnView[] };
+
+type Props = {
+  storyId: string;
+  initial: Loaded | null;
+  onHome: () => void;
+};
+
+const VERDICT: Record<Verdict, { label: string; tone: string }> = {
+  success: { label: "Quest complete", tone: "text-walk" },
+  partial: { label: "Close enough", tone: "text-walk" },
+  fail: { label: "Not this one", tone: "text-hand" },
+};
+
+const KIND_LABEL: Record<TurnView["kind"], string> = {
+  genesis: "The beginning",
+  complete: "Proof",
+  show: "You showed the game master",
+  resume: "A new walk",
+  end: "Walk ended",
+};
+
+function turnLabel(turn: TurnView) {
+  return turn.kind === "complete" && turn.verdict ? VERDICT[turn.verdict].label : KIND_LABEL[turn.kind];
+}
+
+function scrollToTop() {
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+}
+
+/** What the game master just said, with the verdict when it judged a photo. */
+function GameMasterNote({ turn, showPhoto }: { turn: TurnView; showPhoto: boolean }) {
+  const verdict = turn.kind === "complete" && turn.verdict ? VERDICT[turn.verdict] : null;
+  return (
+    <section className="mt-6" aria-label="The game master">
+      {verdict && <p className={`font-sign text-xl font-bold ${verdict.tone}`}>{verdict.label}</p>}
+      <div className="flex items-start gap-4">
+        <p className="font-story text-[1.1875rem] leading-[1.65] text-pretty">{turn.narration}</p>
+        {showPhoto && turn.photoUrl && (
+          <img
+            src={turn.photoUrl}
+            alt="The photo you sent"
+            className="mt-1.5 h-20 w-16 shrink-0 rounded-md object-cover"
+          />
+        )}
+      </div>
+    </section>
+  );
+}
+
+function QuestPanel({ quest, onEnd }: { quest: QuestView; onEnd: () => void }) {
+  const [hint, setHint] = useState(false);
+  return (
+    <section aria-labelledby="quest-title" className="mt-7 border-t-2 border-lane pt-4">
+      <h2 id="quest-title" className="font-sign text-[1.875rem] leading-tight font-bold text-lane">
+        {quest.title}
+      </h2>
+      <p className="mt-1.5 text-lg font-medium text-pretty">{quest.objective}</p>
+      <p className="mt-2 text-concrete">
+        {quest.targetMode === "in_view" ? "In your photo: " : "Somewhere nearby: "}
+        {quest.targetDescription}
+      </p>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <button
+          type="button"
+          aria-expanded={hint}
+          onClick={() => setHint((open) => !open)}
+          className="font-semibold text-paint underline underline-offset-4"
+        >
+          {hint ? "Hide hint" : "Show hint"}
+        </button>
+        <button type="button" onClick={onEnd} className="text-concrete underline underline-offset-4 hover:text-paint">
+          End this walk
+        </button>
+      </div>
+      {hint && <p className="mt-2 font-story text-concrete italic">{quest.hint}</p>}
+    </section>
+  );
+}
+
+function Journal({ story, turns }: { story: StoryView; turns: TurnView[] }) {
+  return (
+    <section className="mt-14 border-t border-seam pt-6" aria-labelledby="journal-title">
+      <h2 id="journal-title" className="font-sign text-2xl font-bold">
+        Story so far
+      </h2>
+      {story.recap && <p className="mt-2 font-story leading-relaxed text-concrete">{story.recap}</p>}
+
+      {story.canon.length > 0 && (
+        <div className="mt-6">
+          <h3 className="font-sign text-lg font-semibold">What you know</h3>
+          <ul className="mt-2 list-disc space-y-1.5 pl-5 marker:text-lane">
+            {story.canon.map((fact) => (
+              <li key={fact}>{fact}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {story.inventory.length > 0 && (
+        <div className="mt-6">
+          <h3 className="font-sign text-lg font-semibold">You carry</h3>
+          <ul className="mt-2 list-disc space-y-1.5 pl-5 marker:text-lane">
+            {story.inventory.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <details className="group mt-6">
+        <summary className="cursor-pointer font-sign text-lg font-semibold">
+          Every turn ({turns.length})
+        </summary>
+        <ol className="mt-3 space-y-5">
+          {[...turns].reverse().map((turn) => (
+            <li key={turn.id} className="flex gap-3">
+              {turn.photoUrl ? (
+                <img src={turn.cardUrl ?? turn.photoUrl} alt="" className="h-16 w-16 shrink-0 rounded-md object-cover" />
+              ) : (
+                <div className="h-16 w-16 shrink-0 rounded-md bg-kerb" />
+              )}
+              <div>
+                <p className="text-sm font-semibold text-concrete">{turnLabel(turn)}</p>
+                <p className="font-story text-[0.98rem] leading-relaxed">{turn.narration}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </details>
+    </section>
+  );
+}
+
+export function StoryScreen({ storyId, initial, onHome }: Props) {
+  const [data, setData] = useState<Loaded | null>(initial);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<{ message: string; photo: string | null } | null>(null);
+  const [error, setError] = useState<{ message: string; retry: (() => void) | null } | null>(null);
+  const requested = useRef(new Set<string>());
+
+  useEffect(() => {
+    if (initial) return;
+    let cancelled = false;
+    api
+      .getStory(storyId)
+      .then((loaded) => !cancelled && setData(loaded))
+      .catch((err: Error) => !cancelled && setLoadError(err.message));
+    return () => {
+      cancelled = true;
+    };
+  }, [storyId, initial]);
+
+  const story = data?.story ?? null;
+  const turns = useMemo(() => data?.turns ?? [], [data]);
+
+  // The turn that issued the current quest: its photo is the quest card.
+  const questTurn = useMemo(() => {
+    const questId = story?.quest?.id;
+    return questId ? (turns.find((turn) => turn.quest?.id === questId && turn.photoUrl) ?? null) : null;
+  }, [story, turns]);
+
+  const replaceTurn = useCallback((turn: TurnView) => {
+    setData((current) =>
+      current ? { ...current, turns: current.turns.map((t) => (t.id === turn.id ? turn : t)) } : current,
+    );
+  }, []);
+
+  // Ask Muse Image for the quest card. State only changes when the request settles.
+  const requestCard = useCallback(
+    (turn: TurnView) => {
+      requested.current.add(turn.id);
+      api.paintCard(storyId, turn.id).then(
+        (result) => replaceTurn(result.turn),
+        () => replaceTurn({ ...turn, cardStatus: "failed" }),
+      );
+    },
+    [storyId, replaceTurn],
+  );
+
+  // A new quest's card is painted automatically ("none" shows as painting until it lands).
+  useEffect(() => {
+    if (!questTurn || requested.current.has(questTurn.id)) return;
+    const stale =
+      questTurn.cardStatus === "pending" && Date.now() - Date.parse(questTurn.createdAt) > 3 * 60_000;
+    if (questTurn.cardStatus === "none" || stale) requestCard(questTurn);
+  }, [questTurn, requestCard]);
+
+  const repaint = (turn: TurnView) => {
+    replaceTurn({ ...turn, cardStatus: "pending" });
+    requestCard(turn);
+  };
+
+  async function run(message: string, photo: string | null, task: () => Promise<TurnResult>) {
+    setError(null);
+    setBusy({ message, photo });
+    try {
+      const result = await task();
+      setData((current) => ({
+        story: result.story,
+        turns: [...(current?.turns ?? []), result.turn],
+      }));
+      scrollToTop();
+    } catch (err) {
+      setError({
+        message: err instanceof Error ? err.message : "That didn't work. Try again.",
+        retry: () => run(message, photo, task),
+      });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  const photoError = (message: string) => setError({ message, retry: null });
+  const complete = (photo: PhotoUpload) =>
+    run("Checking your photo…", photo.photo, () => api.takeTurn(storyId, "complete", photo));
+  const show = (photo: PhotoUpload) =>
+    run("The game master is taking a look…", photo.photo, () => api.takeTurn(storyId, "show", photo));
+  const resume = (photo: PhotoUpload) =>
+    run("Picking the story back up…", photo.photo, () => api.takeTurn(storyId, "resume", photo));
+  const end = () => run("Closing the chapter…", null, () => api.endWalk(storyId));
+
+  if (loadError) {
+    return (
+      <main className="mx-auto w-full max-w-[30rem] px-4 pt-10">
+        <p role="alert">{loadError}</p>
+        <button type="button" onClick={onHome} className="mt-4 font-semibold underline underline-offset-4">
+          Back to your stories
+        </button>
+      </main>
+    );
+  }
+
+  if (!story) {
+    return (
+      <main className="mx-auto w-full max-w-[30rem] px-4 pt-16" aria-busy="true">
+        <div className="lane-line lane-line-moving" />
+        <p className="mt-3 text-concrete">Opening your story…</p>
+      </main>
+    );
+  }
+
+  const latest = turns.at(-1) ?? null;
+  const questLive = story.walkActive && story.quest !== null;
+
+  return (
+    <main className="mx-auto w-full max-w-[30rem] px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-48">
+      <header className="flex items-center justify-between py-2">
+        <button
+          type="button"
+          onClick={onHome}
+          className="-ml-2 inline-flex min-h-11 items-center gap-1 rounded-md px-2 text-concrete hover:text-paint"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Stories
+        </button>
+        <span className="text-concrete">
+          {story.status === "complete" ? "Finished" : `Chapter ${story.chapter}`}
+        </span>
+      </header>
+
+      <h1 className="font-sign text-[2.25rem] leading-[1.05] font-bold text-balance">{story.title}</h1>
+      {turns.length <= 1 && <p className="mt-1.5 text-concrete">{story.logline}</p>}
+
+      <div className="mt-5">
+        {busy ? (
+          <Working photo={busy.photo} message={busy.message} />
+        ) : (
+          <>
+            {questLive && questTurn && (
+              <QuestCard turn={questTurn} questTitle={story.quest!.title} onRepaint={() => repaint(questTurn)} />
+            )}
+            {latest && <GameMasterNote turn={latest} showPhoto={latest.id !== questTurn?.id || !questLive} />}
+            {questLive && <QuestPanel quest={story.quest!} onEnd={end} />}
+
+            {!story.walkActive && story.status === "active" && (
+              <section className="mt-8 border-t-2 border-lane pt-4">
+                <h2 className="font-sign text-[1.875rem] leading-tight font-bold text-lane">
+                  Chapter {story.chapter} is done
+                </h2>
+                <p className="mt-1.5 text-concrete">
+                  Next time you&apos;re out, take a photo wherever you are. The story picks up from there.
+                </p>
+                <CaptureButton onPhoto={resume} onError={photoError} className="mt-5 w-full">
+                  Start the next walk
+                </CaptureButton>
+              </section>
+            )}
+
+            {story.status === "complete" && (
+              <section className="mt-8 border-t-2 border-lane pt-4">
+                <h2 className="font-sign text-[1.875rem] leading-tight font-bold text-lane">The end</h2>
+                <p className="mt-1.5 text-concrete">
+                  You finished this story in {story.chapter} {story.chapter === 1 ? "walk" : "walks"} and{" "}
+                  {story.questsCompleted} {story.questsCompleted === 1 ? "quest" : "quests"}.
+                </p>
+                <button
+                  type="button"
+                  onClick={onHome}
+                  className="mt-5 inline-flex min-h-14 w-full items-center justify-center rounded-[10px] bg-lane px-5 text-lg font-semibold text-asphalt"
+                >
+                  Start a new story
+                </button>
+              </section>
+            )}
+          </>
+        )}
+      </div>
+
+      {error && (
+        <div role="alert" className="mt-6 rounded-[10px] border-l-4 border-hand bg-kerb p-4">
+          <p>{error.message}</p>
+          {error.retry && (
+            <button type="button" onClick={error.retry} className="mt-2 font-semibold underline underline-offset-4">
+              Try again
+            </button>
+          )}
+        </div>
+      )}
+
+      <Journal story={story} turns={turns} />
+
+      {questLive && !busy && (
+        <div className="fixed inset-x-0 bottom-0 border-t-2 border-lane bg-asphalt/95 pt-2 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur">
+          <div className="mx-auto w-full max-w-[30rem] px-4">
+            <button
+              type="button"
+              onClick={() =>
+                document.getElementById("quest-title")?.scrollIntoView({
+                  behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+                  block: "center",
+                })
+              }
+              className="block w-full truncate py-1 text-left font-sign text-lg font-semibold text-lane"
+            >
+              {story.quest!.title}
+            </button>
+            <div className="mt-1.5 flex gap-2.5">
+              <CaptureButton onPhoto={complete} onError={photoError} className="flex-1">
+                I found it
+              </CaptureButton>
+              <CaptureButton onPhoto={show} onError={photoError} variant="secondary">
+                Show the GM
+              </CaptureButton>
+            </div>
+          </div>
+        </div>
+      )}
+    </main>
+  );
+}
