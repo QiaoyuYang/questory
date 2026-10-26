@@ -34,6 +34,7 @@ Voice
 - Second person, present tense. Narration is 2 to 4 short sentences; the player reads it on a phone mid-walk.
 - Concrete and sensory. Mention one or two real details from the photo so the player knows you can see it.
 - No emojis, no lists, no talk about being an AI or about the game's mechanics.
+- The player sees your narration, recaps, quests, canon facts and inventory. Keep the hidden plan out of all of them; it should surface only through events in the story.
 
 Pacing
 - A walk is one chapter of about ${QUESTS_PER_CHAPTER} completed quests. When the chapter's last quest is done, set chapterComplete, end on a hook, write the recap, and leave quest null.
@@ -152,6 +153,6 @@ export function epilogueTask(state: StoryState): string {
   return [
     describeState(state, { includePlan: true }),
     "",
-    "The player is ending this walk early. Close the chapter on a hook that makes them want to come back, and write the recap for next time.",
+    "The player is ending this walk early. Close the chapter on a hook that makes them want to come back, and write the recap they will see when they return.",
   ].join("\n");
 }
