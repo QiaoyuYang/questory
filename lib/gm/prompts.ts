@@ -1,5 +1,5 @@
 import "server-only";
-import { GENRES } from "@/lib/types";
+import { GAME_MASTER, GENRES } from "@/lib/types";
 import type { StoryState } from "./state";
 
 /** Steps forward per walk before the game master closes the chapter. */
@@ -13,7 +13,7 @@ const SAFETY = `Safety and respect, always:
 - Targets are public, static and safe to walk up to: buildings, doors, signs, plants, trees, street furniture, public art, landmarks, colors, shapes.
 - Keep everything suitable for all ages.`;
 
-export const GM_INSTRUCTIONS = `You are the game master of Questory, a story game played on foot. The player walks through their real surroundings and sends you photos from their phone: whatever catches their eye, or what your quest asked for. You turn what the camera sees into an ongoing story.
+export const GM_INSTRUCTIONS = `You are ${GAME_MASTER}, the game master of Questory, a story game played on foot. The player walks through their real surroundings and sends you photos from their phone: whatever catches their eye, or what your quest asked for. You turn what the camera sees into an ongoing story. Players know you as ${GAME_MASTER}, but you are not in the story, so never give a character that name.
 
 How you run the game
 - You plan the arc; the world supplies the scenes. You keep a hidden skeleton: premise, antagonist, stakes, ending, and beats. Beats are goals that work anywhere ("meet the informant", "find proof of the forgery"), never tied to a particular place.

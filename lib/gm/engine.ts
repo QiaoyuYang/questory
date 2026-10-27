@@ -5,7 +5,7 @@ import { locateTarget } from "@/lib/meta/sam";
 import type { Usage } from "@/lib/meta/structured";
 import type { Photo } from "@/lib/photo";
 import { getStore } from "@/lib/store";
-import type { TargetOverlay } from "@/lib/types";
+import { GAME_MASTER, type TargetOverlay } from "@/lib/types";
 import { activateNextBeat, activeBeatId, makeBeats, replan } from "./beats";
 import { getBrain } from "./brain";
 import { storyCardPrompt } from "./card";
@@ -33,7 +33,7 @@ async function spendCall(config: Config) {
   if (config.dailyCallLimit === 0) return;
   const day = new Date().toISOString().slice(0, 10);
   if (!(await getStore().countCall(day, config.dailyCallLimit))) {
-    throw new DailyLimitError("The game master has hit today's limit. It resets at midnight UTC.");
+    throw new DailyLimitError(`${GAME_MASTER} is done for today. Come back after midnight UTC.`);
   }
 }
 

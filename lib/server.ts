@@ -2,6 +2,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { DailyLimitError, GameRuleError } from "@/lib/gm/engine";
 import type { StoryState } from "@/lib/gm/state";
+import { GAME_MASTER } from "@/lib/types";
 import { ModelApiError } from "@/lib/meta/http";
 import { BadRequestError } from "@/lib/photo";
 import { getStore } from "@/lib/store";
@@ -61,8 +62,8 @@ export async function respond(handler: () => Promise<unknown>): Promise<Response
       return Response.json(
         {
           error: busy
-            ? "The game master is busy. Try again in a few seconds."
-            : `The game master couldn't answer (${error.message}).`,
+            ? `${GAME_MASTER} is busy. Try again in a few seconds.`
+            : `${GAME_MASTER} couldn't answer (${error.message}).`,
         },
         { status: busy ? 503 : 502 },
       );

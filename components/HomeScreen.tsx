@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { api, type TurnResult } from "@/lib/client/api";
-import { GENRES, type GenreId, type PhotoUpload, type StorySummary } from "@/lib/types";
+import { GAME_MASTER, GENRES, type GenreId, type PhotoUpload, type StorySummary } from "@/lib/types";
 import { Alert } from "./Alert";
 import { BottomBar } from "./BottomBar";
 import { CaptureButton } from "./CaptureButton";
@@ -53,7 +53,7 @@ export function HomeScreen({ stories, mode, onStarted, onOpen }: Props) {
 
       {pending ? (
         <div className="mt-8">
-          <Working photo={pending} message="Reading your street and writing a story…" />
+          <Working photo={pending} message={`${GAME_MASTER} is reading your street…`} />
         </div>
       ) : (
         <>
@@ -91,8 +91,8 @@ export function HomeScreen({ stories, mode, onStarted, onOpen }: Props) {
                 Your street is page one.
               </h1>
               <p className="mt-3 max-w-[34ch] text-concrete">
-                Take a photo of where you&apos;re standing. A game master writes a story around it, and every photo
-                you take on your walk becomes part of it.
+                Take a photo of where you&apos;re standing. {GAME_MASTER}, your storyteller, writes a story around it,
+                and every photo you take on your walk becomes part of it.
               </p>
             </section>
           )}
@@ -105,7 +105,7 @@ export function HomeScreen({ stories, mode, onStarted, onOpen }: Props) {
                 return (
                   <label
                     key={option.id}
-                    className={`relative flex cursor-pointer flex-col rounded-[12px] border-2 px-3 py-2.5 transition-colors has-[:focus-visible]:outline has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-3 has-[:focus-visible]:outline-paint ${
+                    className={`relative flex min-h-14 cursor-pointer items-center justify-center rounded-[12px] border-2 px-3 transition-colors has-[:focus-visible]:outline has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-3 has-[:focus-visible]:outline-paint ${
                       selected ? "border-lane bg-kerb" : "border-seam hover:border-concrete"
                     }`}
                   >
@@ -120,7 +120,6 @@ export function HomeScreen({ stories, mode, onStarted, onOpen }: Props) {
                     <span className={`font-sign text-xl leading-tight font-bold ${selected ? "text-lane" : ""}`}>
                       {option.name}
                     </span>
-                    <span className="mt-0.5 text-sm leading-snug text-concrete">{option.blurb}</span>
                   </label>
                 );
               })}
@@ -129,8 +128,8 @@ export function HomeScreen({ stories, mode, onStarted, onOpen }: Props) {
 
           {mode === "mock" && (
             <p className="mt-5 text-sm text-concrete">
-              Demo mode: no Meta Model API key is set, so a scripted game master is running. It can&apos;t see your
-              photos.
+              Demo mode: no Meta Model API key is set, so {GAME_MASTER} is reading from a script and can&apos;t see
+              your photos.
             </p>
           )}
         </>
