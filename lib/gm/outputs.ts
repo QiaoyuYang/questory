@@ -52,24 +52,26 @@ const recapText = () =>
     .max(RECAP);
 
 const RECAP_RULES =
-  "Shown to the player when they come back: 2 or 3 sentences, at most 60 words, second person, past tense, covering only what they have seen and done. Never mention the hidden plan, beats or these instructions.";
+  "Shown to the player when they come back: 2 sentences, at most 40 words, second person, past tense, covering only what they have seen and done. Never mention the hidden plan, beats or these instructions.";
 
 export const QuestOutSchema = z.object({
-  title: text(LABEL).describe("Quest title, 2 to 6 words, sentence case."),
+  title: text(LABEL).describe(
+    'Quest title, 2 to 4 words, sentence case. A small tease, not a label: "The worn corner", not "A closer look at the post box".',
+  ),
   targetMode: z
     .enum(["in_view", "seek"])
     .describe(
       "in_view: a closer look at something clearly visible in this photo. seek: a small errand nearby that ends in a photo.",
     ),
   objective: text(SENTENCE).describe(
-    "One sentence telling the player what to do, at most 25 words. For in_view, ask about a detail they can only make out up close.",
+    'One plain sentence of at most 16 words telling the player what to do, e.g. "Find a date carved or painted nearby and photograph it." For in_view, ask about a detail they can only make out up close.',
   ),
-  hint: text(SENTENCE).describe("A gentle extra clue for when they get stuck. One sentence."),
+  hint: text(SENTENCE).describe("One short sentence of at most 12 words for when they get stuck. Never empty."),
   targetPhrase: text(LABEL).describe(
     'A 1 to 4 word concrete noun phrase naming the target, e.g. "red door", "stone bench", "street sign". No verbs, no articles.',
   ),
   targetDescription: text(SENTENCE).describe(
-    "A short player-facing description of what counts, e.g. \"the green door with brass numbers\".",
+    "At most 8 words describing what counts, e.g. \"the green door with brass numbers\".",
   ),
   successCriteria: text(SENTENCE * 2).describe("Private to you: what a photo must show to count as doing this quest."),
 });
@@ -77,9 +79,13 @@ export type QuestOut = z.infer<typeof QuestOutSchema>;
 
 /** A story card: Muse Image paints it onto the photo that moved the story. */
 const CardSchema = z.object({
-  title: text(LABEL).describe("2 to 6 words naming what the player found, sentence case."),
-  caption: text(LABEL).describe("At most 8 words, lettered along the bottom of the card."),
-  flourish: text(SENTENCE).describe("One small visual detail to paint onto the card that fits the story."),
+  title: text(LABEL).describe("2 to 4 words naming what the player found, sentence case. Lettered large across the top."),
+  caption: text(LABEL).describe(
+    'At most 6 words, lettered along the bottom of the card. A fragment, not a sentence, e.g. "Rubbed away, not forgotten".',
+  ),
+  flourish: text(SENTENCE).describe(
+    "One small visual detail to paint onto the card that fits the story. A picture, never words, numbers or labels.",
+  ),
 });
 export type CardOut = z.infer<typeof CardSchema>;
 
@@ -90,17 +96,17 @@ const BindingSchema = z.object({
 
 export const GenesisSchema = z.object({
   title: text(LABEL).describe("The story's title, 2 to 5 words."),
-  logline: text(SENTENCE).describe("One spoiler-free sentence the player sees."),
+  logline: text(SENTENCE).describe("One spoiler-free sentence the player sees, at most 15 words."),
   premise: text(PLAN).describe("Private: the hidden truth behind the story."),
   antagonist: text(PLAN).describe("Private: who or what opposes the player, and why."),
   stakes: text(PLAN).describe("Private: what happens if the player fails."),
   ending: text(PLAN).describe("Private: how the story resolves when every beat is done."),
   beats: list(text(SENTENCE)).describe("Private: 5 to 7 story beats in order, written as goals that work anywhere."),
   characters: list(z.object({ name: text(LABEL), role: text(LABEL), notes: text(SENTENCE) })),
-  narration: prose(NARRATION).describe("The opening, 2 to 4 sentences, set in the place in the photo."),
+  narration: prose(NARRATION).describe("The opening: 2 or 3 sentences, at most 45 words, set in the place in the photo."),
   observations: list(text(SENTENCE)).describe("Concrete things you see in the photo."),
   canonAdd: list(text(SENTENCE)).describe(
-    "Every fact the opening establishes, such as who is missing or what was seen, one short sentence each.",
+    "Every fact the opening establishes, such as who is missing or what was seen, one sentence of at most 12 words each.",
   ),
   bindingsAdd: list(BindingSchema),
   quest: QuestOutSchema,
@@ -124,14 +130,18 @@ export const PhotoTurnSchema = z.object({
     .describe(
       "follows_quest: the photo does what the current quest asked; be generous. moves_story: it does not, but you use what it shows to move the story forward anyway. side_note: it adds a clue or atmosphere, and the story waits for more.",
     ),
-  narration: prose(NARRATION).describe("2 to 4 sentences reacting to this photo, in the story."),
+  narration: prose(NARRATION).describe("2 or 3 sentences, at most 45 words: what this photo changes in the story."),
   card: CardSchema.nullable().describe(
     "With follows_quest or moves_story: the story card that marks this step, painted onto this photo. Null with side_note.",
   ),
   observations: list(text(SENTENCE)).describe("Concrete things you see in the photo."),
-  canonAdd: list(text(SENTENCE)).describe("Every new fact this turn establishes, including what the player found."),
+  canonAdd: list(text(SENTENCE)).describe(
+    'Every new fact this turn establishes, including what the player found, at most 12 words each, e.g. "The foundation plaque is missing from beside the door."',
+  ),
   bindingsAdd: list(BindingSchema),
-  inventoryAdd: list(text(SENTENCE)).describe("Items or clues the player gains."),
+  inventoryAdd: list(text(SENTENCE)).describe(
+    'Things the player now carries, 2 to 6 words each, such as "a brass key" or "a torn note". Never places or fixed objects.',
+  ),
   inventoryRemove: list(text(SENTENCE)).describe("Items the player uses up or loses."),
   ...planFields,
   beatComplete: z
@@ -149,9 +159,11 @@ export const PhotoTurnSchema = z.object({
 export type PhotoTurnOut = z.infer<typeof PhotoTurnSchema>;
 
 export const ResumeSchema = z.object({
-  narration: prose(NARRATION).describe("2 to 4 sentences: pick the story back up in this new place and set the hook."),
+  narration: prose(NARRATION).describe(
+    "2 or 3 sentences, at most 45 words: pick the story back up in this new place and set the hook.",
+  ),
   observations: list(text(SENTENCE)).describe("Concrete things you see in the photo."),
-  canonAdd: list(text(SENTENCE)).describe("Every new fact this turn establishes, one short sentence each."),
+  canonAdd: list(text(SENTENCE)).describe("Every new fact this turn establishes, at most 12 words each."),
   bindingsAdd: list(BindingSchema),
   ...planFields,
   quest: QuestOutSchema,
@@ -159,7 +171,7 @@ export const ResumeSchema = z.object({
 export type ResumeOut = z.infer<typeof ResumeSchema>;
 
 export const EpilogueSchema = z.object({
-  narration: prose(NARRATION).describe("2 to 4 sentences closing this walk on a hook."),
+  narration: prose(NARRATION).describe("2 or 3 sentences, at most 45 words, closing this walk on a hook."),
   recap: recapText().describe(RECAP_RULES),
 });
 export type EpilogueOut = z.infer<typeof EpilogueSchema>;
