@@ -3,9 +3,11 @@
 
 import { useId } from "react";
 import type { TargetOverlay, TurnView } from "@/lib/types";
+import { HeroFrame } from "./HeroFrame";
+import type { Zoomed } from "./PhotoViewer";
 
 /** SAM's outline around the quest target, with the rest of the photo dimmed. */
-function TargetOutline({ overlay }: { overlay: TargetOverlay }) {
+export function TargetOutline({ overlay }: { overlay: TargetOverlay }) {
   const maskId = `spot${useId().replace(/[^A-Za-z0-9_-]/g, "")}`;
   if (!overlay.outline) return null;
   const { width, height } = overlay;
@@ -57,27 +59,19 @@ function TargetOutline({ overlay }: { overlay: TargetOverlay }) {
 type Props = {
   turn: TurnView;
   questTitle: string;
+  onZoom: (image: Zoomed) => void;
 };
 
 /** The photo a closer-look quest came from, with the target outlined. */
-export function QuestPhoto({ turn, questTitle }: Props) {
-  const size = turn.photoSize;
+export function QuestPhoto({ turn, questTitle, onZoom }: Props) {
   if (!turn.photoUrl) return null;
+  const alt = `Your photo, with the target of ${questTitle} outlined`;
+  const zoomed = { src: turn.photoUrl, alt, size: turn.photoSize, overlay: turn.overlay };
 
   return (
-    <figure>
-      <div
-        // Tall portrait photos are cropped to keep the quest text near the top of the screen.
-        className="relative mx-auto max-h-[min(46svh,32rem)] overflow-hidden rounded-[14px] bg-kerb"
-        style={size ? { aspectRatio: `${size.width} / ${size.height}` } : undefined}
-      >
-        <img
-          src={turn.photoUrl}
-          alt={`Your photo, with the target of ${questTitle} outlined`}
-          className="fade-in block h-full w-full object-cover"
-        />
-        {turn.overlay && <TargetOutline key={turn.id} overlay={turn.overlay} />}
-      </div>
-    </figure>
+    <HeroFrame size={turn.photoSize} label="Open the photo full screen" onClick={() => onZoom(zoomed)}>
+      <img src={turn.photoUrl} alt={alt} className="fade-in block h-full w-full object-cover" />
+      {turn.overlay && <TargetOutline key={turn.id} overlay={turn.overlay} />}
+    </HeroFrame>
   );
 }

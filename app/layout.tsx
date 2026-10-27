@@ -38,6 +38,8 @@ export const metadata: Metadata = {
   description: "Take a photo of where you are. A game master turns your walk into a story.",
   applicationName: "Questory",
   appleWebApp: { capable: true, title: "Questory", statusBarStyle: "black-translucent" },
+  // Stop iOS from turning numbers in the story into phone links.
+  formatDetection: { telephone: false, address: false, email: false },
 };
 
 export const viewport: Viewport = {

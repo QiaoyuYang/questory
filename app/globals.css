@@ -25,6 +25,15 @@ html {
   color: var(--color-paint);
   color-scheme: dark;
   -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* No double-tap zoom on controls, and no text selection when a press lingers. */
+button,
+label {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 body {
@@ -88,10 +97,61 @@ body {
   }
 }
 
+/* An iOS-style bottom sheet: a modal <dialog> pinned to the bottom edge. */
+dialog.sheet {
+  margin: auto auto 0;
+  width: 100%;
+  max-width: 30rem;
+  max-height: min(88svh, 48rem);
+  padding: 0;
+  border: 0;
+  border-radius: 18px 18px 0 0;
+  overflow: hidden;
+  background: var(--color-kerb);
+  color: var(--color-paint);
+}
+
+dialog.sheet[open] {
+  animation: sheet-up 0.32s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+dialog.sheet::backdrop {
+  background: rgb(0 0 0 / 0.5);
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+/* A picture on its own, full screen. */
+dialog.viewer {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  border: 0;
+  background: #000;
+  color: var(--color-paint);
+}
+
+dialog.viewer::backdrop {
+  background: #000;
+}
+
+/* The page behind an open sheet or picture stays put. */
+html:has(dialog[open]) {
+  overflow: hidden;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .lane-line-moving,
   .target-trace,
-  .fade-in {
+  .fade-in,
+  dialog.sheet[open] {
     animation: none;
   }
   .target-trace {
