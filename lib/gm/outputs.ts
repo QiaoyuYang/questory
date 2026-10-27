@@ -106,7 +106,7 @@ export const GenesisSchema = z.object({
   narration: prose(NARRATION).describe("The opening: 2 or 3 sentences, at most 45 words, set in the place in the photo."),
   observations: list(text(SENTENCE)).describe("Concrete things you see in the photo."),
   canonAdd: list(text(SENTENCE)).describe(
-    "Every fact the opening establishes, such as who is missing or what was seen, one sentence of at most 12 words each.",
+    "Every fact the opening narration tells the player, such as who is missing or what was seen, at most 12 words each. The player reads these as clues, so nothing from the hidden plan.",
   ),
   bindingsAdd: list(BindingSchema),
   quest: QuestOutSchema,
@@ -136,7 +136,7 @@ export const PhotoTurnSchema = z.object({
   ),
   observations: list(text(SENTENCE)).describe("Concrete things you see in the photo."),
   canonAdd: list(text(SENTENCE)).describe(
-    'Every new fact this turn establishes, including what the player found, at most 12 words each, e.g. "The foundation plaque is missing from beside the door."',
+    'Every new fact this turn\'s narration tells the player, including what they found, at most 12 words each, e.g. "The foundation plaque is missing from beside the door." Nothing from the hidden plan.',
   ),
   bindingsAdd: list(BindingSchema),
   inventoryAdd: list(text(SENTENCE)).describe(
@@ -160,10 +160,12 @@ export type PhotoTurnOut = z.infer<typeof PhotoTurnSchema>;
 
 export const ResumeSchema = z.object({
   narration: prose(NARRATION).describe(
-    "2 or 3 sentences, at most 45 words: pick the story back up in this new place and set the hook.",
+    "2 or 3 sentences, at most 45 words: start the next chapter here and set the hook.",
   ),
   observations: list(text(SENTENCE)).describe("Concrete things you see in the photo."),
-  canonAdd: list(text(SENTENCE)).describe("Every new fact this turn establishes, at most 12 words each."),
+  canonAdd: list(text(SENTENCE)).describe(
+    "Every new fact this turn's narration tells the player, at most 12 words each. Nothing from the hidden plan.",
+  ),
   bindingsAdd: list(BindingSchema),
   ...planFields,
   quest: QuestOutSchema,

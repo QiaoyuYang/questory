@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { GAME_MASTER, type PhotoUpload, type QuestView } from "@/lib/types";
 import { CaptureButton } from "./CaptureButton";
-import { CameraIcon, PhotoIcon } from "./icons";
+import { CameraIcon } from "./icons";
 import { Sheet } from "./Sheet";
 
 type Props = {
@@ -46,16 +46,10 @@ export function QuestSheet({ open, onClose, quest, onPhoto, onError }: Props) {
           Snap whatever catches your eye. {GAME_MASTER} will work it into the story.
         </p>
       )}
-      <div className="mt-6 flex items-center gap-2">
-        <CaptureButton onPhoto={onPhoto} onError={onError} className="flex-1">
-          <CameraIcon />
-          Take a photo
-        </CaptureButton>
-        <CaptureButton library variant="tool" onPhoto={onPhoto} onError={onError}>
-          <PhotoIcon />
-          Upload
-        </CaptureButton>
-      </div>
+      <CaptureButton onPhoto={onPhoto} onError={onError} className="mt-6 w-full">
+        <CameraIcon />
+        Take a photo
+      </CaptureButton>
     </Sheet>
   );
 }

@@ -8,19 +8,19 @@ import { BUTTON } from "./buttons";
 type Props = {
   onPhoto: (photo: PhotoUpload) => void;
   onError: (message: string) => void;
-  /** Pick a photo already taken instead of opening the camera. */
-  library?: boolean;
   disabled?: boolean;
   variant?: keyof typeof BUTTON;
   className?: string;
   children: ReactNode;
 };
 
-/** A button that opens the rear camera, or the photo library, and hands back a downscaled photo. */
+/**
+ * A button that opens the rear camera and hands back a downscaled photo. Desktop
+ * browsers have no camera to open, so they show a file picker instead.
+ */
 export function CaptureButton({
   onPhoto,
   onError,
-  library = false,
   disabled,
   variant = "primary",
   className = "",
@@ -42,7 +42,7 @@ export function CaptureButton({
         ref={input}
         type="file"
         accept="image/*"
-        capture={library ? undefined : "environment"}
+        capture="environment"
         className="hidden"
         tabIndex={-1}
         aria-hidden="true"

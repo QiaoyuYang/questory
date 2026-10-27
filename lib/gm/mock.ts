@@ -111,7 +111,7 @@ export const mockBrain: Brain = {
     const narration = storyComplete
       ? "The last piece slides into place. The letter was never a threat; it was a map home, and the courier drew it for you."
       : chapterComplete
-        ? "That's the one. As you lower your phone you catch a fresh chalk mark that wasn't there a minute ago. Someone is ahead of you. That's enough for today."
+        ? "That's the one. As you lower your phone you catch a fresh chalk mark that wasn't there a minute ago. Someone is ahead of you, and they know you're coming."
         : outcome === "follows_quest"
           ? "That's the one. Up close you find a second mark, smaller and newer than the first. The trail keeps going."
           : outcome === "moves_story"
@@ -151,7 +151,7 @@ export const mockBrain: Brain = {
       usage,
       data: {
         narration:
-          "New streets, same trail. Before you've taken ten steps you spot it: a chalk mark, fresher than the last. Whoever is collecting the pieces passed this way too.",
+          "Same trail, next chapter. Before you've taken ten steps you spot it: a chalk mark, fresher than the last. Whoever is collecting the pieces passed this way too.",
         observations: ["(mock mode)"],
         canonAdd: ["The trail continues beyond the first neighborhood."],
         bindingsAdd: [],

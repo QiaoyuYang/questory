@@ -6,7 +6,7 @@ import { GAME_MASTER, GENRES, type GenreId, type PhotoUpload, type StorySummary 
 import { Alert } from "./Alert";
 import { BottomBar } from "./BottomBar";
 import { CaptureButton } from "./CaptureButton";
-import { CameraIcon, ChevronRightIcon, PhotoIcon } from "./icons";
+import { CameraIcon, ChevronRightIcon } from "./icons";
 import { Wordmark } from "./Wordmark";
 import { Working } from "./Working";
 
@@ -144,16 +144,10 @@ export function HomeScreen({ stories, mode, onStarted, onOpen }: Props) {
               retryLabel="Try again with the same photo"
             />
           )}
-          <div className="flex items-center gap-2">
-            <CaptureButton onPhoto={start} onError={setError} className="flex-1">
-              <CameraIcon />
-              {returning ? "Take a photo to begin" : "Take your first photo"}
-            </CaptureButton>
-            <CaptureButton library variant="tool" onPhoto={start} onError={setError}>
-              <PhotoIcon />
-              Upload
-            </CaptureButton>
-          </div>
+          <CaptureButton onPhoto={start} onError={setError} className="w-full">
+            <CameraIcon />
+            {returning ? "Take a photo to begin" : "Take your first photo"}
+          </CaptureButton>
         </BottomBar>
       )}
     </main>
