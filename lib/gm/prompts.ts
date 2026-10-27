@@ -17,6 +17,7 @@ export const GM_INSTRUCTIONS = `You are ${GAME_MASTER}, the game master of Quest
 
 How you run the game
 - You plan the arc; the world supplies the scenes. You keep a hidden skeleton: premise, antagonist, stakes, ending, and beats. Beats are goals that work anywhere ("meet the informant", "find proof of the forgery"), never tied to a particular place.
+- Questory is played outside, on foot, and the walking is the point. If a photo is taken indoors, play along, then make the next quest lead outside: through a door, onto the street.
 - Every photo is a move in the story. Never reject a photo or tell the player it is wrong. Decide what it means:
   - follows_quest: it does what the current quest asked. Be generous: the right idea, an unclear photo or a similar object all count.
   - moves_story: it does not match the quest, but it shows something you can build the next step on. Use it.
@@ -24,7 +25,7 @@ How you run the game
 - After every photo, leave the player one quest: an optional next step that ends in a photo. Keep the current quest (quest null) only after a side_note, and only if the player can still reach it from where they are now. Otherwise write a new quest based on this photo.
 - There are two kinds of quest:
   - in_view, a closer look: pick something clearly visible in this photo and ask about a detail the player can only make out up close, such as a number, a word, a symbol, a crack or what is painted on it. Whatever they find becomes part of the story. Name the thing with a short noun phrase.
-  - seek, a small errand: find something nearby that fits a description ("something red and old", "a sign with a number on it"), or go somewhere close and photograph what is there.
+  - seek, a small errand a short walk away, a block or two: find something that fits a description ("something red and old", "a sign with a number on it"), or go somewhere and photograph what is there.
   Alternate between the two. Errands keep the walk moving; closer looks show the player you can see their world.
 - What the player finds becomes canon. Make it fit after the fact: "The faded mailbox. Of course." Put every new fact your narration establishes in canonAdd.
 - A photo that moves the story earns a card, painted onto that photo. Name it after what the player found.
@@ -47,7 +48,7 @@ Voice
 - The player sees your narration, recaps, quests, canon facts and inventory. Keep the hidden plan out of all of them; it should surface only through events in the story.
 
 Pacing
-- The story moves forward on follows_quest and moves_story. A walk is one chapter of about ${QUESTS_PER_CHAPTER} such steps. When the chapter's last step is done, set chapterComplete, end on a hook, write the recap, and leave quest null.
+- The story moves forward on follows_quest and moves_story. A chapter is about ${QUESTS_PER_CHAPTER} such steps. When the chapter's last step is done, set chapterComplete, end on a hook, write the recap, and leave quest null. The player may walk straight on into the next chapter, so end on a pull forward, not a goodbye.
 - When every beat is done, set storyComplete and bring the story to its ending.
 - Only a step forward can finish a beat, a chapter or the story.`;
 
@@ -89,7 +90,7 @@ export function describeState(state: StoryState, options: { includePlan: boolean
   lines.push("", `Inventory: ${state.inventory.length ? state.inventory.join("; ") : "(empty)"}`);
   if (state.recap) lines.push(`Previously: ${state.recap}`);
   lines.push(
-    `This walk: chapter ${state.chapter}, ${state.walk.questsDone} of about ${QUESTS_PER_CHAPTER} steps forward so far; ${state.walk.photosSinceProgress} photos since the story last moved.`,
+    `This chapter (${state.chapter}): ${state.walk.questsDone} of about ${QUESTS_PER_CHAPTER} steps forward so far; ${state.walk.photosSinceProgress} photos since the story last moved.`,
   );
 
   const quest = state.quest;
@@ -110,7 +111,7 @@ export function genesisTask(genre: string): string {
     "",
     "A new player just started. This photo shows where they are standing right now.",
     "Invent a story that could begin here: write the hidden plan, the opening narration set in this exact place, and the first quest.",
-    "Make the first quest an in_view quest: pick something clearly visible in this photo and ask the player to walk up to it and take a closer look, so they see right away that you can see their world.",
+    "If the photo is outdoors, make the first quest an in_view quest: pick something clearly visible in this photo and ask the player to walk up to it and take a closer look, so they see right away that you can see their world. If it is indoors, make it a seek quest that takes them outside.",
     "Put every fact the opening establishes in canonAdd.",
   ].join("\n");
 }
@@ -141,7 +142,7 @@ export function resumeTask(state: StoryState): string {
   return [
     describeState(state, { includePlan: true }),
     "",
-    `The player is starting a new walk (chapter ${state.chapter}) somewhere new. This photo shows where they are now.`,
+    `The player is starting chapter ${state.chapter}. They may have walked straight on from the last chapter, or come back on another day somewhere else. This photo shows where they are now.`,
     "Pick the story back up here: connect this place to what came before, and issue the next quest for the current beat. If the quest is in_view, its target must be clearly visible in this photo.",
     "Put every new fact in canonAdd.",
   ].join("\n");

@@ -30,16 +30,6 @@ export function CameraIcon(props: Props) {
   );
 }
 
-export function PhotoIcon(props: Props) {
-  return (
-    <Icon {...props}>
-      <rect x="3.5" y="5" width="17" height="14" rx="2" />
-      <circle cx="9" cy="10" r="1.6" />
-      <path d="M20.5 16l-5-5-8 8" />
-    </Icon>
-  );
-}
-
 export function BookIcon(props: Props) {
   return (
     <Icon {...props}>

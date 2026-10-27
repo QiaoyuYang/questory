@@ -6,7 +6,7 @@ Built for the Meta Global AI Developer Hackathon on the Meta Model API.
 
 ## How a turn works
 
-1. **You take a photo of anything**, or upload one. It can be what the quest asked for or whatever catches your eye. The browser shrinks it to 1280px and uploads it.
+1. **You take a photo of anything.** It can be what the quest asked for or whatever catches your eye. The browser shrinks it to 1280px and uploads it.
 2. **Muse Wonder plays Wren, the game master.** It reads the photo and the story so far, decides what the photo means, narrates, and leaves the next quest, all as structured JSON. A photo can follow the quest, move the story somewhere new, or add a clue on the side. No photo fails.
 3. **SAM 3.1 grounds the target.** When the next quest asks you to take a closer look at something in your photo ("the blue door"), SAM finds it and the app traces its outline.
 4. **Muse Image paints a story card.** When a photo moves the story, it becomes a card with a title and caption drawn on. Cards are keepsakes, so they never cover the photo you navigate by.
@@ -23,7 +23,7 @@ The story state has three layers, and the prompts treat each one differently:
 | Bindings | Which real thing stands in for which story element ("the dead drop" is "the red mailbox") | Freely, every turn |
 | Canon | Facts already established in play | Never contradicted |
 
-A walk is one chapter of about three steps forward. The state is saved after every turn, so the next walk picks up where the last one ended. The skeleton is never sent to the browser.
+A chapter is about three steps forward. The state is saved after every turn, so the next chapter can start right away or on another walk. The skeleton is never sent to the browser.
 
 ## Run it
 

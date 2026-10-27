@@ -7,7 +7,7 @@ import { Alert } from "./Alert";
 import { BottomBar } from "./BottomBar";
 import { BUTTON } from "./buttons";
 import { CaptureButton } from "./CaptureButton";
-import { BookIcon, CameraIcon, ChevronLeftIcon, ChevronRightIcon, PhotoIcon } from "./icons";
+import { BookIcon, CameraIcon, ChevronLeftIcon, ChevronRightIcon } from "./icons";
 import { outcomeLabel } from "./labels";
 import { PhotoViewer, type Zoomed } from "./PhotoViewer";
 import { QuestSheet } from "./QuestSheet";
@@ -123,7 +123,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
   const takePhoto = (photo: PhotoUpload) =>
     run(`${GAME_MASTER} is taking a look…`, photo, () => api.takeTurn(storyId, "photo", photo));
   const resume = (photo: PhotoUpload) =>
-    run(`${GAME_MASTER} is picking the story back up…`, photo, () => api.takeTurn(storyId, "resume", photo));
+    run(`${GAME_MASTER} is starting the next chapter…`, photo, () => api.takeTurn(storyId, "resume", photo));
   const end = () => run(`${GAME_MASTER} is closing the chapter…`, null, () => api.endWalk(storyId));
 
   if (loadError) {
@@ -240,7 +240,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
           {between && (
             <div className="py-1">
               <p className="font-sign text-lg font-bold text-lane">Chapter {story.chapter} is done</p>
-              <p className="text-sm text-concrete">Next time you&apos;re out, take a photo wherever you are.</p>
+              <p className="text-sm text-concrete">Start the next one here, or on your next walk.</p>
             </div>
           )}
           {story.status === "complete" && (
@@ -264,21 +264,13 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
                   <CameraIcon />
                   Take a photo
                 </CaptureButton>
-                <CaptureButton library variant="tool" onPhoto={takePhoto} onError={photoError}>
-                  <PhotoIcon />
-                  Upload
-                </CaptureButton>
               </>
             )}
             {between && (
               <>
                 <CaptureButton onPhoto={resume} onError={photoError} className="flex-1">
                   <CameraIcon />
-                  Start next walk
-                </CaptureButton>
-                <CaptureButton library variant="tool" onPhoto={resume} onError={photoError}>
-                  <PhotoIcon />
-                  Upload
+                  Start chapter {story.chapter + 1}
                 </CaptureButton>
               </>
             )}
@@ -308,7 +300,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
       />
       <Sheet open={panel === "end"} onClose={() => setPanel(null)} title="End this walk?" done={false}>
         <p className="text-lg text-pretty">
-          {GAME_MASTER} will close the chapter. Next time you&apos;re out, the story picks up wherever you are.
+          {GAME_MASTER} will close this chapter. The next one starts with your next photo, wherever you are.
         </p>
         <div className="mt-6 flex flex-col gap-2.5">
           <button

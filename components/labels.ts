@@ -10,7 +10,7 @@ const OUTCOME: Record<Outcome, string | null> = {
 const KIND: Record<TurnView["kind"], string> = {
   genesis: "The beginning",
   photo: "Something you noticed",
-  resume: "A new walk",
+  resume: "A new chapter",
   end: "Walk ended",
 };
 
