@@ -30,8 +30,6 @@ const QUESTS: QuestOut[] = [
     targetPhrase: "door",
     targetDescription: "the nearest door in your photo",
     successCriteria: "A door, close up.",
-    cardCaption: "Find the marked door",
-    cardFlourish: "a chalk arrow on the pavement",
   },
   {
     title: "Something red",
@@ -41,8 +39,6 @@ const QUESTS: QuestOut[] = [
     targetPhrase: "red object",
     targetDescription: "anything red and old",
     successCriteria: "Something red.",
-    cardCaption: "Find something old and red",
-    cardFlourish: "a red thread trailing off the edge",
   },
   {
     title: "Where the light falls",
@@ -52,8 +48,6 @@ const QUESTS: QuestOut[] = [
     targetPhrase: "window",
     targetDescription: "a window with a reflection",
     successCriteria: "A window.",
-    cardCaption: "Catch the reflection",
-    cardFlourish: "a faint lens flare",
   },
   {
     title: "The green sentinel",
@@ -63,8 +57,6 @@ const QUESTS: QuestOut[] = [
     targetPhrase: "tree",
     targetDescription: "a tall tree or plant",
     successCriteria: "A tree or plant.",
-    cardCaption: "Follow the long shadow",
-    cardFlourish: "a few leaves drifting across the card",
   },
 ];
 
@@ -130,6 +122,9 @@ export const mockBrain: Brain = {
       data: {
         outcome,
         narration,
+        card: moved
+          ? { title: "A fresh chalk mark", caption: "The courier was here first", flourish: "a smear of chalk dust" }
+          : null,
         observations: ["(mock mode)"],
         canonAdd: moved ? [`Step ${state.questsCompleted + 1} turned up a fresh chalk mark.`] : [],
         bindingsAdd: [],

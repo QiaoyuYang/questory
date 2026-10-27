@@ -1,5 +1,5 @@
 import "server-only";
-import type { QuestState } from "./state";
+import type { TurnRecord } from "./state";
 
 const GENRE_STYLE: Record<string, string> = {
   mystery:
@@ -12,22 +12,19 @@ const GENRE_STYLE: Record<string, string> = {
     "a cozy sketchbook: loose ink lines, light watercolor washes, small friendly doodles",
 };
 
-/** The instruction Muse Image gets for painting a quest card onto the player's photo. */
-export function questCardPrompt(genre: string, quest: QuestState): string {
+/**
+ * The instruction Muse Image gets for a story card: the photo that moved the story,
+ * painted as a keepsake. The player never navigates by it, so a stylized scene is fine.
+ */
+export function storyCardPrompt(genre: string, card: NonNullable<TurnRecord["card"]>): string {
   const style = GENRE_STYLE[genre] ?? GENRE_STYLE.everyday;
-  const marker =
-    quest.targetMode === "in_view"
-      ? `Mark the ${quest.targetPhrase} where it actually appears in the photo with a glowing outline and a small pointer, so it is easy to spot.`
-      : "The target is not in this photo, so add a small compass rose in one corner instead of marking anything.";
-
   return [
-    "Turn this real street photo into a quest card for a walking adventure game.",
-    "Keep the real scene recognizable: same layout, same objects, same lighting and perspective. Do not move, add or remove buildings or objects.",
+    "Turn this real street photo into a story card for a walking adventure game. The player just found something here that moved the story forward.",
+    "Keep the real scene recognizable: the same place, the same main objects, the same light.",
     `Overlay style: ${style}.`,
-    `Across the top, a banner with the title lettered clearly: "${quest.title}".`,
-    marker,
-    `Along the bottom, in small clean lettering: "${quest.cardCaption}".`,
-    quest.cardFlourish ? `One extra detail: ${quest.cardFlourish}.` : "",
+    `Across the top, a banner with the title lettered clearly: "${card.title}".`,
+    card.caption ? `Along the bottom, in small clean lettering: "${card.caption}".` : "",
+    card.flourish ? `One extra detail: ${card.flourish}.` : "",
     "Do not add people. Keep the graphics to the edges so most of the photo stays visible. Spell all text exactly as given.",
   ]
     .filter(Boolean)

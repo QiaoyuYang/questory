@@ -13,8 +13,6 @@ const QUEST: QuestOut = {
   targetPhrase: "green door",
   targetDescription: "the green door on the left",
   successCriteria: "A close look at the door.",
-  cardCaption: "Find the marked door",
-  cardFlourish: "a chalk arrow",
 };
 
 /** A story on turn 1 with an open quest and beats b1 (active) to b3. */
@@ -56,6 +54,7 @@ function reply(overrides: Partial<PhotoTurnOut> = {}): PhotoTurnOut {
   return {
     outcome: "side_note",
     narration: "You file it away.",
+    card: null,
     observations: [],
     canonAdd: [],
     bindingsAdd: [],
@@ -165,6 +164,16 @@ test("canon and inventory skip duplicates, ignoring case", () => {
   assert.deepEqual(result.canonAdded, ["The door is number 14."]);
   assert.deepEqual(state.inventory, ["A brass key", "A torn letter"]);
   assert.deepEqual(updateInventory(state.inventory, [], [" a BRASS key "]), ["A torn letter"]);
+});
+
+test("only a step forward earns a card", () => {
+  const card = { title: " The marked door ", caption: "Number 14, freshly painted", flourish: "a chalk arrow" };
+  assert.equal(applyPhotoTurn(story(), reply({ card }), 2).card, null);
+  assert.deepEqual(applyPhotoTurn(story(), reply({ outcome: "follows_quest", card }), 2).card, {
+    title: "The marked door",
+    caption: "Number 14, freshly painted",
+    flourish: "a chalk arrow",
+  });
 });
 
 test("target phrases lose leading articles and trailing punctuation", () => {

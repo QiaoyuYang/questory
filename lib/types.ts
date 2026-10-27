@@ -75,6 +75,8 @@ export type TurnView = {
   createdAt: string;
   photoUrl: string | null;
   photoSize: { width: number; height: number } | null;
+  /** Set when the photo moved the story and earned a card. */
+  card: { title: string; caption: string } | null;
   cardUrl: string | null;
   cardStatus: CardStatus;
   /** Set on photo turns. */

@@ -72,10 +72,16 @@ export const QuestOutSchema = z.object({
     "A short player-facing description of what counts, e.g. \"the green door with brass numbers\".",
   ),
   successCriteria: text(SENTENCE * 2).describe("Private to you: what a photo must show to count as doing this quest."),
-  cardCaption: text(LABEL).describe("At most 8 words, printed on the quest card."),
-  cardFlourish: text(SENTENCE).describe("One small visual detail to paint onto the quest card that fits the story."),
 });
 export type QuestOut = z.infer<typeof QuestOutSchema>;
+
+/** A story card: Muse Image paints it onto the photo that moved the story. */
+const CardSchema = z.object({
+  title: text(LABEL).describe("2 to 6 words naming what the player found, sentence case."),
+  caption: text(LABEL).describe("At most 8 words, lettered along the bottom of the card."),
+  flourish: text(SENTENCE).describe("One small visual detail to paint onto the card that fits the story."),
+});
+export type CardOut = z.infer<typeof CardSchema>;
 
 const BindingSchema = z.object({
   abstract: text(SENTENCE).describe("The story element, e.g. \"the informant's dead drop\"."),
@@ -119,6 +125,9 @@ export const PhotoTurnSchema = z.object({
       "follows_quest: the photo does what the current quest asked; be generous. moves_story: it does not, but you use what it shows to move the story forward anyway. side_note: it adds a clue or atmosphere, and the story waits for more.",
     ),
   narration: prose(NARRATION).describe("2 to 4 sentences reacting to this photo, in the story."),
+  card: CardSchema.nullable().describe(
+    "With follows_quest or moves_story: the story card that marks this step, painted onto this photo. Null with side_note.",
+  ),
   observations: list(text(SENTENCE)).describe("Concrete things you see in the photo."),
   canonAdd: list(text(SENTENCE)).describe("Every new fact this turn establishes, including what the player found."),
   bindingsAdd: list(BindingSchema),
