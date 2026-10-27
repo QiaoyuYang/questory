@@ -3,7 +3,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, type TurnResult } from "@/lib/client/api";
-import type { PhotoUpload, QuestView, StoryView, TurnView, Verdict } from "@/lib/types";
+import type { Outcome, PhotoUpload, QuestView, StoryView, TurnView } from "@/lib/types";
 import { CaptureButton } from "./CaptureButton";
 import { QuestCard } from "./QuestCard";
 import { Working } from "./Working";
@@ -16,22 +16,26 @@ type Props = {
   onHome: () => void;
 };
 
-const VERDICT: Record<Verdict, { label: string; tone: string }> = {
-  success: { label: "Quest complete", tone: "text-walk" },
-  partial: { label: "Close enough", tone: "text-walk" },
-  fail: { label: "Not this one", tone: "text-hand" },
+// A side note gets no banner: the narration says what the photo added.
+const OUTCOME: Record<Outcome, { label: string; tone: string } | null> = {
+  follows_quest: { label: "Quest complete", tone: "text-walk" },
+  moves_story: { label: "The story moves on", tone: "text-walk" },
+  side_note: null,
 };
 
 const KIND_LABEL: Record<TurnView["kind"], string> = {
   genesis: "The beginning",
-  complete: "Proof",
-  show: "You showed the game master",
+  photo: "Something you noticed",
   resume: "A new walk",
   end: "Walk ended",
 };
 
+function outcomeOf(turn: TurnView) {
+  return turn.outcome ? OUTCOME[turn.outcome] : null;
+}
+
 function turnLabel(turn: TurnView) {
-  return turn.kind === "complete" && turn.verdict ? VERDICT[turn.verdict].label : KIND_LABEL[turn.kind];
+  return outcomeOf(turn)?.label ?? KIND_LABEL[turn.kind];
 }
 
 function scrollToTop() {
@@ -39,12 +43,12 @@ function scrollToTop() {
   window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
 }
 
-/** What the game master just said, with the verdict when it judged a photo. */
+/** What the game master just said, with a banner when the photo moved the story. */
 function GameMasterNote({ turn, showPhoto }: { turn: TurnView; showPhoto: boolean }) {
-  const verdict = turn.kind === "complete" && turn.verdict ? VERDICT[turn.verdict] : null;
+  const outcome = outcomeOf(turn);
   return (
     <section className="mt-6" aria-label="The game master">
-      {verdict && <p className={`font-sign text-xl font-bold ${verdict.tone}`}>{verdict.label}</p>}
+      {outcome && <p className={`font-sign text-xl font-bold ${outcome.tone}`}>{outcome.label}</p>}
       <div className="flex items-start gap-4">
         <p className="font-story text-[1.1875rem] leading-[1.65] text-pretty">{turn.narration}</p>
         {showPhoto && turn.photoUrl && (
@@ -59,7 +63,8 @@ function GameMasterNote({ turn, showPhoto }: { turn: TurnView; showPhoto: boolea
   );
 }
 
-function QuestPanel({ quest, onEnd }: { quest: QuestView; onEnd: () => void }) {
+/** The game master's suggestion for the next photo. Following it is optional. */
+function QuestPanel({ quest }: { quest: QuestView }) {
   const [hint, setHint] = useState(false);
   return (
     <section aria-labelledby="quest-title" className="mt-7 border-t-2 border-lane pt-4">
@@ -71,20 +76,27 @@ function QuestPanel({ quest, onEnd }: { quest: QuestView; onEnd: () => void }) {
         {quest.targetMode === "in_view" ? "In your photo: " : "Somewhere nearby: "}
         {quest.targetDescription}
       </p>
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-        <button
-          type="button"
-          aria-expanded={hint}
-          onClick={() => setHint((open) => !open)}
-          className="font-semibold text-paint underline underline-offset-4"
-        >
-          {hint ? "Hide hint" : "Show hint"}
-        </button>
-        <button type="button" onClick={onEnd} className="text-concrete underline underline-offset-4 hover:text-paint">
-          End this walk
-        </button>
-      </div>
+      <button
+        type="button"
+        aria-expanded={hint}
+        onClick={() => setHint((open) => !open)}
+        className="mt-3 font-semibold text-paint underline underline-offset-4"
+      >
+        {hint ? "Hide hint" : "Show hint"}
+      </button>
       {hint && <p className="mt-2 font-story text-concrete italic">{quest.hint}</p>}
+    </section>
+  );
+}
+
+/** Shown when the game master left no quest: any photo keeps the story going. */
+function OpenPanel() {
+  return (
+    <section aria-labelledby="quest-title" className="mt-7 border-t-2 border-lane pt-4">
+      <h2 id="quest-title" className="font-sign text-[1.875rem] leading-tight font-bold text-lane">
+        Look around
+      </h2>
+      <p className="mt-1.5 text-lg font-medium text-pretty">Photograph anything that catches your eye.</p>
     </section>
   );
 }
@@ -223,10 +235,8 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
   }
 
   const photoError = (message: string) => setError({ message, retry: null });
-  const complete = (photo: PhotoUpload) =>
-    run("Checking your photo…", photo.photo, () => api.takeTurn(storyId, "complete", photo));
-  const show = (photo: PhotoUpload) =>
-    run("The game master is taking a look…", photo.photo, () => api.takeTurn(storyId, "show", photo));
+  const takePhoto = (photo: PhotoUpload) =>
+    run("The game master is taking a look…", photo.photo, () => api.takeTurn(storyId, "photo", photo));
   const resume = (photo: PhotoUpload) =>
     run("Picking the story back up…", photo.photo, () => api.takeTurn(storyId, "resume", photo));
   const end = () => run("Closing the chapter…", null, () => api.endWalk(storyId));
@@ -252,7 +262,8 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
   }
 
   const latest = turns.at(-1) ?? null;
-  const questLive = story.walkActive && story.quest !== null;
+  const walkLive = story.walkActive && story.status === "active";
+  const questLive = walkLive && story.quest !== null;
 
   return (
     <main className="mx-auto w-full max-w-[30rem] px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-48">
@@ -284,7 +295,16 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
               <QuestCard turn={questTurn} questTitle={story.quest!.title} onRepaint={() => repaint(questTurn)} />
             )}
             {latest && <GameMasterNote turn={latest} showPhoto={latest.id !== questTurn?.id || !questLive} />}
-            {questLive && <QuestPanel quest={story.quest!} onEnd={end} />}
+            {questLive && <QuestPanel quest={story.quest!} />}
+            {walkLive && !questLive && <OpenPanel />}
+            {walkLive && (
+              <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 text-concrete">
+                {questLive && <p>Or photograph anything that catches your eye.</p>}
+                <button type="button" onClick={end} className="ml-auto underline underline-offset-4 hover:text-paint">
+                  End this walk
+                </button>
+              </div>
+            )}
 
             {!story.walkActive && story.status === "active" && (
               <section className="mt-8 border-t-2 border-lane pt-4">
@@ -333,7 +353,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
 
       <Journal story={story} turns={turns} />
 
-      {questLive && !busy && (
+      {walkLive && !busy && (
         <div className="fixed inset-x-0 bottom-0 border-t-2 border-lane bg-asphalt/95 pt-2 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur">
           <div className="mx-auto w-full max-w-[30rem] px-4">
             <button
@@ -346,16 +366,11 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
               }
               className="block w-full truncate py-1 text-left font-sign text-lg font-semibold text-lane"
             >
-              {story.quest!.title}
+              {story.quest?.title ?? "Look around"}
             </button>
-            <div className="mt-1.5 flex gap-2.5">
-              <CaptureButton onPhoto={complete} onError={photoError} className="flex-1">
-                I found it
-              </CaptureButton>
-              <CaptureButton onPhoto={show} onError={photoError} variant="secondary">
-                Show the GM
-              </CaptureButton>
-            </div>
+            <CaptureButton onPhoto={takePhoto} onError={photoError} className="mt-1.5 w-full">
+              Take a photo
+            </CaptureButton>
           </div>
         </div>
       )}

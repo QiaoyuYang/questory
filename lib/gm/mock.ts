@@ -7,7 +7,8 @@ import type { StoryState } from "./state";
 
 /**
  * A scripted game master for working on the app without an API key.
- * It cannot see photos; it cycles through stock quests so every screen can be exercised.
+ * It cannot see photos; it alternates side notes and steps forward and cycles through
+ * stock quests, so every screen can be exercised.
  */
 
 const usage: Usage = {
@@ -23,7 +24,7 @@ const pause = () => new Promise((resolve) => setTimeout(resolve, 700));
 const QUESTS: QuestOut[] = [
   {
     title: "The first mark",
-    objective: "Walk up to the nearest door in your photo and look for anything carved, painted or numbered.",
+    objective: "Walk up to the nearest door in your photo. Is anything carved, painted or numbered on it?",
     hint: "Doors keep secrets in their numbers.",
     targetMode: "in_view",
     targetPhrase: "door",
@@ -105,39 +106,46 @@ export const mockBrain: Brain = {
     };
   },
 
-  async judge(state) {
+  async photo(state, _photo, { mustProgress }) {
     await pause();
-    const done = state.walk.questsDone + 1;
-    const chapterComplete = done >= QUESTS_PER_CHAPTER;
+    // Odd turns are side notes, even turns follow the quest; a forced turn bends the story.
+    const outcome = mustProgress ? "moves_story" : state.turnCount % 2 === 0 ? "follows_quest" : "side_note";
+    const moved = outcome !== "side_note";
     const unfinished = state.skeleton.beats.filter(
       (beat) => beat.status === "pending" || beat.status === "active",
     ).length;
-    const storyComplete = unfinished <= 1;
+    const storyComplete = moved && unfinished <= 1;
+    const chapterComplete = moved && (storyComplete || state.walk.questsDone + 1 >= QUESTS_PER_CHAPTER);
+    const narration = storyComplete
+      ? "The last piece slides into place. The letter was never a threat; it was a map home, and the courier drew it for you."
+      : chapterComplete
+        ? "That's the one. As you lower your phone you catch a fresh chalk mark that wasn't there a minute ago. Someone is ahead of you. That's enough for today."
+        : outcome === "follows_quest"
+          ? "That's the one. Up close you find a second mark, smaller and newer than the first. The trail keeps going."
+          : outcome === "moves_story"
+            ? "Not what you were looking for, but look: a chalk arrow at its base, pointing away from the trail you were on. The courier changed plans."
+            : "You file it away. It doesn't look like the courier's work, but you're starting to see marks everywhere.";
     return {
       usage,
       data: {
-        verdict: "success",
-        narration: storyComplete
-          ? "The last piece slides into place. The letter was never a threat; it was a map home, and the courier drew it for you."
-          : chapterComplete
-            ? "That's the one. As you lower your phone you catch a fresh chalk mark that wasn't there a minute ago. Someone is ahead of you. That's enough for today."
-            : "That's the one. Up close you find a second mark, smaller and newer than the first. The trail keeps going.",
+        outcome,
+        narration,
         observations: ["(mock mode)"],
-        canonAdd: [`Quest ${state.questsCompleted + 1} led to a fresh chalk mark.`],
+        canonAdd: moved ? [`Step ${state.questsCompleted + 1} turned up a fresh chalk mark.`] : [],
         bindingsAdd: [],
-        inventoryAdd: state.questsCompleted === 0 ? ["A torn corner of the letter"] : [],
+        inventoryAdd: moved && state.questsCompleted === 0 ? ["A torn corner of the letter"] : [],
         inventoryRemove: [],
         planChange: "none",
         planReason: "",
         revisedBeats: null,
-        beatComplete: true,
-        chapterComplete: chapterComplete || storyComplete,
+        beatComplete: moved,
+        chapterComplete,
         storyComplete,
-        recap:
-          chapterComplete || storyComplete
-            ? "You followed the courier's chalk marks and found a torn corner of a sealed letter. Someone else is following the same trail."
-            : null,
-        quest: chapterComplete || storyComplete ? null : questAfter({ ...state, questsCompleted: state.questsCompleted + 1 }),
+        recap: chapterComplete
+          ? "You followed the courier's chalk marks and found a torn corner of a sealed letter. Someone else is following the same trail."
+          : null,
+        // A side note keeps the open quest; a step forward brings the next one.
+        quest: chapterComplete || !moved ? null : questAfter({ ...state, questsCompleted: state.questsCompleted + 1 }),
       },
     };
   },
@@ -156,18 +164,6 @@ export const mockBrain: Brain = {
         planReason: "",
         revisedBeats: null,
         quest: questAfter(state),
-      },
-    };
-  },
-
-  async react() {
-    await pause();
-    return {
-      usage,
-      data: {
-        reaction: "You file it away. It doesn't look like the courier's work, but you're starting to see marks everywhere.",
-        relevance: "color",
-        canonAdd: null,
       },
     };
   },

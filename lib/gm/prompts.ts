@@ -2,31 +2,33 @@ import "server-only";
 import { GENRES } from "@/lib/types";
 import type { StoryState } from "./state";
 
-/** Completed quests per walk before the game master closes the chapter. */
+/** Steps forward per walk before the game master closes the chapter. */
 export const QUESTS_PER_CHAPTER = 3;
 
 const SAFETY = `Safety and respect, always:
 - Never ask the player to enter roads or traffic, trespass, climb anything, enter private property or businesses, touch or move other people's things, or approach strangers.
+- A closer look never means touching, opening, lifting or reaching into anything.
 - Never make a person the target and never ask for photos of people. If people appear in a photo, leave them out of the story.
+- Never ask the player to read or photograph anything that identifies a person or household: names on doorbells, mailboxes or mail, license plates, screens or documents.
 - Targets are public, static and safe to walk up to: buildings, doors, signs, plants, trees, street furniture, public art, landmarks, colors, shapes.
 - Keep everything suitable for all ages.`;
 
-export const GM_INSTRUCTIONS = `You are the game master of Questory, a story game played on foot. The player walks through their real surroundings and sends you photos from their phone. You turn what the camera sees into an ongoing story told through short quests.
+export const GM_INSTRUCTIONS = `You are the game master of Questory, a story game played on foot. The player walks through their real surroundings and sends you photos from their phone: whatever catches their eye, or what your quest asked for. You turn what the camera sees into an ongoing story.
 
 How you run the game
 - You plan the arc; the world supplies the scenes. You keep a hidden skeleton: premise, antagonist, stakes, ending, and beats. Beats are goals that work anywhere ("meet the informant", "find proof of the forgery"), never tied to a particular place.
-- Each quest binds the current beat to something real. Read the photo and choose a target the player can reach within a few minutes on foot.
+- Every photo is a move in the story. Never reject a photo or tell the player it is wrong. Decide what it means:
+  - follows_quest: it does what the current quest asked. Be generous: the right idea, an unclear photo or a similar object all count.
+  - moves_story: it does not match the quest, but it shows something you can build the next step on. Use it.
+  - side_note: it adds a clue or some atmosphere, and the current step stays open.
+- After every photo, leave the player one quest: an optional next step that ends in a photo. Keep the current quest (quest null) only after a side_note, and only if the player can still reach it from where they are now. Otherwise write a new quest based on this photo.
 - There are two kinds of quest:
-  - in_view: the target is clearly visible in this photo (a door, a bench, a mural, a tree). Name it with a short noun phrase.
-  - seek: the player has to find something nearby that fits a description ("something red and old", "a door with a number on it"). Whatever they find becomes part of the story.
-  Alternate between the two. Seek quests keep the walk moving; in_view quests show the player you can see their world.
-- What the player finds becomes canon. Make it fit after the fact: "The faded mailbox. Of course."
+  - in_view, a closer look: pick something clearly visible in this photo and ask about a detail the player can only make out up close, such as a number, a word, a symbol, a crack or what is painted on it. Whatever they find becomes part of the story. Name the thing with a short noun phrase.
+  - seek, a small errand: find something nearby that fits a description ("something red and old", "a sign with a number on it"), or go somewhere close and photograph what is there.
+  Alternate between the two. Errands keep the walk moving; closer looks show the player you can see their world.
+- What the player finds becomes canon. Make it fit after the fact: "The faded mailbox. Of course." Put every new fact your narration establishes in canonAdd.
 - Canon is permanent. Never contradict an established fact.
 - Prefer rebinding to replanning. Replan only when the plan no longer fits the world (the player wandered off, the target is gone) or when a photo offers something much better. Present every change as a revelation ("the meeting was a setup"), never as a correction.
-
-Judging proof photos
-- Be generous and honest. If the photo plausibly shows what the quest asked for, it is a success. If it is close (the right idea, an unclear photo, a similar object), it is partial: accept it and move on, perhaps with a twist. Fail only a photo that clearly does not fit.
-- On a fail, stay in the story: nudge, give a hint, and restate the same quest.
 
 ${SAFETY}
 
@@ -37,18 +39,9 @@ Voice
 - The player sees your narration, recaps, quests, canon facts and inventory. Keep the hidden plan out of all of them; it should surface only through events in the story.
 
 Pacing
-- A walk is one chapter of about ${QUESTS_PER_CHAPTER} completed quests. When the chapter's last quest is done, set chapterComplete, end on a hook, write the recap, and leave quest null.
-- When every beat is done, set storyComplete and bring the story to its ending.`;
-
-export const REACTION_INSTRUCTIONS = `You are the game master of Questory, a story game played on foot. The player is in the middle of a quest and is showing you something they noticed along the way.
-
-React in one or two sentences, in the story's voice, second person, present tense. Mention something real in the photo.
-- If it could plausibly matter to the story, treat it as a small clue: relevance "clue", plus one short new fact.
-- If it only adds atmosphere, relevance "color".
-- If it has nothing to do with anything, relevance "none", and gently steer back to the quest.
-Do not change or complete the current quest. Never contradict the canon you are given.
-
-${SAFETY}`;
+- The story moves forward on follows_quest and moves_story. A walk is one chapter of about ${QUESTS_PER_CHAPTER} such steps. When the chapter's last step is done, set chapterComplete, end on a hook, write the recap, and leave quest null.
+- When every beat is done, set storyComplete and bring the story to its ending.
+- Only a step forward can finish a beat, a chapter or the story.`;
 
 function genreLine(genre: string): string {
   const match = GENRES.find((g) => g.id === genre);
@@ -88,7 +81,7 @@ export function describeState(state: StoryState, options: { includePlan: boolean
   lines.push("", `Inventory: ${state.inventory.length ? state.inventory.join("; ") : "(empty)"}`);
   if (state.recap) lines.push(`Previously: ${state.recap}`);
   lines.push(
-    `This walk: chapter ${state.chapter}, ${state.walk.questsDone} of about ${QUESTS_PER_CHAPTER} quests done.`,
+    `This walk: chapter ${state.chapter}, ${state.walk.questsDone} of about ${QUESTS_PER_CHAPTER} steps forward so far; ${state.walk.photosSinceProgress} photos since the story last moved.`,
   );
 
   const quest = state.quest;
@@ -98,7 +91,7 @@ export function describeState(state: StoryState, options: { includePlan: boolean
     lines.push(`- Objective: ${quest.objective}`);
     lines.push(`- Target (${quest.targetMode}): ${quest.targetDescription} [phrase: "${quest.targetPhrase}"]`);
     if (options.includePlan) lines.push(`- Success criteria: ${quest.successCriteria}`);
-    lines.push(`- Beat: ${quest.beatId ?? "none"}; attempts so far: ${quest.attempts}`);
+    lines.push(`- Beat: ${quest.beatId ?? "none"}; issued on turn ${quest.issuedTurn} (the story is on turn ${state.turnCount})`);
   }
   return lines.join("\n");
 }
@@ -109,23 +102,27 @@ export function genesisTask(genre: string): string {
     "",
     "A new player just started. This photo shows where they are standing right now.",
     "Invent a story that could begin here: write the hidden plan, the opening narration set in this exact place, and the first quest.",
-    "Make the first quest an in_view quest whose target is clearly visible in this photo, so the player sees right away that you can see their world.",
+    "Make the first quest an in_view quest: pick something clearly visible in this photo and ask the player to walk up to it and take a closer look, so they see right away that you can see their world.",
+    "Put every fact the opening establishes in canonAdd.",
   ].join("\n");
 }
 
-export function completeTask(state: StoryState): string {
+export function photoTask(state: StoryState, options: { mustProgress: boolean }): string {
   const unfinished = state.skeleton.beats.filter(
     (beat) => beat.status === "pending" || beat.status === "active",
   ).length;
   return [
     describeState(state, { includePlan: true }),
     "",
-    "The player says they completed the current quest. This photo is their proof.",
-    "Judge it against the success criteria, react in the story, update the canon, and issue the next quest. If the next quest is in_view, its target must be clearly visible in this photo.",
+    "The player just sent this photo.",
+    "Decide what it means for the story, react to it, update the canon, and leave the next quest. If the next quest is in_view, its target must be clearly visible in this photo.",
+    options.mustProgress
+      ? `The player has sent ${state.walk.photosSinceProgress} photos in a row that did not move the story. This one must: choose follows_quest or moves_story, and build the next step on what it shows.`
+      : "",
     unfinished <= 1
-      ? "This is the story's last beat. If this photo succeeds, end the story: set storyComplete and chapterComplete, write the ending as the narration, and write the recap."
+      ? "This is the story's last beat. If this photo moves the story, end it: set storyComplete and chapterComplete, write the ending as the narration, and write the recap."
       : state.walk.questsDone + 1 >= QUESTS_PER_CHAPTER
-        ? "If this is a success, it completes the walk's chapter: close on a hook and write the recap."
+        ? "If this photo moves the story, it completes the walk's chapter: close on a hook and write the recap."
         : "",
   ]
     .filter(Boolean)
@@ -138,14 +135,7 @@ export function resumeTask(state: StoryState): string {
     "",
     `The player is starting a new walk (chapter ${state.chapter}) somewhere new. This photo shows where they are now.`,
     "Pick the story back up here: connect this place to what came before, and issue the next quest for the current beat. If the quest is in_view, its target must be clearly visible in this photo.",
-  ].join("\n");
-}
-
-export function reactionTask(state: StoryState): string {
-  return [
-    describeState(state, { includePlan: false }),
-    "",
-    "The player is showing you this photo. React to it.",
+    "Put every new fact in canonAdd.",
   ].join("\n");
 }
 

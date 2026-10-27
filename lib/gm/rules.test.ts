@@ -1,0 +1,176 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import { activateNextBeat, makeBeats } from "./beats";
+import type { PhotoTurnOut, QuestOut } from "./outputs";
+import { FREE_PHOTOS, applyPhotoTurn, makeQuest, mustMoveStory, nounPhrase, updateInventory } from "./rules";
+import type { StoryState } from "./state";
+
+const QUEST: QuestOut = {
+  title: "The marked door",
+  targetMode: "in_view",
+  objective: "Walk up to the green door. What number is painted above it?",
+  hint: "Look at the frame.",
+  targetPhrase: "green door",
+  targetDescription: "the green door on the left",
+  successCriteria: "A close look at the door.",
+  cardCaption: "Find the marked door",
+  cardFlourish: "a chalk arrow",
+};
+
+/** A story on turn 1 with an open quest and beats b1 (active) to b3. */
+function story(): StoryState {
+  const state: StoryState = {
+    version: 1,
+    id: "story",
+    playerId: "player",
+    genre: "mystery",
+    createdAt: "2026-10-26T00:00:00.000Z",
+    updatedAt: "2026-10-26T00:00:00.000Z",
+    title: "The courier's letter",
+    logline: "A trail starts here.",
+    skeleton: {
+      premise: "",
+      antagonist: "",
+      stakes: "",
+      ending: "",
+      beats: activateNextBeat(makeBeats(["one", "two", "three"], 0)),
+    },
+    characters: [],
+    canon: [{ fact: "The courier marks hiding places with chalk.", turn: 1 }],
+    bindings: [],
+    inventory: [],
+    quest: null,
+    chapter: 1,
+    turnCount: 1,
+    questsCompleted: 0,
+    walk: { active: true, startedAt: "2026-10-26T00:00:00.000Z", questsDone: 0, photosSinceProgress: 0 },
+    recap: "",
+    status: "active",
+  };
+  state.quest = makeQuest(QUEST, "b1", 1);
+  return state;
+}
+
+/** A game master reply: a side note that keeps the quest, unless overridden. */
+function reply(overrides: Partial<PhotoTurnOut> = {}): PhotoTurnOut {
+  return {
+    outcome: "side_note",
+    narration: "You file it away.",
+    observations: [],
+    canonAdd: [],
+    bindingsAdd: [],
+    inventoryAdd: [],
+    inventoryRemove: [],
+    planChange: "none",
+    planReason: "",
+    revisedBeats: null,
+    beatComplete: false,
+    chapterComplete: false,
+    storyComplete: false,
+    recap: null,
+    quest: null,
+    ...overrides,
+  };
+}
+
+const beatSummary = (state: StoryState) => state.skeleton.beats.map((b) => `${b.id}:${b.status}`).join(" ");
+
+test("a side note keeps the open quest and counts toward the nudge", () => {
+  const state = story();
+  const questId = state.quest!.id;
+  const result = applyPhotoTurn(state, reply({ beatComplete: true, chapterComplete: true }), 2);
+
+  assert.equal(result.outcome, "side_note");
+  assert.equal(result.questIssued, false);
+  assert.equal(state.quest?.id, questId);
+  assert.equal(state.walk.photosSinceProgress, 1);
+  assert.equal(state.walk.questsDone, 0);
+  // Only a step forward can finish a beat or a chapter.
+  assert.equal(beatSummary(state), "b1:active b2:pending b3:pending");
+  assert.equal(state.walk.active, true);
+});
+
+test("a photo that follows the quest moves the story and brings the next quest", () => {
+  const state = story();
+  const oldId = state.quest!.id;
+  const next = { ...QUEST, title: "Something red", targetMode: "seek" as const };
+  const result = applyPhotoTurn(state, reply({ outcome: "follows_quest", beatComplete: true, quest: next }), 2);
+
+  assert.equal(result.outcome, "follows_quest");
+  assert.equal(result.questIssued, true);
+  assert.notEqual(state.quest?.id, oldId);
+  assert.equal(state.quest?.title, "Something red");
+  assert.equal(state.quest?.issuedTurn, 2);
+  // The new quest belongs to the beat that is active after this turn.
+  assert.equal(state.quest?.beatId, "b2");
+  assert.equal(beatSummary(state), "b1:done b2:active b3:pending");
+  assert.deepEqual([state.questsCompleted, state.walk.questsDone, state.walk.photosSinceProgress], [1, 1, 0]);
+});
+
+test(`after ${FREE_PHOTOS} side notes in a row, the next photo has to move the story`, () => {
+  const state = story();
+  for (let turn = 2; turn < 2 + FREE_PHOTOS; turn++) {
+    assert.equal(mustMoveStory(state), false);
+    applyPhotoTurn(state, reply(), turn);
+  }
+  assert.equal(mustMoveStory(state), true);
+
+  // The game master was told to move the story; a side note is counted as a step anyway.
+  const result = applyPhotoTurn(state, reply({ quest: QUEST }), 2 + FREE_PHOTOS);
+  assert.equal(result.outcome, "moves_story");
+  assert.equal(state.walk.questsDone, 1);
+  assert.equal(state.walk.photosSinceProgress, 0);
+  assert.equal(mustMoveStory(state), false);
+});
+
+test("a step forward without a new quest leaves no quest open", () => {
+  const state = story();
+  const result = applyPhotoTurn(state, reply({ outcome: "moves_story" }), 2);
+  assert.equal(result.questIssued, false);
+  assert.equal(state.quest, null);
+  assert.equal(state.walk.active, true);
+});
+
+test("a step forward can close the chapter, which saves the recap and ends the walk", () => {
+  const state = story();
+  applyPhotoTurn(
+    state,
+    reply({ outcome: "follows_quest", chapterComplete: true, recap: " You found the door. ", quest: QUEST }),
+    2,
+  );
+  assert.equal(state.walk.active, false);
+  assert.equal(state.quest, null);
+  assert.equal(state.recap, "You found the door.");
+  assert.equal(state.status, "active");
+});
+
+test("finishing the story marks it complete", () => {
+  const state = story();
+  applyPhotoTurn(state, reply({ outcome: "moves_story", beatComplete: true, storyComplete: true }), 2);
+  assert.equal(state.status, "complete");
+  assert.equal(state.walk.active, false);
+});
+
+test("canon and inventory skip duplicates, ignoring case", () => {
+  const state = story();
+  state.inventory = ["A brass key"];
+  const result = applyPhotoTurn(
+    state,
+    reply({
+      canonAdd: ["the courier marks hiding places with chalk.", "The door is number 14.", "The door is number 14."],
+      inventoryAdd: ["a brass key", "A torn letter"],
+    }),
+    2,
+  );
+  assert.deepEqual(result.canonAdded, ["The door is number 14."]);
+  assert.deepEqual(state.inventory, ["A brass key", "A torn letter"]);
+  assert.deepEqual(updateInventory(state.inventory, [], [" a BRASS key "]), ["A torn letter"]);
+});
+
+test("target phrases lose leading articles and trailing punctuation", () => {
+  assert.equal(nounPhrase("The tall arched doorway."), "tall arched doorway");
+  assert.equal(nounPhrase(" A red door "), "red door");
+  assert.equal(nounPhrase("theater sign"), "theater sign");
+  assert.equal(nounPhrase("the"), "the");
+  assert.equal(makeQuest({ ...QUEST, targetPhrase: "The Green Door" }, null, 3).targetPhrase, "green door");
+});

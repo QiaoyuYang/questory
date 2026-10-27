@@ -34,7 +34,7 @@ export const api = {
   startStory: (genre: GenreId, photo: PhotoUpload) =>
     call<TurnResult>("/api/stories", { method: "POST", body: JSON.stringify({ genre, ...photo }) }),
 
-  takeTurn: (id: string, kind: "complete" | "show" | "resume", photo: PhotoUpload) =>
+  takeTurn: (id: string, kind: "photo" | "resume", photo: PhotoUpload) =>
     call<TurnResult>(`/api/stories/${id}/turns`, {
       method: "POST",
       body: JSON.stringify({ kind, ...photo }),

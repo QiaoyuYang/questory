@@ -10,7 +10,6 @@ import { clipText } from "@/lib/meta/structured";
 // (see lib/meta/structured.ts).
 const NARRATION = 700;
 const RECAP = 600;
-const REACTION = 600;
 const PLAN = 1200;
 const SENTENCE = 300;
 const LABEL = 100;
@@ -57,20 +56,22 @@ const RECAP_RULES =
 
 export const QuestOutSchema = z.object({
   title: text(LABEL).describe("Quest title, 2 to 6 words, sentence case."),
-  objective: text(SENTENCE).describe("One sentence telling the player what to find or do. At most 25 words."),
-  hint: text(SENTENCE).describe("A gentle extra clue for when they get stuck. One sentence."),
   targetMode: z
     .enum(["in_view", "seek"])
     .describe(
-      "in_view: the target is clearly visible in the current photo. seek: the player must find something nearby that fits a description.",
+      "in_view: a closer look at something clearly visible in this photo. seek: a small errand nearby that ends in a photo.",
     ),
+  objective: text(SENTENCE).describe(
+    "One sentence telling the player what to do, at most 25 words. For in_view, ask about a detail they can only make out up close.",
+  ),
+  hint: text(SENTENCE).describe("A gentle extra clue for when they get stuck. One sentence."),
   targetPhrase: text(LABEL).describe(
     'A 1 to 4 word concrete noun phrase naming the target, e.g. "red door", "stone bench", "street sign". No verbs, no articles.',
   ),
   targetDescription: text(SENTENCE).describe(
     "A short player-facing description of what counts, e.g. \"the green door with brass numbers\".",
   ),
-  successCriteria: text(SENTENCE * 2).describe("Private to you: what a proof photo must show for this quest to count."),
+  successCriteria: text(SENTENCE * 2).describe("Private to you: what a photo must show to count as doing this quest."),
   cardCaption: text(LABEL).describe("At most 8 words, printed on the quest card."),
   cardFlourish: text(SENTENCE).describe("One small visual detail to paint onto the quest card that fits the story."),
 });
@@ -92,7 +93,9 @@ export const GenesisSchema = z.object({
   characters: list(z.object({ name: text(LABEL), role: text(LABEL), notes: text(SENTENCE) })),
   narration: prose(NARRATION).describe("The opening, 2 to 4 sentences, set in the place in the photo."),
   observations: list(text(SENTENCE)).describe("Concrete things you see in the photo."),
-  canonAdd: list(text(SENTENCE)).describe("Facts established by the opening."),
+  canonAdd: list(text(SENTENCE)).describe(
+    "Every fact the opening establishes, such as who is missing or what was seen, one short sentence each.",
+  ),
   bindingsAdd: list(BindingSchema),
   quest: QuestOutSchema,
 });
@@ -108,45 +111,43 @@ const planFields = {
     .describe("Only when planChange is replan: the new list of unfinished beats. Otherwise null."),
 };
 
-export const TurnSchema = z.object({
-  verdict: z.enum(["success", "partial", "fail"]).describe("Your judgment of the proof photo."),
-  narration: prose(NARRATION).describe("2 to 4 sentences reacting to the proof photo, in the story."),
+/** Any photo the player sends during a walk. */
+export const PhotoTurnSchema = z.object({
+  outcome: z
+    .enum(["follows_quest", "moves_story", "side_note"])
+    .describe(
+      "follows_quest: the photo does what the current quest asked; be generous. moves_story: it does not, but you use what it shows to move the story forward anyway. side_note: it adds a clue or atmosphere, and the story waits for more.",
+    ),
+  narration: prose(NARRATION).describe("2 to 4 sentences reacting to this photo, in the story."),
   observations: list(text(SENTENCE)).describe("Concrete things you see in the photo."),
-  canonAdd: list(text(SENTENCE)).describe("Facts this turn establishes."),
+  canonAdd: list(text(SENTENCE)).describe("Every new fact this turn establishes, including what the player found."),
   bindingsAdd: list(BindingSchema),
   inventoryAdd: list(text(SENTENCE)).describe("Items or clues the player gains."),
   inventoryRemove: list(text(SENTENCE)).describe("Items the player uses up or loses."),
   ...planFields,
-  beatComplete: z.boolean().describe("True when this success finishes the current beat."),
+  beatComplete: z
+    .boolean()
+    .describe("True when this photo finishes the current beat. Only with follows_quest or moves_story."),
   chapterComplete: z.boolean().describe("True when this walk's chapter should end now."),
   storyComplete: z.boolean().describe("True when every beat is done and the story is over."),
   recap: recapText()
     .nullable()
     .describe(`Only when the chapter or story ends; otherwise null. ${RECAP_RULES}`),
   quest: QuestOutSchema.nullable().describe(
-    "The next quest. On a fail, restate the current quest (adjusted if needed). Null when the chapter or story ends.",
+    "The next quest. Null keeps the current quest, which only fits after a side_note when the player can still reach it from here. Also null when the chapter or story ends.",
   ),
 });
-export type TurnOut = z.infer<typeof TurnSchema>;
+export type PhotoTurnOut = z.infer<typeof PhotoTurnSchema>;
 
 export const ResumeSchema = z.object({
   narration: prose(NARRATION).describe("2 to 4 sentences: pick the story back up in this new place and set the hook."),
-  observations: list(text(SENTENCE)),
-  canonAdd: list(text(SENTENCE)),
+  observations: list(text(SENTENCE)).describe("Concrete things you see in the photo."),
+  canonAdd: list(text(SENTENCE)).describe("Every new fact this turn establishes, one short sentence each."),
   bindingsAdd: list(BindingSchema),
   ...planFields,
   quest: QuestOutSchema,
 });
 export type ResumeOut = z.infer<typeof ResumeSchema>;
-
-export const ReactionSchema = z.object({
-  reaction: prose(REACTION).describe("One or two sentences, in the story's voice."),
-  relevance: z
-    .enum(["clue", "color", "none"])
-    .describe("clue: it matters to the story. color: atmosphere only. none: unrelated."),
-  canonAdd: text(SENTENCE).nullable().describe("When relevance is clue: one short new fact. Otherwise null."),
-});
-export type ReactionOut = z.infer<typeof ReactionSchema>;
 
 export const EpilogueSchema = z.object({
   narration: prose(NARRATION).describe("2 to 4 sentences closing this walk on a hook."),
