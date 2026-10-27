@@ -107,5 +107,14 @@ export function fileStore(root: string): Store {
         throw error;
       }
     },
+
+    // Not atomic, which is fine for a single dev server.
+    async countCall(day, limit) {
+      const file = dir("usage", `${check(day)}.json`);
+      const calls = ((await readJson(file)) as { calls?: number } | null)?.calls ?? 0;
+      if (calls >= limit) return false;
+      await writeJson(file, { calls: calls + 1 });
+      return true;
+    },
   };
 }

@@ -26,7 +26,20 @@ const client = new Client().setEndpoint(endpoint).setProject(projectId).setKey(a
 const db = new TablesDB(client);
 const storage = new Storage(client);
 
-async function ensure(label: string, create: () => Promise<unknown>) {
+/**
+ * Create something unless it exists. Pass `find` where the plan caps how many there can
+ * be: Appwrite then refuses a create with a plan error before checking for a duplicate.
+ */
+async function ensure(label: string, create: () => Promise<unknown>, find?: () => Promise<unknown>) {
+  if (find) {
+    try {
+      await find();
+      console.log(`exists   ${label}`);
+      return;
+    } catch (error) {
+      if (!(error instanceof AppwriteException && error.code === 404)) throw error;
+    }
+  }
   try {
     await create();
     console.log(`created  ${label}`);
@@ -75,7 +88,11 @@ async function waitForColumns(tableId: string) {
 }
 
 async function main() {
-  await ensure(`database ${databaseId}`, () => db.create({ databaseId, name: "Questory" }));
+  await ensure(
+    `database ${databaseId}`,
+    () => db.create({ databaseId, name: "Questory" }),
+    () => db.get({ databaseId }),
+  );
 
   // Stories: one row per story, the full state as JSON.
   await ensure("table stories", () =>
@@ -109,7 +126,14 @@ async function main() {
     }),
   );
 
-  // Photos and quest cards. Private: the server reads them with its API key.
+  // Usage: one row per UTC day, counting paid model calls for the daily limit.
+  await ensure("table usage", () =>
+    db.createTable({ databaseId, tableId: "usage", name: "Usage", permissions: [], rowSecurity: false }),
+  );
+  await createColumn("usage", { key: "calls", kind: "integer", required: true });
+  await waitForColumns("usage");
+
+  // Photos and story cards. Private: the server reads them with its API key.
   await ensure(`bucket ${bucketId}`, () =>
     storage.createBucket({
       bucketId,
@@ -119,6 +143,7 @@ async function main() {
       maximumFileSize: 10 * 1024 * 1024,
       allowedFileExtensions: ["jpg", "jpeg", "png", "webp"],
     }),
+    () => storage.getBucket({ bucketId }),
   );
 
   console.log("\nAppwrite is ready. Set STORAGE=appwrite (or leave it unset) and restart the dev server.");

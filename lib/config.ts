@@ -16,6 +16,11 @@ function flag(name: string, fallback: boolean): boolean {
   return !["0", "false", "off", "no"].includes(value.toLowerCase());
 }
 
+function integer(name: string, fallback: number): number {
+  const value = Number(env(name, String(fallback)));
+  return Number.isInteger(value) && value >= 0 ? value : fallback;
+}
+
 export type ReasoningEffort = "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
 
 export function getConfig() {
@@ -41,6 +46,8 @@ export function getConfig() {
       questCards: flag("QUEST_CARDS", true),
       sam: flag("SAM_GROUNDING", true),
     },
+    /** Paid model calls per UTC day, all players together. 0 turns the limit off. */
+    dailyCallLimit: integer("DAILY_CALL_LIMIT", 200),
     storage: env("STORAGE", appwriteReady ? "appwrite" : "file") as "appwrite" | "file",
     dataDir: env("DATA_DIR", ".data"),
     appwrite: {

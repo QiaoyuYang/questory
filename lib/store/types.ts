@@ -14,4 +14,6 @@ export interface Store {
   listTurns(storyId: string): Promise<TurnRecord[]>;
   putImage(image: StoredImage): Promise<string>;
   getImage(id: string): Promise<StoredImage | null>;
+  /** Count one call against a day's total. Returns false, counting nothing, once it has reached `limit`. */
+  countCall(day: string, limit: number): Promise<boolean>;
 }

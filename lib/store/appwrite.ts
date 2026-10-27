@@ -9,18 +9,23 @@ import type { Store } from "./types";
 export const APPWRITE_SCHEMA = {
   stories: "stories",
   turns: "turns",
+  usage: "usage",
 } as const;
 
 function isNotFound(error: unknown) {
   return error instanceof AppwriteException && error.code === 404;
 }
 
+function hasType(error: unknown, type: string) {
+  return error instanceof AppwriteException && error.type === type;
+}
+
 const EXT: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 
 /**
  * Appwrite storage: each story is a row holding its state as JSON; each turn is a
- * row keyed by story; photos and story cards live in a private bucket and are
- * served through /api/media.
+ * row keyed by story; each day's model calls are counted in a usage row; photos and
+ * story cards live in a private bucket and are served through /api/media.
  */
 export function appwriteStore(config: Config["appwrite"]): Store {
   const client = new Client()
@@ -124,6 +129,29 @@ export function appwriteStore(config: Config["appwrite"]): Store {
         if (isNotFound(error)) return null;
         throw error;
       }
+    },
+
+    async countCall(day, limit) {
+      // One row per UTC day. Appwrite increments atomically and won't go past `max`, so
+      // requests on different servers can't overshoot the limit.
+      const row = { databaseId, tableId: APPWRITE_SCHEMA.usage, rowId: day };
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          await db.incrementRowColumn({ ...row, column: "calls", value: 1, max: limit });
+          return true;
+        } catch (error) {
+          if (hasType(error, "column_limit_exceeded")) return false;
+          if (!hasType(error, "row_not_found")) throw error;
+        }
+        // The day's first call creates its row. If another request got there first, increment instead.
+        try {
+          await db.createRow({ ...row, data: { calls: 1 } });
+          return true;
+        } catch (error) {
+          if (!hasType(error, "row_already_exists")) throw error;
+        }
+      }
+      throw new Error("Couldn't count today's calls.");
     },
   };
 }

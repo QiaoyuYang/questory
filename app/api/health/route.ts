@@ -14,6 +14,7 @@ export async function GET() {
           questCards: config.features.questCards ? config.meta.imageModel : "off",
           grounding: config.features.sam ? config.meta.samModel : "off",
         },
+    dailyCallLimit: config.dailyCallLimit || "off",
     storage: config.storage,
   });
 }

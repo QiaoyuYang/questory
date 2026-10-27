@@ -43,7 +43,7 @@ Without Appwrite settings, stories and photos are saved as files in `.data/`. Th
 
 1. Create an Appwrite project and an API key with every Database and Storage scope.
 2. Fill in `APPWRITE_ENDPOINT`, `APPWRITE_PROJECT_ID` and `APPWRITE_API_KEY` in `.env.local`.
-3. Run `npm run setup:appwrite` once. It creates the `questory` database, the `stories` and `turns` tables, and a private `media` bucket.
+3. Run `npm run setup:appwrite`. It creates the `questory` database, the `stories`, `turns` and `usage` tables, and a private `media` bucket. Run it again after updating; it only adds what's missing.
 
 Players are anonymous: a random id in an httpOnly cookie.
 
@@ -59,7 +59,7 @@ Every pull request gets its own preview link. The card route can run for up to t
 
 Two things to know before sharing the link:
 
-- **Whoever can open the site spends your Meta credit.** Vercel leaves the production URL public by default. While testing, set Deployment Protection to All Deployments with Vercel Authentication, so only you can open it. That's free on every plan.
+- **Whoever can open the site spends your Meta credit.** `DAILY_CALL_LIMIT` caps what a day can cost. Vercel leaves the production URL public by default. To keep it private while testing, set Deployment Protection to All Deployments with Vercel Authentication, which is free on every plan.
 - **Free Appwrite projects pause after 7 days without development activity in the Console.** A paused project can't load or save stories. Use the Console every few days while people are playing, and reactivate the project there if it pauses.
 
 ## Configuration
@@ -71,10 +71,11 @@ All settings are environment variables; `.env.example` documents each one. The o
 | `GM_REASONING_EFFORT` | `minimal` | Muse Wonder's effort. Higher is slower and costs more |
 | `QUEST_CARDS` | `on` | Turn off to skip Muse Image (the outline still shows the target) |
 | `SAM_GROUNDING` | `on` | Turn off to skip target outlines |
+| `DAILY_CALL_LIMIT` | `200` | Paid calls per UTC day across all players. Each story start, photo, walk end and painted card counts once. `0` turns it off |
 
 ## Cost
 
-A photo turn sends about 3,000 to 4,000 input tokens (the photo is about 1,400 of them) and gets 1,000 to 2,000 back, which comes to roughly 3 to 5 cents on Muse Wonder. A story card adds 1 cent. Every model call logs its token use to the server console.
+A photo turn sends about 3,000 to 4,000 input tokens (the photo is about 1,400 of them) and gets 1,000 to 2,000 back, which comes to roughly 3 to 5 cents on Muse Wonder. A story card adds 1 cent. Every model call logs its token use to the server console. The default `DAILY_CALL_LIMIT` of 200 keeps a bad day to roughly $10.
 
 ## Project layout
 
