@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, type TurnResult } from "@/lib/client/api";
+import { currentChapter, walkStats } from "@/lib/walk";
 import { GAME_MASTER, type PhotoUpload, type StoryView, type TurnView } from "@/lib/types";
 import { Alert } from "./Alert";
 import { BottomBar } from "./BottomBar";
@@ -14,6 +15,7 @@ import { QuestSheet } from "./QuestSheet";
 import { Scene, sceneViews, type SceneView } from "./Scene";
 import { Sheet } from "./Sheet";
 import { StorySheet } from "./StorySheet";
+import { WalkSummary } from "./WalkSummary";
 import { Working } from "./Working";
 
 type Loaded = { story: StoryView; turns: TurnView[] };
@@ -240,16 +242,14 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
           {between && (
             <div className="py-1">
               <p className="font-sign text-lg font-bold text-lane">Chapter {story.chapter} is done</p>
+              <WalkSummary stats={walkStats(currentChapter(turns))} />
               <p className="text-sm text-concrete">Start the next one here, or on your next walk.</p>
             </div>
           )}
           {story.status === "complete" && (
             <div className="py-1">
               <p className="font-sign text-lg font-bold text-lane">The end</p>
-              <p className="text-sm text-concrete">
-                {story.chapter} {story.chapter === 1 ? "walk" : "walks"}, {story.questsCompleted}{" "}
-                {story.questsCompleted === 1 ? "quest" : "quests"}.
-              </p>
+              <WalkSummary stats={walkStats(turns)} total />
             </div>
           )}
 
