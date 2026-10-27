@@ -1,28 +1,18 @@
 import "server-only";
 import type { Config } from "@/lib/config";
-import { chatJson, respondJson, type ContentPart, type Usage } from "@/lib/meta/structured";
+import { respondJson, type ContentPart, type Usage } from "@/lib/meta/structured";
 import { mockBrain } from "./mock";
 import {
   EpilogueSchema,
   GenesisSchema,
-  ReactionSchema,
+  PhotoTurnSchema,
   ResumeSchema,
-  TurnSchema,
   type EpilogueOut,
   type GenesisOut,
-  type ReactionOut,
+  type PhotoTurnOut,
   type ResumeOut,
-  type TurnOut,
 } from "./outputs";
-import {
-  GM_INSTRUCTIONS,
-  REACTION_INSTRUCTIONS,
-  completeTask,
-  epilogueTask,
-  genesisTask,
-  reactionTask,
-  resumeTask,
-} from "./prompts";
+import { GM_INSTRUCTIONS, epilogueTask, genesisTask, photoTask, resumeTask } from "./prompts";
 import type { StoryState } from "./state";
 
 export type Result<T> = { data: T; usage: Usage };
@@ -30,9 +20,9 @@ export type Result<T> = { data: T; usage: Usage };
 /** The game master's decisions. One implementation calls the Meta Model API; the other is scripted. */
 export type Brain = {
   genesis(genre: string, photo: string): Promise<Result<GenesisOut>>;
-  judge(state: StoryState, photo: string): Promise<Result<TurnOut>>;
+  /** Any photo during a walk. `mustProgress` is set when this photo has to move the story. */
+  photo(state: StoryState, photo: string, options: { mustProgress: boolean }): Promise<Result<PhotoTurnOut>>;
   resume(state: StoryState, photo: string): Promise<Result<ResumeOut>>;
-  react(state: StoryState, photo: string): Promise<Result<ReactionOut>>;
   epilogue(state: StoryState): Promise<Result<EpilogueOut>>;
 };
 
@@ -61,12 +51,12 @@ export function liveBrain(config: Config): Brain {
         schemaName: "questory_genesis",
       }),
 
-    judge: (state, photo) =>
+    photo: (state, photo, options) =>
       respondJson({
         ...gm,
-        content: withPhoto(completeTask(state), photo),
-        schema: TurnSchema,
-        schemaName: "questory_turn",
+        content: withPhoto(photoTask(state, options), photo),
+        schema: PhotoTurnSchema,
+        schemaName: "questory_photo",
       }),
 
     resume: (state, photo) =>
@@ -84,32 +74,6 @@ export function liveBrain(config: Config): Brain {
         schema: EpilogueSchema,
         schemaName: "questory_epilogue",
       }),
-
-    react: (state, photo) => {
-      const call = {
-        instructions: REACTION_INSTRUCTIONS,
-        content: withPhoto(reactionTask(state), photo),
-        schema: ReactionSchema,
-        schemaName: "questory_reaction",
-        // Reasoning counts toward this cap, so leave it plenty of room.
-        maxOutputTokens: 4000,
-      };
-      if (config.fast.provider === "openai-compatible") {
-        return chatJson({
-          ...call,
-          baseURL: config.fast.baseURL,
-          apiKey: config.fast.apiKey,
-          model: config.fast.model,
-        });
-      }
-      return respondJson({
-        ...call,
-        baseURL: config.meta.baseURL,
-        apiKey: config.meta.apiKey,
-        model: config.fast.model,
-        effort: config.fast.effort,
-      });
-    },
   };
 }
 

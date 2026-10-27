@@ -20,6 +20,11 @@ export function activateNextBeat(beats: Beat[]): Beat[] {
   return index === -1 ? beats : beats.map((beat, i) => (i === index ? { ...beat, status: "active" } : beat));
 }
 
+/** The beat the story is working on, if any. */
+export function activeBeatId(beats: Beat[]): string | null {
+  return beats.find((beat) => beat.status === "active")?.id ?? null;
+}
+
 /** Mark the active beat done and move on to the next one. */
 export function completeActiveBeat(beats: Beat[]): Beat[] {
   return activateNextBeat(beats.map((beat) => (beat.status === "active" ? { ...beat, status: "done" } : beat)));
@@ -37,8 +42,8 @@ export function replan(beats: Beat[], goals: string[] | null): Beat[] {
 }
 
 /**
- * The beats after a judged proof photo. The finished beat is completed before any
- * replan, because replan keeps only finished beats.
+ * The beats after a photo turn. The finished beat is completed before any replan,
+ * because replan keeps only finished beats.
  */
 export function updateBeats(beats: Beat[], turn: { beatComplete: boolean; replanWith: string[] | null }): Beat[] {
   const afterBeat = turn.beatComplete ? completeActiveBeat(beats) : beats;

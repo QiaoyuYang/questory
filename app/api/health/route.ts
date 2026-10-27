@@ -11,10 +11,6 @@ export async function GET() {
       ? null
       : {
           gameMaster: `${config.meta.gmModel} (reasoning: ${config.meta.gmEffort})`,
-          reactions:
-            config.fast.provider === "openai-compatible"
-              ? `${config.fast.model} at ${config.fast.baseURL}`
-              : config.fast.model,
           questCards: config.features.questCards ? config.meta.imageModel : "off",
           grounding: config.features.sam ? config.meta.samModel : "off",
         },

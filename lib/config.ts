@@ -36,18 +36,6 @@ export function getConfig() {
       imageReasoning: env("IMAGE_REASONING_STRENGTH"), // "low" | "high" | "" (API default)
       samModel: env("SAM_MODEL", "sam-3.1"),
     },
-    /**
-     * The quick model behind "Show the GM". Defaults to Muse Spark on the Model API.
-     * Set FAST_PROVIDER=openai-compatible to point it at a self-hosted Muse Glimmer
-     * (for example vLLM on Modal) through its OpenAI-compatible endpoint.
-     */
-    fast: {
-      provider: env("FAST_PROVIDER", "meta") as "meta" | "openai-compatible",
-      baseURL: env("FAST_BASE_URL").replace(/\/$/, ""),
-      apiKey: env("FAST_API_KEY"),
-      model: env("FAST_MODEL", "muse-spark-1.3"),
-      effort: env("FAST_REASONING_EFFORT", "low") as ReasoningEffort,
-    },
     features: {
       questCards: flag("QUEST_CARDS", true),
       sam: flag("SAM_GROUNDING", true),

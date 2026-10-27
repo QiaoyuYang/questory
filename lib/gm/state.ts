@@ -1,6 +1,13 @@
 import "server-only";
 import { z } from "zod";
-import { GENRES, type QuestView, type StorySummary, type StoryView, type TurnView } from "@/lib/types";
+import {
+  GENRES,
+  type Outcome,
+  type QuestView,
+  type StorySummary,
+  type StoryView,
+  type TurnView,
+} from "@/lib/types";
 
 /**
  * The full story state, server side. The game master's memory lives in three layers:
@@ -27,7 +34,6 @@ export const QuestStateSchema = z.object({
   cardFlourish: z.string(),
   beatId: z.string().nullable(),
   issuedTurn: z.number(),
-  attempts: z.number(),
 });
 export type QuestState = z.infer<typeof QuestStateSchema>;
 
@@ -65,7 +71,10 @@ export const StoryStateSchema = z.object({
   walk: z.object({
     active: z.boolean(),
     startedAt: z.string().nullable(),
+    /** Photos this walk that moved the story forward. */
     questsDone: z.number(),
+    /** Photos in a row that left the story where it was. Stories saved before this field start at 0. */
+    photosSinceProgress: z.number().default(0),
   }),
   recap: z.string(),
   status: z.enum(["active", "complete"]),
@@ -76,13 +85,16 @@ export const TurnRecordSchema = z.object({
   id: z.string(),
   storyId: z.string(),
   number: z.number(),
-  kind: z.enum(["genesis", "complete", "show", "resume", "end"]),
+  // "complete" (proof photo) and "show" are from before every photo went through one turn.
+  kind: z.enum(["genesis", "photo", "resume", "end", "complete", "show"]),
   createdAt: z.string(),
   photoId: z.string().nullable(),
   photoSize: z.object({ width: z.number(), height: z.number() }).nullable(),
   cardId: z.string().nullable(),
   cardStatus: z.enum(["none", "pending", "ready", "failed"]),
-  verdict: z.enum(["success", "partial", "fail"]).nullable(),
+  outcome: z.enum(["follows_quest", "moves_story", "side_note"]).nullable().default(null),
+  /** Only on old proof-photo turns. */
+  verdict: z.enum(["success", "partial", "fail"]).nullish(),
   narration: z.string(),
   quest: QuestStateSchema.nullable(),
   overlay: z
@@ -122,8 +134,15 @@ export function questView(quest: QuestState | null): QuestView | null {
     hint: quest.hint,
     targetMode: quest.targetMode,
     targetDescription: quest.targetDescription,
-    attempts: quest.attempts,
   };
+}
+
+/** Old proof and "show" turns read as photo turns. */
+function viewOutcome(turn: TurnRecord): Outcome | null {
+  if (turn.outcome) return turn.outcome;
+  if (turn.kind === "complete") return turn.verdict === "fail" ? "side_note" : "follows_quest";
+  if (turn.kind === "show") return "side_note";
+  return null;
 }
 
 export function storyView(state: StoryState): StoryView {
@@ -162,13 +181,13 @@ export function turnView(turn: TurnRecord): TurnView {
   return {
     id: turn.id,
     number: turn.number,
-    kind: turn.kind,
+    kind: turn.kind === "complete" || turn.kind === "show" ? "photo" : turn.kind,
     createdAt: turn.createdAt,
     photoUrl: mediaUrl(turn.photoId),
     photoSize: turn.photoSize,
     cardUrl: turn.cardStatus === "ready" ? mediaUrl(turn.cardId) : null,
     cardStatus: turn.cardStatus,
-    verdict: turn.verdict,
+    outcome: viewOutcome(turn),
     narration: turn.narration,
     quest: questView(turn.quest),
     overlay: turn.overlay,

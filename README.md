@@ -6,11 +6,12 @@ Built for the Meta Global AI Developer Hackathon on the Meta Model API.
 
 ## How a turn works
 
-1. **You take a photo.** The browser shrinks it to 1280px and uploads it.
-2. **Muse Wonder runs the game.** It reads the photo and the story so far, then judges your proof, narrates, and issues the next quest as structured JSON.
-3. **SAM 3.1 grounds the target.** For quests whose target is in the photo ("the blue door"), SAM finds it and the app traces its outline on your photo.
+1. **You take a photo of anything.** It can be what the quest asked for or whatever catches your eye. The browser shrinks it to 1280px and uploads it.
+2. **Muse Wonder runs the game.** It reads the photo and the story so far, decides what the photo means, narrates, and leaves the next quest, all as structured JSON. A photo can follow the quest, move the story somewhere new, or add a clue on the side. No photo fails.
+3. **SAM 3.1 grounds the target.** When the next quest asks you to take a closer look at something in your photo ("the blue door"), SAM finds it and the app traces its outline.
 4. **Muse Image paints the quest card.** In the background, your photo becomes a quest card with the title and a marker drawn on.
-5. **"Show the GM"** sends a photo to a faster model (Muse Spark, or a self-hosted Muse Glimmer) for an in-story reaction that never advances the plot.
+
+Quests are suggestions. If two photos in a row only add side notes, the game master moves the story forward with the next one, whatever it shows.
 
 ### How the game master remembers
 
@@ -22,7 +23,7 @@ The story state has three layers, and the prompts treat each one differently:
 | Bindings | Which real thing stands in for which story element ("the dead drop" is "the red mailbox") | Freely, every turn |
 | Canon | Facts already established in play | Never contradicted |
 
-A walk is one chapter of about three quests. The state is saved after every turn, so the next walk picks up where the last one ended. The skeleton is never sent to the browser.
+A walk is one chapter of about three steps forward. The state is saved after every turn, so the next walk picks up where the last one ended. The skeleton is never sent to the browser.
 
 ## Run it
 
@@ -59,11 +60,10 @@ All settings are environment variables; `.env.example` documents each one. The o
 | `GM_REASONING_EFFORT` | `low` | Muse Wonder's effort. Higher is slower and costs more |
 | `QUEST_CARDS` | `on` | Turn off to skip Muse Image (the outline still shows the target) |
 | `SAM_GROUNDING` | `on` | Turn off to skip target outlines |
-| `FAST_PROVIDER` | `meta` | `openai-compatible` to send "Show the GM" to a self-hosted Muse Glimmer |
 
 ## Cost
 
-A quest turn sends about 3,000 to 4,000 input tokens (the photo is about 1,400 of them) and gets 1,000 to 2,000 back, which comes to roughly 4 to 5 cents on Muse Wonder. A quest card adds 1 cent. Every model call logs its token use to the server console.
+A photo turn sends about 3,000 to 4,000 input tokens (the photo is about 1,400 of them) and gets 1,000 to 2,000 back, which comes to roughly 3 to 5 cents on Muse Wonder. A quest card adds 1 cent. Every model call logs its token use to the server console.
 
 ## Project layout
 

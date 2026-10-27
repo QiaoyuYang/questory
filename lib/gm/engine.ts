@@ -6,10 +6,10 @@ import type { Usage } from "@/lib/meta/structured";
 import type { Photo } from "@/lib/photo";
 import { getStore } from "@/lib/store";
 import type { TargetOverlay } from "@/lib/types";
-import { activateNextBeat, makeBeats, replan, updateBeats } from "./beats";
+import { activateNextBeat, activeBeatId, makeBeats, replan } from "./beats";
 import { getBrain } from "./brain";
 import { questCardPrompt } from "./card";
-import type { QuestOut } from "./outputs";
+import { addCanon, applyPhotoTurn, makeQuest, mustMoveStory } from "./rules";
 import type { QuestState, StoryState, TurnRecord } from "./state";
 
 export class GameRuleError extends Error {}
@@ -20,35 +20,6 @@ function logUsage(label: string, usage: Usage) {
   console.info(
     `[questory] ${label} ${usage.model}: in=${usage.inputTokens} (cached ${usage.cachedTokens}) out=${usage.outputTokens} (reasoning ${usage.reasoningTokens})`,
   );
-}
-
-function activeBeatId(state: StoryState): string | null {
-  return state.skeleton.beats.find((beat) => beat.status === "active")?.id ?? null;
-}
-
-function makeQuest(out: QuestOut, state: StoryState, turn: number, previous?: QuestState): QuestState {
-  return {
-    id: previous?.id ?? crypto.randomUUID(),
-    title: out.title.trim(),
-    objective: out.objective.trim(),
-    hint: out.hint.trim(),
-    targetMode: out.targetMode,
-    targetPhrase: out.targetPhrase.trim().toLowerCase(),
-    targetDescription: out.targetDescription.trim(),
-    successCriteria: out.successCriteria.trim(),
-    cardCaption: out.cardCaption.trim(),
-    cardFlourish: out.cardFlourish.trim(),
-    beatId: activeBeatId(state),
-    issuedTurn: previous?.issuedTurn ?? turn,
-    attempts: previous ? previous.attempts + 1 : 0,
-  };
-}
-
-function addCanon(state: StoryState, facts: string[], turn: number): string[] {
-  const known = new Set(state.canon.map((entry) => entry.fact.toLowerCase()));
-  const added = facts.map((fact) => fact.trim()).filter((fact) => fact && !known.has(fact.toLowerCase()));
-  state.canon.push(...added.map((fact) => ({ fact, turn })));
-  return added;
 }
 
 function mockOverlay(photo: Photo, phrase: string): TargetOverlay {
@@ -99,7 +70,7 @@ function newTurn(state: StoryState, kind: TurnRecord["kind"], photoId: string | 
     photoSize: photo ? { width: photo.width, height: photo.height } : null,
     cardId: null,
     cardStatus: "none",
-    verdict: null,
+    outcome: null,
     narration: "",
     quest: null,
     overlay: null,
@@ -154,7 +125,7 @@ export async function startStory(playerId: string, genre: string, photo: Photo) 
     chapter: 1,
     turnCount: 0,
     questsCompleted: 0,
-    walk: { active: true, startedAt: createdAt, questsDone: 0 },
+    walk: { active: true, startedAt: createdAt, questsDone: 0, photosSinceProgress: 0 },
     recap: "",
     status: "active",
   };
@@ -165,69 +136,38 @@ export async function startStory(playerId: string, genre: string, photo: Photo) 
   turn.canonAdded = addCanon(state, data.canonAdd, turn.number);
   turn.usage = [usage];
   state.bindings.push(...data.bindingsAdd.map((b) => ({ ...b, turn: turn.number })));
-  state.quest = makeQuest(data.quest, state, turn.number);
+  state.quest = makeQuest(data.quest, activeBeatId(state.skeleton.beats), turn.number);
   turn.quest = state.quest;
   turn.overlay = await groundQuest(config, state.quest, photo);
   return commit(state, turn);
 }
 
-/** The player sends proof that they completed the current quest. */
-export async function completeQuest(state: StoryState, photo: Photo) {
-  if (!state.walk.active || !state.quest) throw new GameRuleError("There's no quest in progress. Start a walk first.");
+/**
+ * Any photo the player takes during a walk: what the quest asked for, or whatever caught
+ * their eye. The game master decides what it means for the story.
+ */
+export async function takePhoto(state: StoryState, photo: Photo) {
+  if (!state.walk.active) throw new GameRuleError("Start a walk first.");
   const config = getConfig();
   const store = getStore();
-  const [photoId, judged] = await Promise.all([
+  const mustProgress = mustMoveStory(state);
+  const [photoId, played] = await Promise.all([
     store.putImage({ bytes: photo.bytes, mime: photo.mime }),
-    getBrain(config).judge(state, photo.dataUrl),
+    getBrain(config).photo(state, photo.dataUrl, { mustProgress }),
   ]);
-  const { data, usage } = judged;
-  logUsage("judge", usage);
+  const { data, usage } = played;
+  logUsage("photo", usage);
 
-  const turn = newTurn(state, "complete", photoId, photo);
-  turn.verdict = data.verdict;
+  const turn = newTurn(state, "photo", photoId, photo);
+  const applied = applyPhotoTurn(state, data, turn.number);
+  turn.outcome = applied.outcome;
   turn.narration = data.narration.trim();
   turn.observations = data.observations;
   turn.usage = [usage];
-  turn.canonAdded = addCanon(state, data.canonAdd, turn.number);
-  state.bindings.push(...data.bindingsAdd.map((b) => ({ ...b, turn: turn.number })));
-
-  const lower = (s: string) => s.trim().toLowerCase();
-  const removing = new Set(data.inventoryRemove.map(lower));
-  state.inventory = state.inventory.filter((item) => !removing.has(lower(item)));
-  for (const item of data.inventoryAdd.map((s) => s.trim()).filter(Boolean)) {
-    if (!state.inventory.some((owned) => lower(owned) === lower(item))) state.inventory.push(item);
-  }
-
-  const passed = data.verdict !== "fail";
-  if (passed) {
-    state.questsCompleted += 1;
-    state.walk.questsDone += 1;
-  }
-  state.skeleton.beats = updateBeats(state.skeleton.beats, {
-    beatComplete: passed && data.beatComplete,
-    replanWith: data.planChange === "replan" ? data.revisedBeats : null,
-  });
-
-  const storyOver = passed && data.storyComplete;
-  const chapterOver = storyOver || (passed && (data.chapterComplete || data.quest === null));
-
-  if (chapterOver) {
-    state.quest = null;
-    state.walk = { ...state.walk, active: false };
-    if (data.recap) state.recap = data.recap.trim();
-    if (storyOver) state.status = "complete";
-  } else if (passed) {
-    state.quest = data.quest ? makeQuest(data.quest, state, turn.number) : null;
-  } else {
-    // A miss keeps the same quest; the game master may restate it with a better hint.
-    const current = state.quest;
-    state.quest = data.quest ? makeQuest(data.quest, state, turn.number, current) : { ...current, attempts: current.attempts + 1 };
-  }
-
-  turn.quest = state.quest;
-  // Only a newly issued quest is grounded in this photo; a restated one keeps its original card.
-  const issuedNow = state.quest !== null && state.quest.issuedTurn === turn.number;
-  turn.overlay = issuedNow ? await groundQuest(config, state.quest, photo) : null;
+  turn.canonAdded = applied.canonAdded;
+  // A kept quest stays with the photo it was issued from.
+  turn.quest = applied.questIssued ? state.quest : null;
+  turn.overlay = applied.questIssued ? await groundQuest(config, state.quest, photo) : null;
   return commit(state, turn);
 }
 
@@ -238,7 +178,7 @@ export async function resumeStory(state: StoryState, photo: Photo) {
   const config = getConfig();
   const store = getStore();
   state.chapter += 1;
-  state.walk = { active: true, startedAt: now(), questsDone: 0 };
+  state.walk = { active: true, startedAt: now(), questsDone: 0, photosSinceProgress: 0 };
 
   const [photoId, resumed] = await Promise.all([
     store.putImage({ bytes: photo.bytes, mime: photo.mime }),
@@ -255,28 +195,9 @@ export async function resumeStory(state: StoryState, photo: Photo) {
   state.bindings.push(...data.bindingsAdd.map((b) => ({ ...b, turn: turn.number })));
   if (data.planChange === "replan") state.skeleton.beats = replan(state.skeleton.beats, data.revisedBeats);
   state.skeleton.beats = activateNextBeat(state.skeleton.beats);
-  state.quest = makeQuest(data.quest, state, turn.number);
+  state.quest = makeQuest(data.quest, activeBeatId(state.skeleton.beats), turn.number);
   turn.quest = state.quest;
   turn.overlay = await groundQuest(config, state.quest, photo);
-  return commit(state, turn);
-}
-
-/** "Show the GM": a quick in-story reaction that never advances the plot. */
-export async function showGameMaster(state: StoryState, photo: Photo) {
-  if (!state.walk.active) throw new GameRuleError("Start a walk first.");
-  const config = getConfig();
-  const store = getStore();
-  const [photoId, reacted] = await Promise.all([
-    store.putImage({ bytes: photo.bytes, mime: photo.mime }),
-    getBrain(config).react(state, photo.dataUrl),
-  ]);
-  const { data, usage } = reacted;
-  logUsage("react", usage);
-
-  const turn = newTurn(state, "show", photoId, photo);
-  turn.narration = data.reaction.trim();
-  turn.usage = [usage];
-  if (data.relevance === "clue" && data.canonAdd) turn.canonAdded = addCanon(state, [data.canonAdd], turn.number);
   return commit(state, turn);
 }
 

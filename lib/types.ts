@@ -44,8 +44,10 @@ export type TargetOverlay = {
   outline: { path: string; transform: string } | null;
 };
 
+/** in_view: look closer at something in the photo. seek: find or do something nearby. */
 export type TargetMode = "in_view" | "seek";
 
+/** The game master's suggestion for the next photo. Always optional. */
 export type QuestView = {
   id: string;
   title: string;
@@ -53,11 +55,17 @@ export type QuestView = {
   hint: string;
   targetMode: TargetMode;
   targetDescription: string;
-  attempts: number;
 };
 
-export type TurnKind = "genesis" | "complete" | "show" | "resume" | "end";
-export type Verdict = "success" | "partial" | "fail";
+export type TurnKind = "genesis" | "photo" | "resume" | "end";
+
+/**
+ * What a photo did for the story:
+ * - follows_quest: it did what the quest asked
+ * - moves_story: it didn't, but the game master moved the story forward with it anyway
+ * - side_note: a clue or some atmosphere; the story waits for more
+ */
+export type Outcome = "follows_quest" | "moves_story" | "side_note";
 export type CardStatus = "none" | "pending" | "ready" | "failed";
 
 export type TurnView = {
@@ -69,9 +77,10 @@ export type TurnView = {
   photoSize: { width: number; height: number } | null;
   cardUrl: string | null;
   cardStatus: CardStatus;
-  verdict: Verdict | null;
+  /** Set on photo turns. */
+  outcome: Outcome | null;
   narration: string;
-  /** The quest this turn issued or restated, if any. */
+  /** The quest this turn issued, if any. */
   quest: QuestView | null;
   overlay: TargetOverlay | null;
   canonAdded: string[];

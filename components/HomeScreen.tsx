@@ -87,8 +87,8 @@ export function HomeScreen({ stories, mode, onStarted, onOpen }: Props) {
                 Your street is page one.
               </h1>
               <p className="mt-4 max-w-[34ch] text-concrete">
-                Take a photo of where you&apos;re standing. A game master writes a story around it and sends you on
-                quests through your own neighborhood.
+                Take a photo of where you&apos;re standing. A game master writes a story around it, and every photo
+                you take on your walk becomes part of it.
               </p>
             </>
           )}
