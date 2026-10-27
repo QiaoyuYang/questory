@@ -243,7 +243,9 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
             <div className="py-1">
               <p className="font-sign text-lg font-bold text-lane">Chapter {story.chapter} is done</p>
               <WalkSummary stats={walkStats(currentChapter(turns))} />
-              <p className="text-sm text-concrete">Start the next one here, or on your next walk.</p>
+              <p className="text-sm text-concrete">
+                You can start chapter {story.chapter + 1} now or on your next walk.
+              </p>
             </div>
           )}
           {story.status === "complete" && (
@@ -300,7 +302,8 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
       />
       <Sheet open={panel === "end"} onClose={() => setPanel(null)} title="End this walk?" done={false}>
         <p className="text-lg text-pretty">
-          {GAME_MASTER} will close this chapter. The next one starts with your next photo, wherever you are.
+          {GAME_MASTER} will end chapter {story.chapter} now, on a cliffhanger, even if you&apos;re partway through it.
+          Start chapter {story.chapter + 1} whenever you&apos;re ready, from wherever you are.
         </p>
         <div className="mt-6 flex flex-col gap-2.5">
           <button

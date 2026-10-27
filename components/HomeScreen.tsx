@@ -53,7 +53,7 @@ export function HomeScreen({ stories, mode, onStarted, onOpen }: Props) {
 
       {pending ? (
         <div className="mt-8">
-          <Working photo={pending} message={`${GAME_MASTER} is reading your street…`} />
+          <Working photo={pending} message={`${GAME_MASTER} is starting your story…`} />
         </div>
       ) : (
         <>

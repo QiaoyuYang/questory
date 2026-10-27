@@ -41,7 +41,7 @@ export function StoryCard({ turn, onRepaint, onZoom }: Props) {
           <span className="pointer-events-auto inline-flex items-center gap-2 rounded-full bg-black/65 px-3.5 py-2 text-[0.9375rem] font-semibold backdrop-blur">
             {failed ? (
               <>
-                The card didn&apos;t paint.
+                Your card didn&apos;t come out.
                 <button type="button" onClick={onRepaint} className="text-lane underline underline-offset-4">
                   Try again
                 </button>
@@ -49,14 +49,14 @@ export function StoryCard({ turn, onRepaint, onZoom }: Props) {
             ) : (
               <>
                 <span className="lane-line lane-line-moving h-[3px] w-8" aria-hidden="true" />
-                Painting your card…
+                Drawing your card…
               </>
             )}
           </span>
         </div>
       )}
       <p className="sr-only" aria-live="polite">
-        {ready ? `Card earned: ${turn.card.title}` : failed ? "The card didn't paint." : "Painting your card."}
+        {ready ? `Card earned: ${turn.card.title}` : failed ? "Your card didn't come out." : "Drawing your card."}
       </p>
     </div>
   );
