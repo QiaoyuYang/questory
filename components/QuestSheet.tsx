@@ -1,19 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import type { QuestView } from "@/lib/types";
+import { GAME_MASTER, type PhotoUpload, type QuestView } from "@/lib/types";
+import { CaptureButton } from "./CaptureButton";
+import { CameraIcon, PhotoIcon } from "./icons";
 import { Sheet } from "./Sheet";
 
 type Props = {
   open: boolean;
   onClose: () => void;
   quest: QuestView | null;
-  /** Shows the outlined photo, for a closer-look quest. */
-  onLook: (() => void) | null;
+  onPhoto: (photo: PhotoUpload) => void;
+  onError: (message: string) => void;
 };
 
-/** The game master's suggestion for the next photo, with the hint held back until asked for. */
-export function QuestSheet({ open, onClose, quest, onLook }: Props) {
+/** The game master's lead for the next photo, with the camera right under it. */
+export function QuestSheet({ open, onClose, quest, onPhoto, onError }: Props) {
   const [hint, setHint] = useState(false);
 
   return (
@@ -26,30 +28,34 @@ export function QuestSheet({ open, onClose, quest, onLook }: Props) {
             {quest.targetMode === "in_view" ? "In your photo: " : "Somewhere nearby: "}
             {quest.targetDescription}
           </p>
-          <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
-            {onLook && (
-              <button type="button" onClick={onLook} className="min-h-11 font-semibold text-paint underline underline-offset-4">
-                Show me where
-              </button>
-            )}
-            {quest.hint && !hint && (
+          {quest.hint &&
+            (hint ? (
+              <p className="mt-4 font-story text-lg text-pretty italic">{quest.hint}</p>
+            ) : (
               <button
                 type="button"
                 onClick={() => setHint(true)}
-                className="min-h-11 font-semibold text-paint underline underline-offset-4"
+                className="mt-3 min-h-11 font-semibold text-paint underline underline-offset-4"
               >
                 Need a hint?
               </button>
-            )}
-          </div>
-          {hint && <p className="mt-2 font-story text-lg text-pretty italic">{quest.hint}</p>}
-          <p className="mt-6 text-sm text-concrete">
-            Quests are optional. Photograph anything that catches your eye, and the story will use it.
-          </p>
+            ))}
         </>
       ) : (
-        <p className="text-lg text-pretty">Photograph anything that catches your eye, and the story will use it.</p>
+        <p className="text-lg text-pretty">
+          Snap whatever catches your eye. {GAME_MASTER} will work it into the story.
+        </p>
       )}
+      <div className="mt-6 flex items-center gap-2">
+        <CaptureButton onPhoto={onPhoto} onError={onError} className="flex-1">
+          <CameraIcon />
+          Take a photo
+        </CaptureButton>
+        <CaptureButton library variant="tool" onPhoto={onPhoto} onError={onError}>
+          <PhotoIcon />
+          Upload
+        </CaptureButton>
+      </div>
     </Sheet>
   );
 }

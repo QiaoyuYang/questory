@@ -3,6 +3,10 @@
  * game master's hidden plan: the story skeleton stays on the server.
  */
 
+/** What players call the game master. */
+export const GAME_MASTER = "Wren";
+
+/** The picker shows each name; the blurb tells the game master what the genre is about. */
 export const GENRES = [
   {
     id: "mystery",
@@ -21,7 +25,7 @@ export const GENRES = [
   },
   {
     id: "everyday",
-    name: "Everyday magic",
+    name: "Cozy",
     blurb: "Small wonders and kind strangers. Low stakes, warm heart.",
   },
 ] as const;

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, type TurnResult } from "@/lib/client/api";
-import type { PhotoUpload, StoryView, TurnView } from "@/lib/types";
+import { GAME_MASTER, type PhotoUpload, type StoryView, type TurnView } from "@/lib/types";
 import { Alert } from "./Alert";
 import { BottomBar } from "./BottomBar";
 import { BUTTON } from "./buttons";
@@ -121,10 +121,10 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
 
   const photoError = (message: string) => setError({ message, retry: null });
   const takePhoto = (photo: PhotoUpload) =>
-    run("The game master is taking a look…", photo, () => api.takeTurn(storyId, "photo", photo));
+    run(`${GAME_MASTER} is taking a look…`, photo, () => api.takeTurn(storyId, "photo", photo));
   const resume = (photo: PhotoUpload) =>
-    run("Picking the story back up…", photo, () => api.takeTurn(storyId, "resume", photo));
-  const end = () => run("Closing the chapter…", null, () => api.endWalk(storyId));
+    run(`${GAME_MASTER} is picking the story back up…`, photo, () => api.takeTurn(storyId, "resume", photo));
+  const end = () => run(`${GAME_MASTER} is closing the chapter…`, null, () => api.endWalk(storyId));
 
   if (loadError) {
     return (
@@ -149,20 +149,12 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
   const walkLive = story.walkActive && story.status === "active";
   const between = !story.walkActive && story.status === "active";
   const quest = walkLive ? story.quest : null;
-  // Only a closer look needs its photo: the outline shows where to look.
-  const lookTurn = quest?.targetMode === "in_view" ? questTurn : null;
+  // Only a closer look needs its photo, and only when SAM outlined the target: without
+  // the outline it is the same photo again.
+  const lookTurn = quest?.targetMode === "in_view" && questTurn?.overlay?.outline ? questTurn : null;
   const views = scene ? sceneViews(scene, lookTurn) : [];
   const view = picked && picked.turnId === scene?.id && views.includes(picked.view) ? picked.view : views[0];
   const outcome = latest ? outcomeLabel(latest) : null;
-
-  const showWhere =
-    scene && views.includes("look")
-      ? () => {
-          setPicked({ turnId: scene.id, view: "look" });
-          setPanel(null);
-          scrollToTop();
-        }
-      : null;
 
   return (
     <main className="mx-auto w-full max-w-[30rem] px-4 pb-56">
@@ -212,7 +204,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
               />
             )}
             {latest && (
-              <section aria-label="The game master" className="mt-5">
+              <section aria-label={GAME_MASTER} className="mt-5">
                 {outcome && (
                   <p className="font-sign text-lg font-bold text-walk">
                     {outcome}
@@ -311,11 +303,12 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
         open={panel === "quest"}
         onClose={() => setPanel(null)}
         quest={quest}
-        onLook={showWhere}
+        onPhoto={takePhoto}
+        onError={photoError}
       />
       <Sheet open={panel === "end"} onClose={() => setPanel(null)} title="End this walk?" done={false}>
         <p className="text-lg text-pretty">
-          The game master will close the chapter. Next time you&apos;re out, the story picks up wherever you are.
+          {GAME_MASTER} will close the chapter. Next time you&apos;re out, the story picks up wherever you are.
         </p>
         <div className="mt-6 flex flex-col gap-2.5">
           <button
