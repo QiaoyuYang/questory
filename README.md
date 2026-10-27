@@ -34,7 +34,7 @@ npm run dev
 
 Open http://localhost:3000. Without `MODEL_API_KEY` the app runs a scripted game master (it can't see photos), so you can work on the UI without spending credits. `GET /api/health` shows which mode and models are active.
 
-To play on your phone during development, run `npm run dev -- -H 0.0.0.0` and open `http://<your-computer's-ip>:3000` on the same Wi-Fi.
+To play on your phone during development, run `npm run dev` and open the Network address it prints, such as `http://192.168.1.65:3000`, on a phone on the same Wi-Fi. Anyone on that network can reach it while it runs, so stop it when you're done if a real API key is set.
 
 ## Storage
 
