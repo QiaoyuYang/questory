@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { api, type TurnResult } from "@/lib/client/api";
 import { GENRES, type GenreId, type PhotoUpload, type StorySummary } from "@/lib/types";
+import { Alert } from "./Alert";
+import { BottomBar } from "./BottomBar";
 import { CaptureButton } from "./CaptureButton";
+import { CameraIcon, ChevronRightIcon, PhotoIcon } from "./icons";
 import { Wordmark } from "./Wordmark";
 import { Working } from "./Working";
 
@@ -19,14 +22,14 @@ function genreName(id: string) {
 }
 
 function describe(story: StorySummary) {
-  const quests = story.questsCompleted === 1 ? "1 quest done" : `${story.questsCompleted} quests done`;
-  if (story.status === "complete") return `${genreName(story.genre)}, finished, ${quests}`;
-  return `${genreName(story.genre)}, chapter ${story.chapter}, ${quests}`;
+  const quests = story.questsCompleted === 1 ? "1 quest" : `${story.questsCompleted} quests`;
+  if (story.status === "complete") return `${genreName(story.genre)} · finished · ${quests}`;
+  return `${genreName(story.genre)} · chapter ${story.chapter} · ${quests}`;
 }
 
 export function HomeScreen({ stories, mode, onStarted, onOpen }: Props) {
   const [genre, setGenre] = useState<GenreId>("mystery");
-  const [pending, setPending] = useState<string | null>(null);
+  const [pending, setPending] = useState<PhotoUpload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [lastPhoto, setLastPhoto] = useState<PhotoUpload | null>(null);
   const returning = stories !== null && stories.length > 0;
@@ -34,7 +37,7 @@ export function HomeScreen({ stories, mode, onStarted, onOpen }: Props) {
   async function start(photo: PhotoUpload) {
     setError(null);
     setLastPhoto(photo);
-    setPending(photo.photo);
+    setPending(photo);
     try {
       onStarted(await api.startStory(genre, photo));
     } catch (err) {
@@ -45,65 +48,64 @@ export function HomeScreen({ stories, mode, onStarted, onOpen }: Props) {
   }
 
   return (
-    <main className="mx-auto w-full max-w-[30rem] px-4 pt-[max(2rem,env(safe-area-inset-top))] pb-16">
+    <main className="mx-auto w-full max-w-[30rem] px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-44">
       <Wordmark />
 
       {pending ? (
-        <div className="mt-10">
+        <div className="mt-8">
           <Working photo={pending} message="Reading your street and writing a story…" />
         </div>
       ) : (
         <>
           {returning ? (
-            <section className="mt-10" aria-labelledby="continue-title">
-              <h1 id="continue-title" className="font-sign text-2xl font-bold">
-                Continue a story
+            <section className="mt-8" aria-labelledby="stories-title">
+              <h1 id="stories-title" className="font-sign text-2xl font-bold">
+                Your stories
               </h1>
-              <ul className="mt-3 divide-y divide-seam border-y border-seam">
+              <ul className="mt-3 overflow-hidden rounded-[14px] bg-kerb">
                 {stories.map((story) => (
-                  <li key={story.id}>
+                  <li key={story.id} className="border-b border-seam/70 last:border-b-0">
                     <button
                       type="button"
                       onClick={() => onOpen(story.id)}
-                      className="flex w-full items-center justify-between gap-4 py-4 text-left hover:text-lane"
+                      className="flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left hover:bg-seam/40 active:bg-seam/60"
                     >
-                      <span>
-                        <span className="block font-sign text-[1.375rem] leading-tight font-bold">{story.title}</span>
-                        <span className="mt-0.5 block text-[0.9375rem] text-concrete">{describe(story)}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-sign text-xl leading-tight font-bold">{story.title}</span>
+                        <span className="mt-0.5 block text-sm text-concrete">{describe(story)}</span>
                       </span>
                       {story.walkActive && (
-                        <span className="shrink-0 rounded-full bg-walk/15 px-2.5 py-1 text-sm font-medium text-walk">
-                          Walk in progress
+                        <span className="shrink-0 rounded-full bg-walk/15 px-2 py-0.5 text-xs font-semibold text-walk">
+                          Walking
                         </span>
                       )}
+                      <ChevronRightIcon className="shrink-0 text-concrete" />
                     </button>
                   </li>
                 ))}
               </ul>
             </section>
           ) : (
-            <>
-              <h1 className="mt-10 font-story text-[2.125rem] leading-[1.15] font-medium text-balance">
+            <section className="mt-8">
+              <h1 className="font-story text-[2rem] leading-[1.15] font-medium text-balance">
                 Your street is page one.
               </h1>
-              <p className="mt-4 max-w-[34ch] text-concrete">
+              <p className="mt-3 max-w-[34ch] text-concrete">
                 Take a photo of where you&apos;re standing. A game master writes a story around it, and every photo
                 you take on your walk becomes part of it.
               </p>
-            </>
+            </section>
           )}
 
-          <fieldset className={returning ? "mt-12" : "mt-9"}>
-            <legend className={`font-sign font-semibold ${returning ? "text-2xl font-bold" : "text-xl"}`}>
-              {returning ? "Start a new story" : "What kind of story?"}
-            </legend>
-            <div className="mt-3 grid grid-cols-2 gap-2.5">
+          <fieldset className="mt-8">
+            <legend className="font-sign text-xl font-bold">{returning ? "New story" : "What kind of story?"}</legend>
+            <div className="mt-3 grid grid-cols-2 gap-2">
               {GENRES.map((option) => {
                 const selected = option.id === genre;
                 return (
                   <label
                     key={option.id}
-                    className={`relative flex cursor-pointer flex-col rounded-[10px] border-2 p-3.5 transition-colors has-[:focus-visible]:outline has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-3 has-[:focus-visible]:outline-paint ${
+                    className={`relative flex cursor-pointer flex-col rounded-[12px] border-2 px-3 py-2.5 transition-colors has-[:focus-visible]:outline has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-3 has-[:focus-visible]:outline-paint ${
                       selected ? "border-lane bg-kerb" : "border-seam hover:border-concrete"
                     }`}
                   >
@@ -115,42 +117,45 @@ export function HomeScreen({ stories, mode, onStarted, onOpen }: Props) {
                       onChange={() => setGenre(option.id)}
                       className="sr-only"
                     />
-                    <span className={`font-sign text-[1.375rem] leading-tight font-bold ${selected ? "text-lane" : ""}`}>
+                    <span className={`font-sign text-xl leading-tight font-bold ${selected ? "text-lane" : ""}`}>
                       {option.name}
                     </span>
-                    <span className="mt-1 text-[0.9375rem] leading-snug text-concrete">{option.blurb}</span>
+                    <span className="mt-0.5 text-sm leading-snug text-concrete">{option.blurb}</span>
                   </label>
                 );
               })}
             </div>
           </fieldset>
 
-          {error && (
-            <div role="alert" className="mt-6 rounded-[10px] border-l-4 border-hand bg-kerb p-4">
-              <p>{error}</p>
-              {lastPhoto && (
-                <button
-                  type="button"
-                  onClick={() => start(lastPhoto)}
-                  className="mt-2 font-semibold text-paint underline underline-offset-4"
-                >
-                  Try again with the same photo
-                </button>
-              )}
-            </div>
-          )}
-
-          <CaptureButton onPhoto={start} onError={setError} className="mt-7 w-full">
-            {returning ? "Take a photo to begin" : "Take your first photo"}
-          </CaptureButton>
-
           {mode === "mock" && (
-            <p className="mt-4 text-sm text-concrete">
+            <p className="mt-5 text-sm text-concrete">
               Demo mode: no Meta Model API key is set, so a scripted game master is running. It can&apos;t see your
               photos.
             </p>
           )}
         </>
+      )}
+
+      {!pending && (
+        <BottomBar>
+          {error && (
+            <Alert
+              message={error}
+              retry={lastPhoto ? () => start(lastPhoto) : null}
+              retryLabel="Try again with the same photo"
+            />
+          )}
+          <div className="flex items-center gap-2">
+            <CaptureButton onPhoto={start} onError={setError} className="flex-1">
+              <CameraIcon />
+              {returning ? "Take a photo to begin" : "Take your first photo"}
+            </CaptureButton>
+            <CaptureButton library variant="tool" onPhoto={start} onError={setError}>
+              <PhotoIcon />
+              Upload
+            </CaptureButton>
+          </div>
+        </BottomBar>
       )}
     </main>
   );

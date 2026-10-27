@@ -6,7 +6,7 @@ Built for the Meta Global AI Developer Hackathon on the Meta Model API.
 
 ## How a turn works
 
-1. **You take a photo of anything.** It can be what the quest asked for or whatever catches your eye. The browser shrinks it to 1280px and uploads it.
+1. **You take a photo of anything**, or upload one. It can be what the quest asked for or whatever catches your eye. The browser shrinks it to 1280px and uploads it.
 2. **Muse Wonder runs the game.** It reads the photo and the story so far, decides what the photo means, narrates, and leaves the next quest, all as structured JSON. A photo can follow the quest, move the story somewhere new, or add a clue on the side. No photo fails.
 3. **SAM 3.1 grounds the target.** When the next quest asks you to take a closer look at something in your photo ("the blue door"), SAM finds it and the app traces its outline.
 4. **Muse Image paints a story card.** When a photo moves the story, it becomes a card with a title and caption drawn on. Cards are keepsakes, so they never cover the photo you navigate by.
@@ -35,7 +35,7 @@ npm run dev
 
 Open http://localhost:3000. Without `MODEL_API_KEY` the app runs a scripted game master (it can't see photos), so you can work on the UI without spending credits. `GET /api/health` shows which mode and models are active.
 
-To play on your phone during development, run `npm run dev` and open the Network address it prints, such as `http://192.168.1.65:3000`, on a phone on the same Wi-Fi. Anyone on that network can reach it while it runs, so stop it when you're done if a real API key is set.
+To play on your phone during development, run `npm run dev` and open the Network address it prints, such as `http://192.168.1.65:3000`, on a phone on the same Wi-Fi. Anyone on that network can reach it while it runs, so stop it when you're done if a real API key is set. On an iPhone, Share and then Add to Home Screen gives it an icon, and it opens full screen like an app.
 
 ## Storage
 

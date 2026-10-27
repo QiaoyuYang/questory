@@ -3,25 +3,29 @@
 import { useRef, type ReactNode } from "react";
 import { preparePhoto } from "@/lib/client/photo";
 import type { PhotoUpload } from "@/lib/types";
+import { BUTTON } from "./buttons";
 
 type Props = {
   onPhoto: (photo: PhotoUpload) => void;
   onError: (message: string) => void;
+  /** Pick a photo already taken instead of opening the camera. */
+  library?: boolean;
   disabled?: boolean;
-  variant?: "primary" | "secondary";
+  variant?: keyof typeof BUTTON;
   className?: string;
   children: ReactNode;
 };
 
-const VARIANTS = {
-  primary:
-    "bg-lane text-asphalt hover:bg-[#ffc933] active:translate-y-px disabled:bg-seam disabled:text-concrete",
-  secondary:
-    "border-2 border-seam text-paint hover:border-concrete active:translate-y-px disabled:text-concrete",
-};
-
-/** A button that opens the rear camera and hands back a downscaled photo. */
-export function CaptureButton({ onPhoto, onError, disabled, variant = "primary", className = "", children }: Props) {
+/** A button that opens the rear camera, or the photo library, and hands back a downscaled photo. */
+export function CaptureButton({
+  onPhoto,
+  onError,
+  library = false,
+  disabled,
+  variant = "primary",
+  className = "",
+  children,
+}: Props) {
   const input = useRef<HTMLInputElement>(null);
 
   return (
@@ -30,7 +34,7 @@ export function CaptureButton({ onPhoto, onError, disabled, variant = "primary",
         type="button"
         disabled={disabled}
         onClick={() => input.current?.click()}
-        className={`inline-flex min-h-14 items-center justify-center rounded-[10px] px-5 text-lg font-semibold transition-colors ${VARIANTS[variant]} ${className}`}
+        className={`${BUTTON[variant]} ${className}`}
       >
         {children}
       </button>
@@ -38,7 +42,7 @@ export function CaptureButton({ onPhoto, onError, disabled, variant = "primary",
         ref={input}
         type="file"
         accept="image/*"
-        capture="environment"
+        capture={library ? undefined : "environment"}
         className="hidden"
         tabIndex={-1}
         aria-hidden="true"

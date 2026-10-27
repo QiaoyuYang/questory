@@ -12,6 +12,8 @@ const PRIVATE_NETWORK_HOSTS = [
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: PRIVATE_NETWORK_HOSTS,
+  // Every corner of the phone layout holds a control. Errors still show without the badge.
+  devIndicators: false,
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
