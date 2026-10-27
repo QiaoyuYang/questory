@@ -1,5 +1,5 @@
 import "server-only";
-import { AppwriteException, Client, ID, Query, Storage, TablesDB } from "node-appwrite";
+import { AppwriteException, Client, Query, Storage, TablesDB } from "node-appwrite";
 import { InputFile } from "node-appwrite/file";
 import type { Config } from "@/lib/config";
 import { StoryStateSchema, TurnRecordSchema } from "@/lib/gm/state";
@@ -100,7 +100,10 @@ export function appwriteStore(config: Config["appwrite"]): Store {
     },
 
     async putImage(image) {
-      const id = ID.unique();
+      // Knowing a media id is the only access check on /api/media, so ids must be
+      // unguessable. Appwrite's ID.unique() is a timestamp plus seven Math.random()
+      // digits; a UUID fits Appwrite's 36-character id limit.
+      const id = crypto.randomUUID();
       const name = `${id}.${EXT[image.mime] ?? "bin"}`;
       await storage.createFile({
         bucketId: config.bucketId,
