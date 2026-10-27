@@ -5,8 +5,9 @@
  *   npm run setup:appwrite
  *
  * Reads APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID, APPWRITE_API_KEY (and optionally
- * APPWRITE_DATABASE_ID, APPWRITE_BUCKET_ID) from .env.local. The API key needs the
- * databases.write, tables.write, buckets.write (and matching read) scopes.
+ * APPWRITE_DATABASE_ID, APPWRITE_BUCKET_ID) from .env.local. The API key needs every
+ * Database and Storage scope: this script creates the database, tables, columns,
+ * indexes and bucket, and the app reads and writes rows and files.
  */
 import { AppwriteException, Client, Storage, TablesDB, TablesDBIndexType } from "node-appwrite";
 
