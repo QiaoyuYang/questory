@@ -14,12 +14,27 @@ import type { QuestState, StoryState, TurnRecord } from "./state";
 
 export class GameRuleError extends Error {}
 
+/** Today's limit on paid model calls is used up. */
+export class DailyLimitError extends Error {}
+
 const now = () => new Date().toISOString();
 
 function logUsage(label: string, usage: Usage) {
   console.info(
     `[questory] ${label} ${usage.model}: in=${usage.inputTokens} (cached ${usage.cachedTokens}) out=${usage.outputTokens} (reasoning ${usage.reasoningTokens})`,
   );
+}
+
+/**
+ * Count a paid model call against the daily limit before making it. Mock turns count
+ * too, so the limit can be tried without spending credit.
+ */
+async function spendCall(config: Config) {
+  if (config.dailyCallLimit === 0) return;
+  const day = new Date().toISOString().slice(0, 10);
+  if (!(await getStore().countCall(day, config.dailyCallLimit))) {
+    throw new DailyLimitError("The game master has hit today's limit. It resets at midnight UTC.");
+  }
 }
 
 function mockOverlay(photo: Photo, phrase: string): TargetOverlay {
@@ -94,6 +109,7 @@ async function commit(state: StoryState, turn: TurnRecord) {
 export async function startStory(playerId: string, genre: string, photo: Photo) {
   const config = getConfig();
   const store = getStore();
+  await spendCall(config);
   const [photoId, genesis] = await Promise.all([
     store.putImage({ bytes: photo.bytes, mime: photo.mime }),
     getBrain(config).genesis(genre, photo.dataUrl),
@@ -151,6 +167,7 @@ export async function takePhoto(state: StoryState, photo: Photo) {
   if (!state.walk.active) throw new GameRuleError("Start a walk first.");
   const config = getConfig();
   const store = getStore();
+  await spendCall(config);
   const mustProgress = mustMoveStory(state);
   const [photoId, played] = await Promise.all([
     store.putImage({ bytes: photo.bytes, mime: photo.mime }),
@@ -179,6 +196,7 @@ export async function resumeStory(state: StoryState, photo: Photo) {
   if (state.walk.active) throw new GameRuleError("A walk is already in progress.");
   const config = getConfig();
   const store = getStore();
+  await spendCall(config);
   state.chapter += 1;
   state.walk = { active: true, startedAt: now(), questsDone: 0, photosSinceProgress: 0 };
 
@@ -207,6 +225,7 @@ export async function resumeStory(state: StoryState, photo: Photo) {
 export async function endWalk(state: StoryState) {
   if (!state.walk.active) throw new GameRuleError("There's no walk in progress.");
   const config = getConfig();
+  await spendCall(config);
   const { data, usage } = await getBrain(config).epilogue(state);
   logUsage("epilogue", usage);
 
@@ -242,6 +261,7 @@ export async function paintCard(state: StoryState, turn: TurnRecord): Promise<Tu
 
   const photo = await store.getImage(turn.photoId);
   if (!photo) throw new GameRuleError("The photo for this turn is missing.");
+  await spendCall(config);
 
   turn.cardStatus = "pending";
   await store.saveTurn(turn);

@@ -1,6 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
-import { GameRuleError } from "@/lib/gm/engine";
+import { DailyLimitError, GameRuleError } from "@/lib/gm/engine";
 import type { StoryState } from "@/lib/gm/state";
 import { ModelApiError } from "@/lib/meta/http";
 import { BadRequestError } from "@/lib/photo";
@@ -54,6 +54,7 @@ export async function respond(handler: () => Promise<unknown>): Promise<Response
     if (error instanceof BadRequestError) return Response.json({ error: error.message }, { status: 400 });
     if (error instanceof NotFoundError) return Response.json({ error: error.message }, { status: 404 });
     if (error instanceof GameRuleError) return Response.json({ error: error.message }, { status: 409 });
+    if (error instanceof DailyLimitError) return Response.json({ error: error.message }, { status: 429 });
     if (error instanceof ModelApiError) {
       console.error("[questory] Model API error:", error.status, error.body.slice(0, 1000));
       const busy = error.status === 429;
