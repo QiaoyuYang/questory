@@ -56,7 +56,7 @@ All settings are environment variables; `.env.example` documents each one. The o
 
 | Variable | Default | What it does |
 | --- | --- | --- |
-| `GM_REASONING_EFFORT` | `low` | Muse Wonder's effort. Higher is slower and costs more |
+| `GM_REASONING_EFFORT` | `minimal` | Muse Wonder's effort. Higher is slower and costs more |
 | `QUEST_CARDS` | `on` | Turn off to skip Muse Image (the outline still shows the target) |
 | `SAM_GROUNDING` | `on` | Turn off to skip target outlines |
 | `FAST_PROVIDER` | `meta` | `openai-compatible` to send "Show the GM" to a self-hosted Muse Glimmer |
