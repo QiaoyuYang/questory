@@ -91,7 +91,8 @@ export function liveBrain(config: Config): Brain {
         content: withPhoto(reactionTask(state), photo),
         schema: ReactionSchema,
         schemaName: "questory_reaction",
-        maxOutputTokens: 1500,
+        // Reasoning counts toward this cap, so leave it plenty of room.
+        maxOutputTokens: 4000,
       };
       if (config.fast.provider === "openai-compatible") {
         return chatJson({
