@@ -30,8 +30,6 @@ export const QuestStateSchema = z.object({
   targetPhrase: z.string(),
   targetDescription: z.string(),
   successCriteria: z.string(),
-  cardCaption: z.string(),
-  cardFlourish: z.string(),
   beatId: z.string().nullable(),
   issuedTurn: z.number(),
 });
@@ -90,6 +88,8 @@ export const TurnRecordSchema = z.object({
   createdAt: z.string(),
   photoId: z.string().nullable(),
   photoSize: z.object({ width: z.number(), height: z.number() }).nullable(),
+  /** Set when the photo moved the story: what Muse Image paints onto it. */
+  card: z.object({ title: z.string(), caption: z.string(), flourish: z.string() }).nullable().default(null),
   cardId: z.string().nullable(),
   cardStatus: z.enum(["none", "pending", "ready", "failed"]),
   outcome: z.enum(["follows_quest", "moves_story", "side_note"]).nullable().default(null),
@@ -185,6 +185,7 @@ export function turnView(turn: TurnRecord): TurnView {
     createdAt: turn.createdAt,
     photoUrl: mediaUrl(turn.photoId),
     photoSize: turn.photoSize,
+    card: turn.card ? { title: turn.card.title, caption: turn.card.caption } : null,
     cardUrl: turn.cardStatus === "ready" ? mediaUrl(turn.cardId) : null,
     cardStatus: turn.cardStatus,
     outcome: viewOutcome(turn),

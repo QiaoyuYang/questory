@@ -19,7 +19,7 @@ const EXT: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "
 
 /**
  * Appwrite storage: each story is a row holding its state as JSON; each turn is a
- * row keyed by story; photos and quest cards live in a private bucket and are
+ * row keyed by story; photos and story cards live in a private bucket and are
  * served through /api/media.
  */
 export function appwriteStore(config: Config["appwrite"]): Store {

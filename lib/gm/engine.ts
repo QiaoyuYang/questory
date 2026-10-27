@@ -8,7 +8,7 @@ import { getStore } from "@/lib/store";
 import type { TargetOverlay } from "@/lib/types";
 import { activateNextBeat, activeBeatId, makeBeats, replan } from "./beats";
 import { getBrain } from "./brain";
-import { questCardPrompt } from "./card";
+import { storyCardPrompt } from "./card";
 import { addCanon, applyPhotoTurn, makeQuest, mustMoveStory } from "./rules";
 import type { QuestState, StoryState, TurnRecord } from "./state";
 
@@ -68,6 +68,7 @@ function newTurn(state: StoryState, kind: TurnRecord["kind"], photoId: string | 
     createdAt: now(),
     photoId,
     photoSize: photo ? { width: photo.width, height: photo.height } : null,
+    card: null,
     cardId: null,
     cardStatus: "none",
     outcome: null,
@@ -161,6 +162,7 @@ export async function takePhoto(state: StoryState, photo: Photo) {
   const turn = newTurn(state, "photo", photoId, photo);
   const applied = applyPhotoTurn(state, data, turn.number);
   turn.outcome = applied.outcome;
+  turn.card = applied.card;
   turn.narration = data.narration.trim();
   turn.observations = data.observations;
   turn.usage = [usage];
@@ -217,10 +219,13 @@ export async function endWalk(state: StoryState) {
   return commit(state, turn);
 }
 
-/** Paint the quest card for a turn with Muse Image. Safe to call more than once. */
-export async function paintQuestCard(state: StoryState, turn: TurnRecord): Promise<TurnRecord> {
-  if (!turn.quest || !turn.photoId || !turn.photoSize) {
-    throw new GameRuleError("This turn has no quest to paint.");
+/**
+ * Paint the story card for a photo that moved the story, with Muse Image. Safe to call
+ * more than once.
+ */
+export async function paintCard(state: StoryState, turn: TurnRecord): Promise<TurnRecord> {
+  if (!turn.card || !turn.photoId || !turn.photoSize) {
+    throw new GameRuleError("This turn has no card to paint.");
   }
   if (turn.cardStatus === "ready") return turn;
 
@@ -228,7 +233,7 @@ export async function paintQuestCard(state: StoryState, turn: TurnRecord): Promi
   const store = getStore();
 
   if (config.mock || !config.features.questCards) {
-    // Without Muse Image the card is the photo itself; the outline overlay still shows the target.
+    // Without Muse Image the card is the photo itself.
     turn.cardId = turn.photoId;
     turn.cardStatus = "ready";
     await store.saveTurn(turn);
@@ -241,7 +246,7 @@ export async function paintQuestCard(state: StoryState, turn: TurnRecord): Promi
   turn.cardStatus = "pending";
   await store.saveTurn(turn);
   try {
-    const card = await editPhoto(photo, questCardPrompt(state.genre, turn.quest), turn.photoSize, {
+    const card = await editPhoto(photo, storyCardPrompt(state.genre, turn.card), turn.photoSize, {
       baseURL: config.meta.baseURL,
       apiKey: config.meta.apiKey,
       model: config.meta.imageModel,
@@ -250,7 +255,7 @@ export async function paintQuestCard(state: StoryState, turn: TurnRecord): Promi
     turn.cardId = await store.putImage(card);
     turn.cardStatus = "ready";
   } catch (error) {
-    console.warn("[questory] Muse Image could not paint the quest card:", error);
+    console.warn("[questory] Muse Image could not paint the card:", error);
     turn.cardStatus = "failed";
   }
   await store.saveTurn(turn);

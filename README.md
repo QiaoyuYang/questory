@@ -9,7 +9,7 @@ Built for the Meta Global AI Developer Hackathon on the Meta Model API.
 1. **You take a photo of anything.** It can be what the quest asked for or whatever catches your eye. The browser shrinks it to 1280px and uploads it.
 2. **Muse Wonder runs the game.** It reads the photo and the story so far, decides what the photo means, narrates, and leaves the next quest, all as structured JSON. A photo can follow the quest, move the story somewhere new, or add a clue on the side. No photo fails.
 3. **SAM 3.1 grounds the target.** When the next quest asks you to take a closer look at something in your photo ("the blue door"), SAM finds it and the app traces its outline.
-4. **Muse Image paints the quest card.** In the background, your photo becomes a quest card with the title and a marker drawn on.
+4. **Muse Image paints a story card.** When a photo moves the story, it becomes a card with a title and caption drawn on. Cards are keepsakes, so they never cover the photo you navigate by.
 
 Quests are suggestions. If two photos in a row only add side notes, the game master moves the story forward with the next one, whatever it shows.
 
@@ -63,12 +63,12 @@ All settings are environment variables; `.env.example` documents each one. The o
 
 ## Cost
 
-A photo turn sends about 3,000 to 4,000 input tokens (the photo is about 1,400 of them) and gets 1,000 to 2,000 back, which comes to roughly 3 to 5 cents on Muse Wonder. A quest card adds 1 cent. Every model call logs its token use to the server console.
+A photo turn sends about 3,000 to 4,000 input tokens (the photo is about 1,400 of them) and gets 1,000 to 2,000 back, which comes to roughly 3 to 5 cents on Muse Wonder. A story card adds 1 cent. Every model call logs its token use to the server console.
 
 ## Project layout
 
 ```
-app/api/            Route handlers: stories, turns, quest cards, media, health
+app/api/            Route handlers: stories, turns, story cards, media, health
 components/         The mobile UI
 lib/gm/             The game master: state schema, prompts, output schemas, engine, scripted mock
 lib/meta/           Meta Model API clients: structured JSON, SAM 3.1 grounding, Muse Image edits

@@ -5,7 +5,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, type TurnResult } from "@/lib/client/api";
 import type { Outcome, PhotoUpload, QuestView, StoryView, TurnView } from "@/lib/types";
 import { CaptureButton } from "./CaptureButton";
-import { QuestCard } from "./QuestCard";
+import { QuestPhoto } from "./QuestPhoto";
+import { StoryCard } from "./StoryCard";
 import { Working } from "./Working";
 
 type Loaded = { story: StoryView; turns: TurnView[] };
@@ -177,11 +178,12 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
   const story = data?.story ?? null;
   const turns = useMemo(() => data?.turns ?? [], [data]);
 
-  // The turn that issued the current quest: its photo is the quest card.
+  // The turn that issued the current quest: a closer look is outlined on its photo.
   const questTurn = useMemo(() => {
     const questId = story?.quest?.id;
     return questId ? (turns.find((turn) => turn.quest?.id === questId && turn.photoUrl) ?? null) : null;
   }, [story, turns]);
+  const latest = turns.at(-1) ?? null;
 
   const replaceTurn = useCallback((turn: TurnView) => {
     setData((current) =>
@@ -189,7 +191,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
     );
   }, []);
 
-  // Ask Muse Image for the quest card. State only changes when the request settles.
+  // Ask Muse Image for a story card. State only changes when the request settles.
   const requestCard = useCallback(
     (turn: TurnView) => {
       requested.current.add(turn.id);
@@ -201,13 +203,14 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
     [storyId, replaceTurn],
   );
 
-  // A new quest's card is painted automatically ("none" shows as painting until it lands).
+  // A photo that moved the story gets its card painted automatically ("none" shows as painting).
+  const cardTurn = latest?.card && latest.photoUrl ? latest : null;
   useEffect(() => {
-    if (!questTurn || requested.current.has(questTurn.id)) return;
+    if (!cardTurn || requested.current.has(cardTurn.id)) return;
     const stale =
-      questTurn.cardStatus === "pending" && Date.now() - Date.parse(questTurn.createdAt) > 3 * 60_000;
-    if (questTurn.cardStatus === "none" || stale) requestCard(questTurn);
-  }, [questTurn, requestCard]);
+      cardTurn.cardStatus === "pending" && Date.now() - Date.parse(cardTurn.createdAt) > 3 * 60_000;
+    if (cardTurn.cardStatus === "none" || stale) requestCard(cardTurn);
+  }, [cardTurn, requestCard]);
 
   const repaint = (turn: TurnView) => {
     replaceTurn({ ...turn, cardStatus: "pending" });
@@ -261,9 +264,12 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
     );
   }
 
-  const latest = turns.at(-1) ?? null;
   const walkLive = story.walkActive && story.status === "active";
   const questLive = walkLive && story.quest !== null;
+  // Only a closer look needs its photo: the outline shows where to look.
+  const questPhoto = questLive && story.quest!.targetMode === "in_view" ? questTurn : null;
+  // The latest photo appears once: as the quest photo, as its card, or as a thumbnail.
+  const thumbnail = latest !== null && !latest.card && latest.id !== questPhoto?.id;
 
   return (
     <main className="mx-auto w-full max-w-[30rem] px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-48">
@@ -291,10 +297,9 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
           <Working photo={busy.photo} message={busy.message} />
         ) : (
           <>
-            {questLive && questTurn && (
-              <QuestCard turn={questTurn} questTitle={story.quest!.title} onRepaint={() => repaint(questTurn)} />
-            )}
-            {latest && <GameMasterNote turn={latest} showPhoto={latest.id !== questTurn?.id || !questLive} />}
+            {questPhoto && <QuestPhoto turn={questPhoto} questTitle={story.quest!.title} />}
+            {latest && <GameMasterNote turn={latest} showPhoto={thumbnail} />}
+            {latest?.card && <StoryCard turn={latest} onRepaint={() => repaint(latest)} />}
             {questLive && <QuestPanel quest={story.quest!} />}
             {walkLive && !questLive && <OpenPanel />}
             {walkLive && (

@@ -1,7 +1,7 @@
 import type { Outcome } from "@/lib/types";
 import { activeBeatId, updateBeats } from "./beats";
 import type { PhotoTurnOut, QuestOut } from "./outputs";
-import type { QuestState, StoryState } from "./state";
+import type { QuestState, StoryState, TurnRecord } from "./state";
 
 /**
  * How a photo turn changes the story. Pure bookkeeping on the state object, kept apart
@@ -39,8 +39,6 @@ export function makeQuest(out: QuestOut, beatId: string | null, turn: number): Q
     targetPhrase: nounPhrase(out.targetPhrase),
     targetDescription: out.targetDescription.trim(),
     successCriteria: out.successCriteria.trim(),
-    cardCaption: out.cardCaption.trim(),
-    cardFlourish: out.cardFlourish.trim(),
     beatId,
     issuedTurn: turn,
   };
@@ -75,6 +73,8 @@ export type PhotoTurnResult = {
   canonAdded: string[];
   /** True when the turn replaced the quest with a new one. */
   questIssued: boolean;
+  /** The card to paint onto the photo. Only a step forward earns one. */
+  card: TurnRecord["card"];
 };
 
 /** Apply the game master's reading of a photo to the story. Mutates `state`. */
@@ -82,6 +82,10 @@ export function applyPhotoTurn(state: StoryState, data: PhotoTurnOut, turn: numb
   // The game master was told this photo has to count, so hold it to that.
   const outcome: Outcome = data.outcome === "side_note" && mustMoveStory(state) ? "moves_story" : data.outcome;
   const moved = outcome !== "side_note";
+  const card =
+    moved && data.card
+      ? { title: data.card.title.trim(), caption: data.card.caption.trim(), flourish: data.card.flourish.trim() }
+      : null;
 
   const canonAdded = addCanon(state, data.canonAdd, turn);
   state.bindings.push(...data.bindingsAdd.map((binding) => ({ ...binding, turn })));
@@ -106,14 +110,14 @@ export function applyPhotoTurn(state: StoryState, data: PhotoTurnOut, turn: numb
     state.walk = { ...state.walk, active: false };
     if (data.recap) state.recap = data.recap.trim();
     if (storyOver) state.status = "complete";
-    return { outcome, canonAdded, questIssued: false };
+    return { outcome, canonAdded, questIssued: false, card };
   }
 
   if (data.quest) {
     state.quest = makeQuest(data.quest, activeBeatId(state.skeleton.beats), turn);
-    return { outcome, canonAdded, questIssued: true };
+    return { outcome, canonAdded, questIssued: true, card };
   }
   // A side note can leave the open quest in place; a step forward has used it up.
   if (moved) state.quest = null;
-  return { outcome, canonAdded, questIssued: false };
+  return { outcome, canonAdded, questIssued: false, card };
 }
