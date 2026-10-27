@@ -41,7 +41,7 @@ To play on your phone during development, run `npm run dev` and open the Network
 
 Without Appwrite settings, stories and photos are saved as files in `.data/`. That's fine locally but won't survive on serverless hosts. For deployment:
 
-1. Create an Appwrite project and an API key with database, table and bucket read/write scopes.
+1. Create an Appwrite project and an API key with every Database and Storage scope.
 2. Fill in `APPWRITE_ENDPOINT`, `APPWRITE_PROJECT_ID` and `APPWRITE_API_KEY` in `.env.local`.
 3. Run `npm run setup:appwrite` once. It creates the `questory` database, the `stories` and `turns` tables, and a private `media` bucket.
 
@@ -49,7 +49,18 @@ Players are anonymous: a random id in an httpOnly cookie.
 
 ## Deploy
 
-Any Node host works. On Vercel, add the environment variables from `.env.example` and use Appwrite for storage. The quest-card route can take up to three minutes, so your plan needs functions that long.
+Any Node host works. On Vercel:
+
+1. Import the repo. Vercel detects Next.js, so the build settings can stay as they are.
+2. Add `MODEL_API_KEY` and the three `APPWRITE_` values for Production and Preview. Vercel can't keep files between requests, so stories need Appwrite there.
+3. Deploy, then open `/api/health`. It should show `"mode":"live"` and `"storage":"appwrite"`.
+
+Every pull request gets its own preview link. The card route can run for up to three minutes, which fits the five that Vercel's free plan allows.
+
+Two things to know before sharing the link:
+
+- **Whoever can open the site spends your Meta credit.** Vercel leaves the production URL public by default. While testing, set Deployment Protection to All Deployments with Vercel Authentication, so only you can open it. That's free on every plan.
+- **Free Appwrite projects pause after 7 days without development activity in the Console.** A paused project can't load or save stories. Use the Console every few days while people are playing, and reactivate the project there if it pauses.
 
 ## Configuration
 
