@@ -1,5 +1,5 @@
 import type { Outcome } from "@/lib/types";
-import { activeBeatId, updateBeats } from "./beats";
+import { activeBeatId, unfinishedBeats, updateBeats } from "./beats";
 import type { PhotoTurnOut, QuestOut } from "./outputs";
 import type { QuestState, StoryState, TurnRecord } from "./state";
 
@@ -7,6 +7,12 @@ import type { QuestState, StoryState, TurnRecord } from "./state";
  * How a photo turn changes the story. Pure bookkeeping on the state object, kept apart
  * from the engine (which talks to the models and the store) so it can be tested.
  */
+
+/** Steps forward in a story. Each one finishes a beat and turns up a piece of evidence. */
+export const STORY_STEPS = 6;
+
+/** Steps forward in a chapter. */
+export const QUESTS_PER_CHAPTER = 3;
 
 /**
  * How many photos in a row may leave the story where it is. The next photo has to move
@@ -73,30 +79,40 @@ export type PhotoTurnResult = {
   canonAdded: string[];
   /** True when the turn replaced the quest with a new one. */
   questIssued: boolean;
-  /** The card to paint onto the photo. Only a step forward earns one. */
+  /** The evidence card to paint onto the photo. Only a step forward earns one. */
   card: TurnRecord["card"];
 };
+
+const named = (text: string) => /\p{L}/u.test(text);
+
+/** The evidence a step forward turns up. A reply that left it blank still gets a card. */
+function evidenceCard(card: PhotoTurnOut["card"]): NonNullable<TurnRecord["card"]> {
+  if (!named(card.title)) return { title: "New evidence", caption: "", flourish: "" };
+  return {
+    title: card.title.trim(),
+    caption: named(card.proves) ? card.proves.trim() : "",
+    flourish: card.flourish.trim(),
+  };
+}
 
 /** Apply the game master's reading of a photo to the story. Mutates `state`. */
 export function applyPhotoTurn(state: StoryState, data: PhotoTurnOut, turn: number): PhotoTurnResult {
   // The game master was told this photo has to count, so hold it to that.
   const outcome: Outcome = data.outcome === "side_note" && mustMoveStory(state) ? "moves_story" : data.outcome;
   const moved = outcome !== "side_note";
-  const card =
-    moved && data.card
-      ? { title: data.card.title.trim(), caption: data.card.caption.trim(), flourish: data.card.flourish.trim() }
-      : null;
+  const card = moved ? evidenceCard(data.card) : null;
 
   const canonAdded = addCanon(state, data.canonAdd, turn);
   state.bindings.push(...data.bindingsAdd.map((binding) => ({ ...binding, turn })));
   state.inventory = updateInventory(state.inventory, data.inventoryAdd, data.inventoryRemove);
   state.skeleton.beats = updateBeats(state.skeleton.beats, {
-    // Only a step forward can finish a beat, a chapter or the story.
-    beatComplete: moved && data.beatComplete,
+    // Every step forward finishes a beat; a side note finishes nothing.
+    beatComplete: moved,
     replanWith: data.planChange === "replan" ? data.revisedBeats : null,
   });
 
-  if (moved) {
+  if (card) {
+    state.evidence.push({ title: card.title, caption: card.caption, turn });
     state.questsCompleted += 1;
     state.walk.questsDone += 1;
     state.walk.photosSinceProgress = 0;
@@ -104,8 +120,10 @@ export function applyPhotoTurn(state: StoryState, data: PhotoTurnOut, turn: numb
     state.walk.photosSinceProgress += 1;
   }
 
-  const storyOver = moved && data.storyComplete;
-  if (storyOver || (moved && data.chapterComplete)) {
+  // The last beat solves the case. The game master is told in advance when a step ends
+  // a chapter or the story, so it can write the hook or the ending.
+  const storyOver = moved && unfinishedBeats(state.skeleton.beats) === 0;
+  if (storyOver || (moved && state.walk.questsDone >= QUESTS_PER_CHAPTER)) {
     state.quest = null;
     state.walk = { ...state.walk, active: false };
     if (data.recap) state.recap = data.recap.trim();

@@ -8,12 +8,13 @@ import {
   type StoryView,
   type TurnView,
 } from "@/lib/types";
+import { unfinishedBeats } from "./beats";
 
 /**
  * The full story state, server side. The game master's memory lives in three layers:
  *
- * - skeleton: the hidden plan (premise, antagonist, beats). Beats are goals that work
- *   anywhere; they can be re-planned, but only when the world forces it.
+ * - skeleton: the hidden plan (the secret, premise, antagonist, beats). Beats are goals
+ *   that work anywhere; they can be re-planned, but only when the world forces it.
  * - bindings: how abstract beats map onto real things the player photographed.
  *   These change freely, every turn.
  * - canon: facts already established in play. Permanent; never contradicted.
@@ -50,8 +51,11 @@ export const StoryStateSchema = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
   title: z.string(),
+  /** The case: the question the story answers. Older stories have a one-line pitch instead. */
   logline: z.string(),
   skeleton: z.object({
+    /** The answer to the case, revealed when the story ends. Stories saved before it start empty. */
+    secret: z.string().default(""),
     premise: z.string(),
     antagonist: z.string(),
     stakes: z.string(),
@@ -62,6 +66,8 @@ export const StoryStateSchema = z.object({
   canon: z.array(z.object({ fact: z.string(), turn: z.number() })),
   bindings: z.array(z.object({ abstract: z.string(), concrete: z.string(), turn: z.number() })),
   inventory: z.array(z.string()),
+  /** One piece per step forward, named on that step's card. Stories saved before it start empty. */
+  evidence: z.array(z.object({ title: z.string(), caption: z.string(), turn: z.number() })).default([]),
   quest: QuestStateSchema.nullable(),
   chapter: z.number(),
   turnCount: z.number(),
@@ -146,6 +152,7 @@ function viewOutcome(turn: TurnRecord): Outcome | null {
 }
 
 export function storyView(state: StoryState): StoryView {
+  const complete = state.status === "complete";
   return {
     id: state.id,
     title: state.title,
@@ -156,6 +163,9 @@ export function storyView(state: StoryState): StoryView {
     walkActive: state.walk.active,
     quest: questView(state.quest),
     questsCompleted: state.questsCompleted,
+    // Every step forward finishes a beat and turns up a piece of evidence.
+    evidenceTotal: state.questsCompleted + (complete ? 0 : unfinishedBeats(state.skeleton.beats)),
+    secret: complete && state.skeleton.secret ? state.skeleton.secret : null,
     inventory: state.inventory,
     canon: state.canon.map((entry) => entry.fact),
     recap: state.recap,
@@ -173,6 +183,7 @@ export function storySummary(state: StoryState): StorySummary {
     status: view.status,
     walkActive: view.walkActive,
     questsCompleted: view.questsCompleted,
+    evidenceTotal: view.evidenceTotal,
     updatedAt: view.updatedAt,
   };
 }

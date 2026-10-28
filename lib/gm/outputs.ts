@@ -1,6 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { clipText } from "@/lib/meta/structured";
+import { STORY_STEPS } from "./rules";
 
 /** What the game master returns. These double as the structured-output schemas. */
 
@@ -77,11 +78,13 @@ export const QuestOutSchema = z.object({
 });
 export type QuestOut = z.infer<typeof QuestOutSchema>;
 
-/** A story card: Muse Image paints it onto the photo that moved the story. */
+/** A piece of evidence. Muse Image paints it as a card onto the photo that turned it up. */
 const CardSchema = z.object({
-  title: text(LABEL).describe("2 to 4 words naming what the player found, sentence case. Lettered large across the top."),
-  caption: text(LABEL).describe(
-    'At most 6 words, lettered along the bottom of the card. A fragment, not a sentence, e.g. "Rubbed away, not forgotten".',
+  title: text(LABEL).describe(
+    'The evidence, 2 to 4 words, sentence case: the thing in this photo as the story sees it, e.g. "The forced lock". Lettered large across the top of the card.',
+  ),
+  proves: text(LABEL).describe(
+    'What the evidence proves, 3 to 6 words, e.g. "Someone forced it, then fixed it" or "Left in a hurry", never where it is. Lettered along the bottom.',
   ),
   flourish: text(SENTENCE).describe(
     "One small visual detail to paint onto the card that fits the story. A picture, never words, numbers or labels.",
@@ -96,14 +99,25 @@ const BindingSchema = z.object({
 
 export const GenesisSchema = z.object({
   title: text(LABEL).describe("The story's title, 2 to 5 words."),
-  logline: text(SENTENCE).describe("One spoiler-free sentence the player sees, at most 15 words."),
+  question: text(SENTENCE).describe(
+    'The case: the one plain question the whole story answers, at most 12 words, e.g. "Who forged the eviction notice under your door?". The player sees it all story long.',
+  ),
+  secret: text(SENTENCE).describe(
+    'Private until the last step: the answer to the case in one plain sentence, e.g. "Mara, the landlord\'s niece, forged it to buy the flat cheap." It never changes.',
+  ),
   premise: text(PLAN).describe("Private: the hidden truth behind the story."),
   antagonist: text(PLAN).describe("Private: who or what opposes the player, and why."),
   stakes: text(PLAN).describe("Private: what happens if the player fails."),
   ending: text(PLAN).describe("Private: how the story resolves when every beat is done."),
-  beats: list(text(SENTENCE)).describe("Private: 5 to 7 story beats in order, written as goals that work anywhere."),
-  characters: list(z.object({ name: text(LABEL), role: text(LABEL), notes: text(SENTENCE) })),
-  narration: prose(NARRATION).describe("The opening: 2 or 3 sentences, at most 45 words, set in the place in the photo."),
+  beats: list(text(SENTENCE)).describe(
+    `Private: exactly ${STORY_STEPS} beats in order, one per step forward. Each is a goal that works anywhere and ends in one piece of evidence that points toward the secret, e.g. "Find proof the notice's date was changed".`,
+  ),
+  characters: list(z.object({ name: text(LABEL), role: text(LABEL), notes: text(SENTENCE) })).describe(
+    "Private: everyone the story will name, at most 3, including whoever is behind the secret.",
+  ),
+  narration: prose(NARRATION).describe(
+    "The opening: 2 to 4 short sentences, at most 50 words, set in the place in the photo. It says what happened, who it matters to, and what the player is trying to find out.",
+  ),
   observations: list(text(SENTENCE)).describe("Concrete things you see in the photo."),
   canonAdd: list(text(SENTENCE)).describe(
     "Every fact the opening narration tells the player, such as who is missing or what was seen, at most 12 words each. The player reads these as clues, so nothing from the hidden plan.",
@@ -120,7 +134,7 @@ const planFields = {
   planReason: text(SENTENCE).describe("Private: why, in one sentence. Empty when planChange is none."),
   revisedBeats: list(text(SENTENCE))
     .nullable()
-    .describe("Only when planChange is replan: the new list of unfinished beats. Otherwise null."),
+    .describe("Only when planChange is replan: the new unfinished beats, as many as before. Otherwise null."),
 };
 
 /** Any photo the player sends during a walk. */
@@ -128,11 +142,14 @@ export const PhotoTurnSchema = z.object({
   outcome: z
     .enum(["follows_quest", "moves_story", "side_note"])
     .describe(
-      "follows_quest: the photo does what the current quest asked; be generous. moves_story: it does not, but you use what it shows to move the story forward anyway. side_note: it adds a clue or atmosphere, and the story waits for more.",
+      "follows_quest: the photo does what the current quest asked; be generous. moves_story: it does not, but you use what it shows to move the story forward anyway. side_note: it adds atmosphere or a small detail but nothing new about the case, and the story waits for more.",
     ),
-  narration: prose(NARRATION).describe("2 or 3 sentences, at most 45 words: what this photo changes in the story."),
-  card: CardSchema.nullable().describe(
-    "With follows_quest or moves_story: the story card that marks this step, painted onto this photo. Null with side_note.",
+  narration: prose(NARRATION).describe(
+    "2 to 4 short sentences, at most 50 words: what this photo turns out to be in the story, what it tells the player about the case, and where it points next.",
+  ),
+  // Always required: when it was optional, the game master often left it out of real steps.
+  card: CardSchema.describe(
+    'The piece of evidence this photo turns up, painted onto it as a card, even when the find rules something out ("The empty room": "Nothing was sold here"). After a side_note it is set aside, so it only counts on a step forward.',
   ),
   observations: list(text(SENTENCE)).describe("Concrete things you see in the photo."),
   canonAdd: list(text(SENTENCE)).describe(
@@ -144,23 +161,18 @@ export const PhotoTurnSchema = z.object({
   ),
   inventoryRemove: list(text(SENTENCE)).describe("Items the player uses up or loses."),
   ...planFields,
-  beatComplete: z
-    .boolean()
-    .describe("True when this photo finishes the current beat. Only with follows_quest or moves_story."),
-  chapterComplete: z.boolean().describe("True when this walk's chapter should end now."),
-  storyComplete: z.boolean().describe("True when every beat is done and the story is over."),
   recap: recapText()
     .nullable()
-    .describe(`Only when the chapter or story ends; otherwise null. ${RECAP_RULES}`),
+    .describe(`Only when this step ends the chapter or the story; otherwise null. ${RECAP_RULES}`),
   quest: QuestOutSchema.nullable().describe(
-    "The next quest. Null keeps the current quest, which only fits after a side_note when the player can still reach it from here. Also null when the chapter or story ends.",
+    "The next quest. Null keeps the current quest, which only fits after a side_note when the player can still reach it from here. Also null when this step ends the chapter or the story.",
   ),
 });
 export type PhotoTurnOut = z.infer<typeof PhotoTurnSchema>;
 
 export const ResumeSchema = z.object({
   narration: prose(NARRATION).describe(
-    "2 or 3 sentences, at most 45 words: start the next chapter here and set the hook.",
+    "2 to 4 short sentences, at most 50 words: start the next chapter here, remind the player what the case is, and set up the next step.",
   ),
   observations: list(text(SENTENCE)).describe("Concrete things you see in the photo."),
   canonAdd: list(text(SENTENCE)).describe(
@@ -173,7 +185,7 @@ export const ResumeSchema = z.object({
 export type ResumeOut = z.infer<typeof ResumeSchema>;
 
 export const EpilogueSchema = z.object({
-  narration: prose(NARRATION).describe("2 or 3 sentences, at most 45 words, closing this walk on a hook."),
+  narration: prose(NARRATION).describe("2 to 4 short sentences, at most 50 words, closing this walk on a hook."),
   recap: recapText().describe(RECAP_RULES),
 });
 export type EpilogueOut = z.infer<typeof EpilogueSchema>;

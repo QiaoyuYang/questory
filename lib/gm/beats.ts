@@ -20,6 +20,11 @@ export function activateNextBeat(beats: Beat[]): Beat[] {
   return index === -1 ? beats : beats.map((beat, i) => (i === index ? { ...beat, status: "active" } : beat));
 }
 
+/** How many beats are left to play: the active one and the pending ones after it. */
+export function unfinishedBeats(beats: Beat[]): number {
+  return beats.filter((beat) => beat.status === "pending" || beat.status === "active").length;
+}
+
 /** The beat the story is working on, if any. */
 export function activeBeatId(beats: Beat[]): string | null {
   return beats.find((beat) => beat.status === "active")?.id ?? null;

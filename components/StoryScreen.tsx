@@ -8,7 +8,7 @@ import { Alert } from "./Alert";
 import { BottomBar } from "./BottomBar";
 import { BUTTON } from "./buttons";
 import { CaptureButton } from "./CaptureButton";
-import { BookIcon, CameraIcon, ChevronLeftIcon, ChevronRightIcon } from "./icons";
+import { CameraIcon, ChevronLeftIcon, ChevronRightIcon, MagnifierIcon } from "./icons";
 import { outcomeLabel } from "./labels";
 import { PhotoViewer, type Zoomed } from "./PhotoViewer";
 import { QuestSheet } from "./QuestSheet";
@@ -157,6 +157,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
   const views = scene ? sceneViews(scene, lookTurn) : [];
   const view = picked && picked.turnId === scene?.id && views.includes(picked.view) ? picked.view : views[0];
   const outcome = latest ? outcomeLabel(latest) : null;
+  const evidenceFound = turns.filter((turn) => turn.card).length;
 
   return (
     <main className="mx-auto w-full max-w-[30rem] px-4 pb-56">
@@ -210,7 +211,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
                 {outcome && (
                   <p className="font-sign text-lg font-bold text-walk">
                     {outcome}
-                    {latest.card && <span className="text-concrete"> · card earned</span>}
+                    {latest.card && <span className="text-concrete"> · new evidence</span>}
                   </p>
                 )}
                 <p className="font-story text-[1.1875rem] leading-[1.6] text-pretty">{latest.narration}</p>
@@ -224,21 +225,32 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
         <BottomBar>
           {error && <Alert message={error.message} retry={error.retry} />}
 
-          {walkLive && (
-            <button
-              type="button"
-              onClick={() => setPanel("quest")}
-              className="flex min-h-11 w-full items-center gap-2.5 text-left"
-            >
-              <span className="shrink-0 rounded-full bg-lane/15 px-2 py-0.5 text-xs font-bold tracking-wider text-lane uppercase">
-                Next
-              </span>
-              <span className="min-w-0 flex-1 truncate font-sign text-lg font-semibold">
-                {quest ? quest.title : "Look around"}
-              </span>
-              <ChevronRightIcon className="shrink-0 text-concrete" />
-            </button>
-          )}
+          {/* The next step is spelled out here, so nobody has to find it. A new one pulses. */}
+          {walkLive &&
+            (quest ? (
+              <button
+                key={quest.id}
+                type="button"
+                onClick={() => setPanel("quest")}
+                className="callout block w-full rounded-[14px] border border-lane/50 bg-kerb px-3.5 pt-2 pb-2.5 text-left"
+              >
+                <span className="flex min-h-6 items-center gap-2 text-sm">
+                  <span className="shrink-0 text-xs font-bold tracking-wider text-lane uppercase">Next step</span>
+                  <span className="min-w-0 flex-1 truncate font-semibold text-concrete">{quest.title}</span>
+                  <span className="inline-flex shrink-0 items-center font-semibold text-concrete">
+                    {quest.hint && "Hint"}
+                    <ChevronRightIcon className="h-5 w-5" />
+                  </span>
+                </span>
+                <span className="mt-0.5 line-clamp-3 block font-sign text-lg leading-snug font-semibold text-pretty">
+                  {quest.objective}
+                </span>
+              </button>
+            ) : (
+              <p className="py-1 text-pretty">
+                Take a photo of whatever catches your eye. {GAME_MASTER} will work it into the story.
+              </p>
+            ))}
           {between && (
             <div className="py-1">
               <p className="font-sign text-lg font-bold text-lane">Chapter {story.chapter} is done</p>
@@ -257,8 +269,19 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
 
           <div className="mt-2 flex items-center gap-2">
             <button type="button" onClick={() => setPanel("story")} className={BUTTON.tool}>
-              <BookIcon />
-              Story
+              <span className="relative">
+                <MagnifierIcon />
+                <span
+                  aria-hidden="true"
+                  className="absolute -top-1.5 left-4 rounded-full bg-lane px-1.5 text-[0.6875rem] leading-4 font-bold whitespace-nowrap text-asphalt"
+                >
+                  {evidenceFound}/{story.evidenceTotal}
+                </span>
+              </span>
+              Evidence
+              <span className="sr-only">
+                , {evidenceFound} of {story.evidenceTotal} found
+              </span>
             </button>
             {walkLive && (
               <>

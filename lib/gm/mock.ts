@@ -1,14 +1,15 @@
 import "server-only";
 import type { Usage } from "@/lib/meta/structured";
+import { unfinishedBeats } from "./beats";
 import type { Brain } from "./brain";
-import type { QuestOut } from "./outputs";
-import { QUESTS_PER_CHAPTER } from "./prompts";
+import type { CardOut, QuestOut } from "./outputs";
+import { QUESTS_PER_CHAPTER } from "./rules";
 import type { StoryState } from "./state";
 
 /**
  * A scripted game master for working on the app without an API key.
- * It cannot see photos; it alternates side notes and steps forward and cycles through
- * stock quests, so every screen can be exercised.
+ * It cannot see photos; it alternates side notes and steps forward and plays one short
+ * case from start to finish, so every screen can be exercised.
  */
 
 const usage: Usage = {
@@ -24,7 +25,7 @@ const pause = () => new Promise((resolve) => setTimeout(resolve, 700));
 const QUESTS: QuestOut[] = [
   {
     title: "The first mark",
-    objective: "Walk up to the nearest door in your photo. Is anything carved, painted or numbered on it?",
+    objective: "Walk up to the nearest door in your photo. Is anything chalked, painted or numbered on it?",
     hint: "Doors keep secrets in their numbers.",
     targetMode: "in_view",
     targetPhrase: "door",
@@ -60,39 +61,83 @@ const QUESTS: QuestOut[] = [
   },
 ];
 
+/** One step forward of the case: the evidence it turns up and what the player learns. */
+type Step = { card: CardOut; narration: string; fact: string };
+
+const STEPS: Step[] = [
+  {
+    card: { title: "A chalk arrow", proves: "The thief marked the way", flourish: "a smear of chalk dust" },
+    narration:
+      "Up close it's a chalk arrow, small and fresh, pointing away from the bakery. Whoever took the bell marked the way so they could find it again. Follow where it points.",
+    fact: "The thief marks the way with small chalk arrows.",
+  },
+  {
+    card: { title: "Brass dust", proves: "The bell was dragged here", flourish: "a few gold flecks" },
+    narration:
+      "Gold flecks sit in the cracks here: brass dust, rubbed off as the bell was dragged along. The thief came this way with it, and not long ago.",
+    fact: "Brass dust shows the bell was dragged this way.",
+  },
+  {
+    card: { title: "A floury handprint", proves: "The thief came from inside", flourish: "a puff of flour" },
+    narration:
+      "There's a floury handprint on the corner, the same white as Rosa's bread flour. The thief came out of the bakery itself. When you tell Rosa, she goes quiet. \"Only family has a key,\" she says.",
+    fact: "A floury handprint shows the thief came from inside the bakery.",
+  },
+  {
+    card: { title: "An empty hiding spot", proves: "Moved again this morning", flourish: "a bell-shaped ring in the dust" },
+    narration:
+      "Below another chalk arrow is a bell-shaped ring in the dust, and nothing else. The bell was hidden here, and someone moved it again this morning. They know you're looking.",
+    fact: "The bell was hidden here and moved again this morning.",
+  },
+  {
+    card: { title: "A borrowed ladder", proves: "The thief hides things up high", flourish: "a small wooden ladder" },
+    narration:
+      "Every hiding spot so far has been up high. Rosa's ladder went missing the same night, and only her nephew Teo, who sleeps above the shop, asked to borrow it.",
+    fact: "Rosa's nephew Teo borrowed her ladder the night the bell vanished.",
+  },
+  {
+    card: { title: "The brass bell", proves: "Hidden under Teo's window box", flourish: "a sock wrapped round the clapper" },
+    narration:
+      "Under the window box above the bakery sits the bell, a sock wrapped round its clapper. Teo hid it because it woke him at dawn. Rosa laughs, and from now on it rings only after eight.",
+    fact: "Teo hid the bell because it woke him at dawn.",
+  },
+];
+
 function questAfter(state: StoryState | null): QuestOut {
   const index = state ? state.questsCompleted % QUESTS.length : 0;
   return QUESTS[index];
 }
 
 export const mockBrain: Brain = {
-  async genesis(genre) {
+  async genesis() {
     await pause();
     return {
       usage,
       data: {
-        title: genre === "mystery" ? "The courier's letter" : "The quiet signal",
-        logline: "Someone left a trail through this neighborhood, and it starts right where you are standing.",
-        premise: "A courier hid a sealed letter in pieces across the neighborhood before vanishing.",
-        antagonist: "The person the letter would expose, who is quietly collecting the pieces first.",
-        stakes: "If they find the last piece first, the truth stays buried.",
-        ending: "You assemble the letter and learn the courier hid it to protect you.",
+        title: "The missing bell",
+        question: "Who took the brass bell from Rosa's bakery door?",
+        secret: "Teo, Rosa's nephew, hid the bell because it woke him at dawn.",
+        premise: "Rosa's shop bell vanished overnight. Her nephew Teo, who sleeps above the shop, hid it to get some sleep and chalked arrows so he could find his hiding spots again.",
+        antagonist: "Teo, sleepy and embarrassed, who moves the bell whenever someone gets close.",
+        stakes: "Without the bell Rosa misses customers, and she is starting to blame the new café.",
+        ending: "You find the bell under Teo's window box, and Rosa agrees it rings only after eight.",
         beats: [
-          "Find the courier's first mark",
-          "Learn who else is looking",
-          "Recover the second piece",
-          "Outwit the collector",
-          "Read the letter",
+          "Find the first chalk mark the thief left",
+          "Find signs of where the bell was carried",
+          "Learn the thief knows the bakery from inside",
+          "Find a hiding spot the thief has already emptied",
+          "Learn who could reach the high hiding spots",
+          "Find the bell and the person who hid it",
         ],
         characters: [
-          { name: "The courier", role: "missing ally", notes: "Leaves marks in chalk." },
-          { name: "The collector", role: "antagonist", notes: "Always one step behind, or ahead." },
+          { name: "Rosa", role: "baker who lost her bell", notes: "Proud, loud, blames the café." },
+          { name: "Teo", role: "Rosa's nephew, secretly the thief", notes: "Sleeps above the shop." },
         ],
         narration:
-          "You notice it the moment you stop: a scuff of chalk, half washed away, pointing somewhere close. Someone wanted this spot remembered. The trail starts here, and it starts with you.",
+          "Rosa, the baker on the corner, is furious: someone took the brass bell from her shop door last night. They left a trail of small chalk arrows. Find out who took the bell. The first arrow should be close.",
         observations: ["(mock mode: the scripted game master can't see photos)"],
-        canonAdd: ["The courier marks hiding places with chalk."],
-        bindingsAdd: [{ abstract: "the courier's first mark", concrete: "the place in your first photo" }],
+        canonAdd: ["Someone took the brass bell from Rosa's bakery door last night."],
+        bindingsAdd: [{ abstract: "the first chalk arrow", concrete: "the place in your first photo" }],
         quest: questAfter(null),
       },
     };
@@ -103,44 +148,32 @@ export const mockBrain: Brain = {
     // Odd turns are side notes, even turns follow the quest; a forced turn bends the story.
     const outcome = mustProgress ? "moves_story" : state.turnCount % 2 === 0 ? "follows_quest" : "side_note";
     const moved = outcome !== "side_note";
-    const unfinished = state.skeleton.beats.filter(
-      (beat) => beat.status === "pending" || beat.status === "active",
-    ).length;
-    const storyComplete = moved && unfinished <= 1;
-    const chapterComplete = moved && (storyComplete || state.walk.questsDone + 1 >= QUESTS_PER_CHAPTER);
-    const narration = storyComplete
-      ? "The last piece slides into place. The letter was never a threat; it was a map home, and the courier drew it for you."
-      : chapterComplete
-        ? "That's the one. As you lower your phone you catch a fresh chalk mark that wasn't there a minute ago. Someone is ahead of you, and they know you're coming."
-        : outcome === "follows_quest"
-          ? "That's the one. Up close you find a second mark, smaller and newer than the first. The trail keeps going."
-          : outcome === "moves_story"
-            ? "Not what you were looking for, but look: a chalk arrow at its base, pointing away from the trail you were on. The courier changed plans."
-            : "You file it away. It doesn't look like the courier's work, but you're starting to see marks everywhere.";
+    const step = STEPS[Math.min(state.questsCompleted, STEPS.length - 1)];
+    const storyEnds = moved && unfinishedBeats(state.skeleton.beats) <= 1;
+    const chapterEnds = moved && (storyEnds || state.walk.questsDone + 1 >= QUESTS_PER_CHAPTER);
     return {
       usage,
       data: {
         outcome,
-        narration,
-        card: moved
-          ? { title: "A fresh chalk mark", caption: "The courier was here first", flourish: "a smear of chalk dust" }
-          : null,
+        narration: moved
+          ? step.narration
+          : "You file it away. It isn't a chalk arrow, but now you're looking twice at every wall.",
+        card: step.card,
         observations: ["(mock mode)"],
-        canonAdd: moved ? [`Step ${state.questsCompleted + 1} turned up a fresh chalk mark.`] : [],
+        canonAdd: moved ? [step.fact] : [],
         bindingsAdd: [],
-        inventoryAdd: moved && state.questsCompleted === 0 ? ["A torn corner of the letter"] : [],
+        inventoryAdd: [],
         inventoryRemove: [],
         planChange: "none",
         planReason: "",
         revisedBeats: null,
-        beatComplete: moved,
-        chapterComplete,
-        storyComplete,
-        recap: chapterComplete
-          ? "You followed the courier's chalk marks and found a torn corner of a sealed letter. Someone else is following the same trail."
-          : null,
+        recap: storyEnds
+          ? "You followed chalk arrows, brass dust and a floury handprint to Teo, who hid Rosa's bell to sleep in. The bell is back on the door."
+          : chapterEnds
+            ? "You followed the bell thief's chalk arrows away from Rosa's bakery. A floury handprint showed the thief came from inside it."
+            : null,
         // A side note keeps the open quest; a step forward brings the next one.
-        quest: chapterComplete || !moved ? null : questAfter({ ...state, questsCompleted: state.questsCompleted + 1 }),
+        quest: chapterEnds || !moved ? null : questAfter({ ...state, questsCompleted: state.questsCompleted + 1 }),
       },
     };
   },
@@ -151,9 +184,9 @@ export const mockBrain: Brain = {
       usage,
       data: {
         narration:
-          "Same trail, next chapter. Before you've taken ten steps you spot it: a chalk mark, fresher than the last. Whoever is collecting the pieces passed this way too.",
+          "Back to the case of Rosa's missing bell. The thief knows the bakery from the inside, and they left more chalk arrows than you have found. The next one should be close.",
         observations: ["(mock mode)"],
-        canonAdd: ["The trail continues beyond the first neighborhood."],
+        canonAdd: [],
         bindingsAdd: [],
         planChange: "none",
         planReason: "",
@@ -169,8 +202,8 @@ export const mockBrain: Brain = {
       usage,
       data: {
         narration:
-          "You pocket your phone. Somewhere behind you, chalk scrapes on stone. The trail will still be here tomorrow, but will the next piece?",
-        recap: "You followed the courier's chalk marks through your neighborhood. Someone else is following the same trail.",
+          "You pocket your phone for now. Rosa's door is still silent, and somewhere a chalk arrow you haven't found points at the answer.",
+        recap: "You started tracking whoever took Rosa's bakery bell by following their chalk arrows.",
       },
     };
   },

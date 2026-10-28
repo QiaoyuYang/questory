@@ -126,8 +126,9 @@ export async function startStory(playerId: string, genre: string, photo: Photo) 
     createdAt,
     updatedAt: createdAt,
     title: data.title.trim(),
-    logline: data.logline.trim(),
+    logline: data.question.trim(),
     skeleton: {
+      secret: data.secret.trim(),
       premise: data.premise,
       antagonist: data.antagonist,
       stakes: data.stakes,
@@ -138,6 +139,7 @@ export async function startStory(playerId: string, genre: string, photo: Photo) 
     canon: [],
     bindings: [],
     inventory: [],
+    evidence: [],
     quest: null,
     chapter: 1,
     turnCount: 0,
@@ -239,8 +241,8 @@ export async function endWalk(state: StoryState) {
 }
 
 /**
- * Paint the story card for a photo that moved the story, with Muse Image. Safe to call
- * more than once.
+ * Paint the evidence card for a photo that moved the story, with Muse Image. Safe to
+ * call more than once.
  */
 export async function paintCard(state: StoryState, turn: TurnRecord): Promise<TurnRecord> {
   if (!turn.card || !turn.photoId || !turn.photoSize) {

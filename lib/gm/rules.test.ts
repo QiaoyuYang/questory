@@ -1,8 +1,16 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { activateNextBeat, makeBeats } from "./beats";
+import { activateNextBeat, completeActiveBeat, makeBeats } from "./beats";
 import type { PhotoTurnOut, QuestOut } from "./outputs";
-import { FREE_PHOTOS, applyPhotoTurn, makeQuest, mustMoveStory, nounPhrase, updateInventory } from "./rules";
+import {
+  FREE_PHOTOS,
+  QUESTS_PER_CHAPTER,
+  applyPhotoTurn,
+  makeQuest,
+  mustMoveStory,
+  nounPhrase,
+  updateInventory,
+} from "./rules";
 import type { StoryState } from "./state";
 
 const QUEST: QuestOut = {
@@ -27,6 +35,7 @@ function story(): StoryState {
     title: "The courier's letter",
     logline: "A trail starts here.",
     skeleton: {
+      secret: "",
       premise: "",
       antagonist: "",
       stakes: "",
@@ -37,6 +46,7 @@ function story(): StoryState {
     canon: [{ fact: "The courier marks hiding places with chalk.", turn: 1 }],
     bindings: [],
     inventory: [],
+    evidence: [],
     quest: null,
     chapter: 1,
     turnCount: 1,
@@ -54,7 +64,7 @@ function reply(overrides: Partial<PhotoTurnOut> = {}): PhotoTurnOut {
   return {
     outcome: "side_note",
     narration: "You file it away.",
-    card: null,
+    card: { title: "A scuffed step", proves: "Someone was here", flourish: "" },
     observations: [],
     canonAdd: [],
     bindingsAdd: [],
@@ -63,9 +73,6 @@ function reply(overrides: Partial<PhotoTurnOut> = {}): PhotoTurnOut {
     planChange: "none",
     planReason: "",
     revisedBeats: null,
-    beatComplete: false,
-    chapterComplete: false,
-    storyComplete: false,
     recap: null,
     quest: null,
     ...overrides,
@@ -77,15 +84,17 @@ const beatSummary = (state: StoryState) => state.skeleton.beats.map((b) => `${b.
 test("a side note keeps the open quest and counts toward the nudge", () => {
   const state = story();
   const questId = state.quest!.id;
-  const result = applyPhotoTurn(state, reply({ beatComplete: true, chapterComplete: true }), 2);
+  const result = applyPhotoTurn(state, reply(), 2);
 
   assert.equal(result.outcome, "side_note");
   assert.equal(result.questIssued, false);
   assert.equal(state.quest?.id, questId);
   assert.equal(state.walk.photosSinceProgress, 1);
   assert.equal(state.walk.questsDone, 0);
-  // Only a step forward can finish a beat or a chapter.
+  // A side note finishes no beat and turns up no evidence.
   assert.equal(beatSummary(state), "b1:active b2:pending b3:pending");
+  assert.equal(result.card, null);
+  assert.deepEqual(state.evidence, []);
   assert.equal(state.walk.active, true);
 });
 
@@ -93,7 +102,7 @@ test("a photo that follows the quest moves the story and brings the next quest",
   const state = story();
   const oldId = state.quest!.id;
   const next = { ...QUEST, title: "Something red", targetMode: "seek" as const };
-  const result = applyPhotoTurn(state, reply({ outcome: "follows_quest", beatComplete: true, quest: next }), 2);
+  const result = applyPhotoTurn(state, reply({ outcome: "follows_quest", quest: next }), 2);
 
   assert.equal(result.outcome, "follows_quest");
   assert.equal(result.questIssued, true);
@@ -130,12 +139,17 @@ test("a step forward without a new quest leaves no quest open", () => {
   assert.equal(state.walk.active, true);
 });
 
-test("a step forward can close the chapter, which saves the recap and ends the walk", () => {
+test(`step ${QUESTS_PER_CHAPTER} of a walk closes the chapter, which saves the recap and ends the walk`, () => {
   const state = story();
+  state.skeleton.beats = activateNextBeat(makeBeats(["one", "two", "three", "four", "five", "six"], 0));
+  for (let turn = 2; turn < 1 + QUESTS_PER_CHAPTER; turn++) {
+    applyPhotoTurn(state, reply({ outcome: "follows_quest", quest: QUEST }), turn);
+    assert.equal(state.walk.active, true);
+  }
   applyPhotoTurn(
     state,
-    reply({ outcome: "follows_quest", chapterComplete: true, recap: " You found the door. ", quest: QUEST }),
-    2,
+    reply({ outcome: "follows_quest", recap: " You found the door. ", quest: QUEST }),
+    1 + QUESTS_PER_CHAPTER,
   );
   assert.equal(state.walk.active, false);
   assert.equal(state.quest, null);
@@ -143,9 +157,13 @@ test("a step forward can close the chapter, which saves the recap and ends the w
   assert.equal(state.status, "active");
 });
 
-test("finishing the story marks it complete", () => {
+test("the step that finishes the last beat solves the case", () => {
   const state = story();
-  applyPhotoTurn(state, reply({ outcome: "moves_story", beatComplete: true, storyComplete: true }), 2);
+  state.skeleton.beats = completeActiveBeat(completeActiveBeat(state.skeleton.beats));
+  applyPhotoTurn(state, reply(), 2);
+  assert.equal(state.status, "active");
+  applyPhotoTurn(state, reply({ outcome: "moves_story" }), 3);
+  assert.equal(beatSummary(state), "b1:done b2:done b3:done");
   assert.equal(state.status, "complete");
   assert.equal(state.walk.active, false);
 });
@@ -166,14 +184,23 @@ test("canon and inventory skip duplicates, ignoring case", () => {
   assert.deepEqual(updateInventory(state.inventory, [], [" a BRASS key "]), ["A torn letter"]);
 });
 
-test("only a step forward earns a card", () => {
-  const card = { title: " The marked door ", caption: "Number 14, freshly painted", flourish: "a chalk arrow" };
+test("every step forward turns up a piece of evidence, painted as a card", () => {
+  const card = { title: " The marked door ", proves: "Number 14, freshly painted", flourish: "a chalk arrow" };
   assert.equal(applyPhotoTurn(story(), reply({ card }), 2).card, null);
-  assert.deepEqual(applyPhotoTurn(story(), reply({ outcome: "follows_quest", card }), 2).card, {
+
+  const state = story();
+  assert.deepEqual(applyPhotoTurn(state, reply({ outcome: "follows_quest", card }), 2).card, {
     title: "The marked door",
     caption: "Number 14, freshly painted",
     flourish: "a chalk arrow",
   });
+  // A reply that left the evidence blank still gets a card, so the count stays true.
+  const blank = { title: ".", proves: ".", flourish: "" };
+  assert.equal(applyPhotoTurn(state, reply({ outcome: "moves_story", card: blank }), 3).card?.title, "New evidence");
+  assert.deepEqual(state.evidence, [
+    { title: "The marked door", caption: "Number 14, freshly painted", turn: 2 },
+    { title: "New evidence", caption: "", turn: 3 },
+  ]);
 });
 
 test("target phrases lose leading articles and trailing punctuation", () => {
