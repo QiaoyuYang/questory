@@ -106,7 +106,7 @@ export function HomeScreen({ stories, mode, onStarted, onOpen, onRemove }: Props
     try {
       const result = await shareLink({
         title: "Questory",
-        text: "Help me solve a case on Questory. I'm starting it on my walk, and you play chapter 2 on yours.",
+        text: "Help me solve a case on Questory. We each follow a lead, on our own walks.",
         url: inviteLink(invite.storyId, invite.code),
       });
       if (result === "cancelled") return;
@@ -264,7 +264,8 @@ export function HomeScreen({ stories, mode, onStarted, onOpen, onRemove }: Props
             {players === "team" && (
               <>
                 <p className="mt-2 text-sm text-concrete text-pretty">
-                  You play chapter 1, and your friend plays chapter 2 on their own streets.
+                  You each follow a lead on your own walk, at the same time or not. A chapter ends when you&apos;ve both
+                  found your part.
                 </p>
                 <button type="button" onClick={() => void sendLink()} className={`${BUTTON.secondary} mt-3 w-full`}>
                   {linkSent ? "Send the link again" : "Send your friend the link"}

@@ -31,6 +31,12 @@ async function ignoreMissing(request: Promise<unknown>) {
 
 const EXT: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** How long a request waits for a story's lock, and how long before a held lock counts as left behind. */
+const LOCK_WAIT_MS = 15_000;
+const LOCK_STALE_MS = 8_000;
+
 /**
  * Appwrite storage: each story is a row holding its state as JSON; each turn is a
  * row keyed by story; each day's model calls are counted in a usage row; photos and
@@ -172,6 +178,60 @@ export function appwriteStore(config: Config["appwrite"]): Store {
       }
       throw new Error("Couldn't count today's calls.");
     },
+
+    async withLock(key, task) {
+      // A lock is a usage row counting who holds it. Row ids are at most 36 characters,
+      // so a UUID key loses its dashes.
+      const row = { databaseId, tableId: APPWRITE_SCHEMA.usage, rowId: `lock_${key.replace(/-/g, "").slice(0, 31)}` };
+      const started = Date.now();
+      let reset = false;
+      while (!(await takeLock(row))) {
+        const waited = Date.now() - started;
+        // Saving a turn holds the lock for well under a second, so a lock held this long
+        // was left behind by a request that stopped partway.
+        if (waited > LOCK_STALE_MS && !reset) {
+          console.warn("[questory] Resetting a lock left behind by a request that stopped.");
+          await db.updateRow({ ...row, data: { calls: 0 } });
+          reset = true;
+          continue;
+        }
+        if (waited > LOCK_WAIT_MS) throw new Error("This story is busy. Try again in a moment.");
+        await sleep(150 + Math.random() * 150);
+      }
+      try {
+        return await task();
+      } finally {
+        await db.decrementRowColumn({ ...row, column: "calls", value: 1, min: 0 }).catch((error) => {
+          console.warn("[questory] Couldn't let go of a lock:", error);
+        });
+      }
+    },
   };
+
+  type RowRef = { databaseId: string; tableId: string; rowId: string };
+
+  /**
+   * Increments are atomic, so of everyone adding 1 to a free lock, exactly one sees 1 and
+   * holds it. The rest take their 1 back off and try again.
+   */
+  async function takeLock(row: RowRef): Promise<boolean> {
+    let holders: number;
+    try {
+      holders = Number((await db.incrementRowColumn({ ...row, column: "calls", value: 1 })).calls);
+    } catch (error) {
+      if (!hasType(error, "row_not_found")) throw error;
+      try {
+        await db.createRow({ ...row, data: { calls: 1 } });
+        return true;
+      } catch (error) {
+        if (hasType(error, "row_already_exists")) return false;
+        throw error;
+      }
+    }
+    if (holders === 1) return true;
+    await db.decrementRowColumn({ ...row, column: "calls", value: 1 }).catch(() => {});
+    return false;
+  }
+
   return store;
 }

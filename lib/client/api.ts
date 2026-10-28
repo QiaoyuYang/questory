@@ -56,21 +56,25 @@ export const api = {
   ) =>
     call<TurnResult>("/api/stories", { method: "POST", body: JSON.stringify({ ...story, ...photo }) }),
 
-  takeTurn: (id: string, kind: "photo" | "resume", photo: PhotoUpload) =>
+  /** `takeOver` walks the other lead too, while no friend has taken it. */
+  takeTurn: (id: string, kind: "photo" | "resume", photo: PhotoUpload, options: { takeOver?: boolean } = {}) =>
     call<TurnResult>(`/api/stories/${id}/turns`, {
       method: "POST",
-      body: JSON.stringify({ kind, ...photo }),
+      body: JSON.stringify({ kind, ...photo, takeOver: options.takeOver === true }),
     }),
 
-  /** A friend joins a shared case from its link, to follow it until their chapter. */
+  /** A two-player chapter's ending, once both leads are done. Safe to ask more than once. */
+  closeChapter: (id: string) => call<TurnResult>(`/api/stories/${id}/close`, { method: "POST" }),
+
+  /** A friend joins a shared case from its link, and takes the other lead. */
   joinStory: (id: string, code: string) =>
     call<{ story: StoryView }>(`/api/stories/${id}/join`, { method: "POST", body: JSON.stringify({ code }) }),
 
   inviteInfo: (id: string, code: string) =>
     call<{ invite: InviteView | null }>(`/api/stories/${id}/invite?code=${encodeURIComponent(code)}`),
 
-
-  endWalk: (id: string) => call<TurnResult>(`/api/stories/${id}/end`, { method: "POST" }),
+  /** The chapter waits for the player's next walk. */
+  endWalk: (id: string) => call<{ story: StoryView }>(`/api/stories/${id}/end`, { method: "POST" }),
 
   paintCard: (id: string, turnId: string) =>
     call<{ turn: TurnView }>(`/api/stories/${id}/turns/${turnId}/card`, { method: "POST" }),

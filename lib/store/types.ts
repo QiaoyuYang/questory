@@ -21,6 +21,11 @@ export interface Store {
    * counting nothing, once it has reached `limit`.
    */
   countCall(key: string, limit: number): Promise<boolean>;
+  /**
+   * Run `task` while no other request holds the same key: two players' turns on one story
+   * are saved one after the other, never over each other. Hold it only for quick work.
+   */
+  withLock<T>(key: string, task: () => Promise<T>): Promise<T>;
 }
 
 /** Every photo and card a story's turns point to. A card drawn without Muse Image is the photo itself. */

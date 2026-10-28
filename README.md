@@ -21,11 +21,20 @@ Questory is built for the part where people stop. The story carries on from one 
 3. **SAM 3.1 grounds the target.** When the next quest asks you to take a closer look at something in your photo ("the blue door"), SAM finds it and the app traces its outline.
 4. **Muse Image draws the evidence.** When a photo moves the story, it's redrawn as a picture of the evidence, with its name and what it proves lettered on, in the story's style. The story waits for it, so the new evidence and what Wren says about it show up together. If Muse Image turns a picture down, it gets one plainer try, and if that's turned down too, your photo is the picture. These are keepsakes, so they never cover the photo you navigate by.
 
-Every story is a case: one plain question, like "Who took Sir Buttons the garden gnome?", and an answer Wren decides at the start. A case is six steps forward. Each one turns up a piece of evidence, the last one solves it, and the evidence list shows what you've found and how much is left. A case has two characters at most, and the person behind the answer shows up early, so a sharp player can guess it before the end. If the evidence you find stops pointing at the answer, Wren changes the answer rather than the evidence, and the reveal ties the two together.
+Every story is a case: one plain question, like "Who took Sir Buttons the garden gnome?", and an answer Wren decides at the start. A case is three chapters of four steps forward. Each step turns up a piece of evidence, the last one solves it, and the evidence list shows what you've found and how much is left. A case has two characters at most, and the person behind the answer shows up early, so a sharp player can guess it before the end. If the evidence you find stops pointing at the answer, Wren changes the answer rather than the evidence, and the reveal ties the two together.
 
 Pick Mystery, Fantasy, Sci-fi or Comedy, or type your own idea, like "a haunted bakery", and Wren builds the case around it. Name a world people know, like Sherlock Holmes, and the case happens there, with its own characters.
 
-A case can be played by two. Pick "With a friend" when you start, and send your friend the link right there, even before your first photo: their page waits for the case and fills in by itself once it begins. You play chapter 1, and your friend can join any time to follow it as it happens, then plays chapter 2 on their own streets. Wren tells them the case and what you found, the evidence list shows who found what, and each of you gets your own walking time. Only the player on the current walk can add to it, so a shared case never has two people writing at once, and the other player's screen keeps up by itself.
+A case can be played by two. Pick "With a friend" when you start, and send your friend the link right there, even before your first photo: their page waits for the case and fills in by itself once it begins. A shared case has two leads that come at the answer from different sides, say how it was done and who could have done it, and you each follow one on your own walk, at the same time or not. Each of you finds four pieces of evidence per chapter.
+
+The story has to hold up whichever of you finds what first, so:
+
+- **No step needs the other lead.** Each lead is a line of steps in order, so Wren still builds each one on the last, but nothing on your lead waits for your partner's.
+- **Your partner's finds are news.** Wren knows everything both of you have found, so it can bring their latest find into what it tells you, but it never finishes their lead for them.
+- **A chapter ends together.** It closes once you've both found your part, and its ending is written on its own, from everything the two of you found, so it reads the same in any order. So does the final answer.
+- **Nothing is lost when you both send a photo at once.** Each turn is saved onto the story as it stands by then, under a short per-story lock, so both count. If your friend hasn't joined by the time your part is done, you can walk theirs too.
+
+The evidence list shows who found what, each of you gets your own walking time, and each screen keeps up with the other player by itself.
 
 Quests are suggestions. If two photos in a row only add side notes, the game master moves the story forward with the next one, whatever it shows.
 
@@ -35,11 +44,11 @@ The story state has three layers, and the prompts treat each one differently:
 
 | Layer | What it holds | How it changes |
 | --- | --- | --- |
-| Skeleton | The hidden answer to the case, the premise, antagonist, stakes, ending, and six beats written as goals that work anywhere | Re-planned only when the world forces it, and always narrated as a twist. The answer changes only to keep fitting the evidence |
+| Skeleton | The hidden answer to the case, the premise, antagonist, stakes, ending, what each chapter finds out, and the beats of each lead, written as goals that work anywhere | Re-planned only when the world forces it, and always narrated as a twist. The answer changes only to keep fitting the evidence |
 | Bindings | Which real thing stands in for which story element ("the dead drop" is "the red mailbox") | Freely, every turn |
 | Canon | Facts already established in play | Never contradicted |
 
-A chapter is three steps forward, so a case takes two chapters. The state is saved after every turn, so the next chapter can start right away or on another walk. The skeleton is never sent to the browser, and the answer reaches it only once the case is solved.
+Ending a walk partway is a pause: the chapter waits, and the next photo picks it back up from wherever you are. The state is saved after every turn, so the next chapter can start right away or on another walk. The skeleton is never sent to the browser, and the answer reaches it only once the case is solved.
 
 ## Privacy
 
@@ -98,8 +107,8 @@ All settings are environment variables; `.env.example` documents each one. The o
 | `GM_REASONING_EFFORT` | `minimal` | Muse Wonder's effort. `medium` took twice as long in testing and didn't write any better |
 | `QUEST_CARDS` | `on` | Turn off to skip Muse Image (the outline still shows the target) |
 | `SAM_GROUNDING` | `on` | Turn off to skip target outlines |
-| `DAILY_CALL_LIMIT` | `200` | Paid calls per UTC day across all players. Each story start, photo, walk end and painted card counts once. `0` turns it off |
-| `PLAYER_DAILY_CALL_LIMIT` | `60` | Paid calls per UTC day for one player, about three full cases. It counts by IP address, or by browser when there's none, and is checked first, so one player can't use up everyone's calls. `0` turns it off |
+| `DAILY_CALL_LIMIT` | `200` | Paid calls per UTC day across all players. Each story start, photo, two-player chapter ending and painted card counts once. `0` turns it off |
+| `PLAYER_DAILY_CALL_LIMIT` | `100` | Paid calls per UTC day for one player, about three full cases, or one case for two friends on the same Wi-Fi. It counts by IP address, or by browser when there's none, and is checked first, so one player can't use up everyone's calls. `0` turns it off |
 
 ## Cost
 

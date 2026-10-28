@@ -8,7 +8,18 @@ import {
   type StoryView,
   type TurnView,
 } from "@/lib/types";
-import { unfinishedBeats } from "./beats";
+import { LEADS, unfinishedBeats } from "./beats";
+import { fromSingleWalk } from "./migrate";
+import {
+  TEAM_SIZE,
+  closeDue,
+  leadPartDone,
+  otherLead,
+  seatOf,
+  singleLead,
+  stepsLeft,
+  unclaimedLead,
+} from "./rules";
 
 /**
  * The full story state, server side. The game master's memory lives in three layers:
@@ -18,6 +29,10 @@ import { unfinishedBeats } from "./beats";
  * - bindings: how abstract beats map onto real things the player photographed.
  *   These change freely, every turn.
  * - canon: facts already established in play. Permanent; never contradicted.
+ *
+ * Each player has a seat: their lead, their next step and their walk. Two players can be
+ * partway through turns at once, so turns are saved onto the story as it is by then (see
+ * commit in engine.ts).
  */
 
 const GenreSchema = z.enum(GENRES.map((g) => g.id) as [string, ...string[]]);
@@ -39,76 +54,96 @@ export const BeatSchema = z.object({
   id: z.string(),
   goal: z.string(),
   status: z.enum(["pending", "active", "done", "skipped"]),
+  /** Whose lead it's on. A two-player case has two; stories from before leads have one. */
+  lead: z.enum(LEADS).default("a"),
 });
 export type Beat = z.infer<typeof BeatSchema>;
 
-export const StoryStateSchema = z.object({
-  version: z.literal(1),
-  id: z.string(),
-  /** The player who started the story. */
+/** One player's place in a story. */
+export const SeatSchema = z.object({
   playerId: z.string(),
-  /** Players who joined through the invite link and took a chapter. Stories saved before it start empty. */
-  partners: z.array(z.string()).default([]),
-  /** The invite link's code and how many players the case takes, made when the owner first shares it. */
-  invite: z.object({ code: z.string(), size: z.number() }).nullable().default(null),
-  genre: GenreSchema,
-  /** The player's own idea for a custom story, already cleaned (see cleanTheme). */
-  theme: z.string().nullable().default(null),
-  /** One player, or two taking a chapter each. Stories saved before it are solo. */
-  mode: z.enum(["solo", "team"]).default("solo"),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  title: z.string(),
-  /** The case: the question the story answers. Older stories have a one-line pitch instead. */
-  logline: z.string(),
-  skeleton: z.object({
-    /** The answer to the case, revealed when the story ends. Stories saved before it start empty. */
-    secret: z.string().default(""),
-    premise: z.string(),
-    antagonist: z.string(),
-    stakes: z.string(),
-    ending: z.string(),
-    beats: z.array(BeatSchema),
-  }),
-  characters: z.array(z.object({ name: z.string(), role: z.string(), notes: z.string() })),
-  canon: z.array(z.object({ fact: z.string(), turn: z.number() })),
-  bindings: z.array(z.object({ abstract: z.string(), concrete: z.string(), turn: z.number() })),
-  inventory: z.array(z.string()),
-  /** One piece per step forward, named on that step's card. Stories saved before it start empty. */
-  evidence: z
-    .array(
-      // `by` is who found it; null on evidence from before stories could be shared, which the owner found.
-      z.object({ title: z.string(), caption: z.string(), turn: z.number(), by: z.string().nullable().default(null) }),
-    )
-    .default([]),
+  /** The lead they follow. Their photos only move this one. */
+  lead: z.enum(LEADS),
   quest: QuestStateSchema.nullable(),
-  chapter: z.number(),
-  turnCount: z.number(),
-  questsCompleted: z.number(),
-  walk: z.object({
-    active: z.boolean(),
-    startedAt: z.string().nullable(),
-    /** Photos this walk that moved the story forward. */
-    questsDone: z.number(),
-    /** Photos in a row that left the story where it was. Stories saved before this field start at 0. */
-    photosSinceProgress: z.number().default(0),
-    /** Who is playing this walk. Only they can send photos or end it. Null means the owner. */
-    playerId: z.string().nullable().default(null),
-  }),
-  recap: z.string(),
-  /** The game master's last narration, so the next one can carry on from it without repeating it. */
-  lastNarration: z.string().default(""),
-  status: z.enum(["active", "complete"]),
+  /** Out on a walk now. Ending a walk pauses it, and the chapter waits for them. */
+  walking: z.boolean(),
+  startedAt: z.string().nullable(),
+  /** Photos in a row that left the story where it was. */
+  photosSinceProgress: z.number(),
+  /** The game master's last narration to this player, so the next one can carry on from it without repeating it. */
+  lastNarration: z.string(),
 });
+export type Seat = z.infer<typeof SeatSchema>;
+
+export const StoryStateSchema = z.preprocess(
+  fromSingleWalk,
+  z.object({
+    version: z.literal(1),
+    id: z.string(),
+    /** The player who started the story. */
+    playerId: z.string(),
+    /** Players who joined through the invite link. Stories saved before it start empty. */
+    partners: z.array(z.string()).default([]),
+    /** The invite link's code and how many players the case takes, made when the owner first shares it. */
+    invite: z.object({ code: z.string(), size: z.number() }).nullable().default(null),
+    genre: GenreSchema,
+    /** The player's own idea for a custom story, already cleaned (see cleanTheme). */
+    theme: z.string().nullable().default(null),
+    /** One player, or two following a lead each. Stories saved before it are solo. */
+    mode: z.enum(["solo", "team"]).default("solo"),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+    title: z.string(),
+    /** The case: the question the story answers. Older stories have a one-line pitch instead. */
+    logline: z.string(),
+    skeleton: z.object({
+      /** The answer to the case, revealed when the story ends. Stories saved before it start empty. */
+      secret: z.string().default(""),
+      premise: z.string(),
+      antagonist: z.string(),
+      stakes: z.string(),
+      ending: z.string(),
+      beats: z.array(BeatSchema),
+      /** What each chapter finds out, in order. Stories saved before chapters were planned have none. */
+      chapters: z.array(z.string()).default([]),
+      /** In a two-player case, the side of the case each lead finds out. */
+      focus: z.object({ a: z.string(), b: z.string() }).nullable().default(null),
+    }),
+    characters: z.array(z.object({ name: z.string(), role: z.string(), notes: z.string() })),
+    canon: z.array(z.object({ fact: z.string(), turn: z.number() })),
+    bindings: z.array(z.object({ abstract: z.string(), concrete: z.string(), turn: z.number() })),
+    inventory: z.array(z.string()),
+    /** One piece per step forward, named on that step's card. Stories saved before it start empty. */
+    evidence: z
+      .array(
+        // `by` is who found it; null on evidence from before stories could be shared, which the owner found.
+        z.object({ title: z.string(), caption: z.string(), turn: z.number(), by: z.string().nullable().default(null) }),
+      )
+      .default([]),
+    seats: z.array(SeatSchema),
+    chapter: z.number(),
+    /** The last chapter whose ending has been told: equal to `chapter` between chapters. */
+    closed: z.number(),
+    /** Steps forward on each lead in the current chapter. */
+    progress: z.object({ a: z.number(), b: z.number() }),
+    turnCount: z.number(),
+    questsCompleted: z.number(),
+    recap: z.string(),
+    status: z.enum(["active", "complete"]),
+  }),
+);
 export type StoryState = z.infer<typeof StoryStateSchema>;
 
 export const TurnRecordSchema = z.object({
   id: z.string(),
   storyId: z.string(),
   number: z.number(),
-  // "complete" (proof photo) and "show" are from before every photo went through one turn.
-  kind: z.enum(["genesis", "photo", "resume", "end", "complete", "show"]),
+  // "complete" (proof photo) and "show" are from before every photo went through one turn,
+  // and "end" from when ending a walk closed its chapter. "close" tells a two-player chapter's ending.
+  kind: z.enum(["genesis", "photo", "resume", "end", "close", "complete", "show"]),
   createdAt: z.string(),
+  /** The chapter it belongs to. Null on turns from before it was kept. */
+  chapter: z.number().nullable().default(null),
   photoId: z.string().nullable(),
   photoSize: z.object({ width: z.number(), height: z.number() }).nullable(),
   /** Set when the photo moved the story: what Muse Image paints onto it. */
@@ -130,7 +165,7 @@ export const TurnRecordSchema = z.object({
       outline: z.object({ path: z.string(), transform: z.string() }).nullable(),
     })
     .nullable(),
-  /** Who played the turn. Null on turns from before stories could be shared, which the owner played. */
+  /** Who played the turn. Null on a chapter's ending, which is both players', and on turns from before stories could be shared, which the owner played. */
   playerId: z.string().nullable().default(null),
   canonAdded: z.array(z.string()),
   observations: z.array(z.string()),
@@ -168,18 +203,28 @@ function viewOutcome(turn: TurnRecord): Outcome | null {
   return null;
 }
 
-/** Who is playing the current walk. Walks from before stories could be shared were the owner's. */
-export function walkPlayer(state: StoryState): string {
-  return state.walk.playerId ?? state.playerId;
+/** Where the viewer stands in the story right now. */
+function stageOf(state: StoryState, viewerId: string): StoryView["stage"] {
+  if (state.status === "complete") return "solved";
+  const seat = seatOf(state, viewerId);
+  if (seat?.walking) return "walking";
+  if (closeDue(state)) return "closing";
+  if (state.closed === state.chapter) return "between";
+  // A case from before leads has one walk at a time.
+  if (singleLead(state) && state.seats.some((other) => other.walking)) return "watching";
+  return leadPartDone(state, seat?.lead ?? unclaimedLead(state) ?? "a") ? "waiting" : "ready";
 }
-
-/** Players a case takes when its owner invites a friend. */
-export const TEAM_SIZE = 2;
 
 /** The story as `viewerId` sees it: the owner, or a partner who joined through the invite. */
 export function storyView(state: StoryState, viewerId: string): StoryView {
   const complete = state.status === "complete";
   const size = state.invite?.size ?? TEAM_SIZE;
+  const seat = seatOf(state, viewerId);
+  const stage = stageOf(state, viewerId);
+  const two = state.mode === "team" && !singleLead(state);
+  // The partner's lead: the one the viewer isn't on, whether or not the friend has taken it yet.
+  const partnerLead = otherLead(seat?.lead ?? "a");
+  const partnerSeat = state.seats.find((other) => other.playerId !== viewerId) ?? null;
   return {
     id: state.id,
     title: state.title,
@@ -189,14 +234,22 @@ export function storyView(state: StoryState, viewerId: string): StoryView {
     mode: state.mode,
     chapter: state.chapter,
     status: state.status,
-    walkActive: state.walk.active,
+    walkActive: state.seats.some((other) => other.walking),
+    stage,
     role: viewerId === state.playerId ? "owner" : "partner",
     shared: state.partners.length > 0,
-    partnerWalking: state.walk.active && walkPlayer(state) !== viewerId,
+    partner: two
+      ? {
+          joined: state.partners.length > 0,
+          walking: partnerSeat?.walking ?? false,
+          left: complete ? 0 : stepsLeft(state, partnerLead),
+        }
+      : null,
+    // Before the friend joins, the player can walk their lead too, so the chapter can end.
+    canTakeOver: stage === "waiting" && two && unclaimedLead(state) === partnerLead && !leadPartDone(state, partnerLead),
     invitable: state.mode === "team" && viewerId === state.playerId && !complete && state.partners.length < size - 1,
-    upNext: state.mode === "team" && walkPlayer(state) === viewerId ? "partner" : "you",
     inviteCode: state.mode === "team" && viewerId === state.playerId ? (state.invite?.code ?? null) : null,
-    quest: questView(state.quest),
+    quest: seat?.walking ? questView(seat.quest) : null,
     questsCompleted: state.questsCompleted,
     // Every step forward finishes a beat and turns up a piece of evidence.
     evidenceTotal: state.questsCompleted + (complete ? 0 : unfinishedBeats(state.skeleton.beats)),
@@ -226,14 +279,15 @@ export function storySummary(state: StoryState, viewerId: string): StorySummary 
   };
 }
 
-/** A turn as `viewerId` sees it. Turns without a player are the owner's. */
+/** A turn as `viewerId` sees it. Turns without a player are the owner's, except a chapter's ending, which is everyone's. */
 export function turnView(turn: TurnRecord, viewerId: string, ownerId: string): TurnView {
   return {
     id: turn.id,
     number: turn.number,
-    playedBy: (turn.playerId ?? ownerId) === viewerId ? "you" : "partner",
+    playedBy: turn.kind === "close" || (turn.playerId ?? ownerId) === viewerId ? "you" : "partner",
     kind: turn.kind === "complete" || turn.kind === "show" ? "photo" : turn.kind,
     createdAt: turn.createdAt,
+    chapter: turn.chapter,
     photoUrl: mediaUrl(turn.photoId),
     photoSize: turn.photoSize,
     card: turn.card ? { title: turn.card.title, caption: turn.card.caption } : null,

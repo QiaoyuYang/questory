@@ -3,29 +3,43 @@ import type { Config } from "@/lib/config";
 import { respondJson, type ContentPart, type Usage } from "@/lib/meta/structured";
 import { mockBrain } from "./mock";
 import {
-  EpilogueSchema,
+  CloseSchema,
   GenesisSchema,
+  GenesisTeamSchema,
   PhotoTurnSchema,
   ResumeSchema,
-  type EpilogueOut,
+  type CloseOut,
   type GenesisOut,
   type PhotoTurnOut,
   type ResumeOut,
 } from "./outputs";
-import { GM_INSTRUCTIONS, epilogueTask, genesisTask, photoTask, resumeTask } from "./prompts";
+import { GM_INSTRUCTIONS, closeTask, genesisTask, photoTask, resumeTask } from "./prompts";
 import type { StoryState } from "./state";
 
 export type Result<T> = { data: T; usage: Usage };
 
 /** The game master's decisions. One implementation calls the Meta Model API; the other is scripted. */
 export type Brain = {
-  /** `theme` is the player's own idea, for a custom story. */
-  genesis(genre: string, theme: string | null, photo: string): Promise<Result<GenesisOut>>;
-  /** Any photo during a walk. `mustProgress` is set when this photo has to move the story. */
-  photo(state: StoryState, photo: string, options: { mustProgress: boolean }): Promise<Result<PhotoTurnOut>>;
-  /** `newPlayer` is a partner joining through the invite link, who hasn't seen the story. */
-  resume(state: StoryState, photo: string, options: { newPlayer: boolean }): Promise<Result<ResumeOut>>;
-  epilogue(state: StoryState): Promise<Result<EpilogueOut>>;
+  /** `theme` is the player's own idea, for a custom story. A "team" case gets a lead for each player. */
+  genesis(genre: string, theme: string | null, mode: "solo" | "team", photo: string): Promise<Result<GenesisOut>>;
+  /** Any photo during `playerId`'s walk. `mustProgress` is set when this photo has to move the story. */
+  photo(
+    state: StoryState,
+    photo: string,
+    options: { playerId: string; mustProgress: boolean },
+  ): Promise<Result<PhotoTurnOut>>;
+  /**
+   * The first photo of a walk. `newPlayer` is a partner's first walk on the case; `newChapter`
+   * is set when the walk opens the next chapter rather than picking one back up; `takeOver`
+   * when the player starts on the lead their friend hasn't joined to take.
+   */
+  resume(
+    state: StoryState,
+    photo: string,
+    options: { playerId: string; newPlayer: boolean; newChapter: boolean; takeOver: boolean },
+  ): Promise<Result<ResumeOut>>;
+  /** A two-player chapter's ending, once both leads are done. */
+  close(state: StoryState): Promise<Result<CloseOut>>;
 };
 
 function withPhoto(text: string, photo: string): ContentPart[] {
@@ -45,11 +59,11 @@ export function liveBrain(config: Config): Brain {
   };
 
   return {
-    genesis: (genre, theme, photo) =>
+    genesis: (genre, theme, mode, photo) =>
       respondJson({
         ...gm,
-        content: withPhoto(genesisTask(genre, theme), photo),
-        schema: GenesisSchema,
+        content: withPhoto(genesisTask(genre, theme, mode), photo),
+        schema: mode === "team" ? GenesisTeamSchema : GenesisSchema,
         schemaName: "questory_genesis",
       }),
 
@@ -69,12 +83,12 @@ export function liveBrain(config: Config): Brain {
         schemaName: "questory_resume",
       }),
 
-    epilogue: (state) =>
+    close: (state) =>
       respondJson({
         ...gm,
-        content: [{ type: "input_text", text: epilogueTask(state) }],
-        schema: EpilogueSchema,
-        schemaName: "questory_epilogue",
+        content: [{ type: "input_text", text: closeTask(state) }],
+        schema: CloseSchema,
+        schemaName: "questory_close",
       }),
   };
 }
