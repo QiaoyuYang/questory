@@ -64,7 +64,6 @@ export type QuestView = {
   objective: string;
   hint: string;
   targetMode: TargetMode;
-  targetDescription: string;
 };
 
 export type TurnKind = "genesis" | "photo" | "resume" | "end";
