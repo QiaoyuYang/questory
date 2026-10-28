@@ -87,7 +87,7 @@ const CardSchema = z.object({
     'What the evidence proves, 3 to 6 words, e.g. "Someone forced it, then fixed it" or "Left in a hurry", never where it is and never more than the photo shows. Lettered along the bottom.',
   ),
   flourish: text(SENTENCE).describe(
-    "One small visual detail to paint onto the card that fits the story. A picture, never words, numbers or labels.",
+    'One small thing to draw near the edge of the card that fits the story, named in a few words, e.g. "a trail of tiny paw prints" or "a curl of steam". Something you could see, never a sentence, words or numbers, and nothing that could look like blood or an injury.',
   ),
 });
 export type CardOut = z.infer<typeof CardSchema>;

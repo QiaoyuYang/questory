@@ -1,6 +1,6 @@
 import "server-only";
 import { getConfig, type Config } from "@/lib/config";
-import { editPhoto } from "@/lib/meta/image";
+import { editPhoto, refusedOnContent } from "@/lib/meta/image";
 import { locateTarget } from "@/lib/meta/sam";
 import type { Usage } from "@/lib/meta/structured";
 import type { Photo } from "@/lib/photo";
@@ -323,13 +323,9 @@ export async function paintCard(state: StoryState, turn: TurnRecord, playerId: s
   turn.cardStatus = "pending";
   await store.saveTurn(turn);
   try {
-    const card = await editPhoto(photo, storyCardPrompt(state.genre, turn.card, state.theme), turn.photoSize, {
-      baseURL: config.meta.baseURL,
-      apiKey: config.meta.apiKey,
-      model: config.meta.imageModel,
-      reasoningStrength: config.meta.imageReasoning || undefined,
-    });
-    turn.cardId = await store.putImage(card);
+    const card = await drawCard(config, playerId, state, turn.card, photo, turn.photoSize);
+    // When Muse Image won't draw it at all, the photo is the evidence.
+    turn.cardId = card ? await store.putImage(card) : turn.photoId;
     turn.cardStatus = "ready";
   } catch (error) {
     console.warn("[questory] Muse Image could not paint the card:", error);
@@ -337,4 +333,40 @@ export async function paintCard(state: StoryState, turn: TurnRecord, playerId: s
   }
   await store.saveTurn(turn);
   return turn;
+}
+
+/**
+ * Muse Image turns a few cards down on content grounds, usually over a phrase in the game
+ * master's extra detail ("That red drip gives us a trail" read as blood). Asking again
+ * would only be refused again, so a refused card gets one plainer try, without the detail
+ * or the player's theme. Null when that is refused too.
+ */
+async function drawCard(
+  config: Config,
+  playerId: string,
+  state: StoryState,
+  card: NonNullable<TurnRecord["card"]>,
+  photo: { bytes: Uint8Array; mime: string },
+  size: { width: number; height: number },
+): Promise<{ bytes: Uint8Array; mime: string } | null> {
+  const options = {
+    baseURL: config.meta.baseURL,
+    apiKey: config.meta.apiKey,
+    model: config.meta.imageModel,
+    reasoningStrength: config.meta.imageReasoning || undefined,
+  };
+  try {
+    return await editPhoto(photo, storyCardPrompt(state.genre, card, state.theme), size, options);
+  } catch (error) {
+    if (!refusedOnContent(error)) throw error;
+    console.warn("[questory] Muse Image turned the card down on content grounds; trying a plainer one.");
+  }
+  await spendCall(config, playerId);
+  try {
+    return await editPhoto(photo, storyCardPrompt(state.genre, { ...card, flourish: "" }, null), size, options);
+  } catch (error) {
+    if (!refusedOnContent(error)) throw error;
+    console.warn("[questory] Muse Image turned the plainer card down too; the photo stands in.");
+    return null;
+  }
 }
