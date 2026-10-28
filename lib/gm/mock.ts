@@ -178,13 +178,14 @@ export const mockBrain: Brain = {
     };
   },
 
-  async resume(state) {
+  async resume(state, _photo, { newPlayer }) {
     await pause();
     return {
       usage,
       data: {
-        narration:
-          "Back to the case of Rosa's missing bell. The thief knows the bakery from the inside, and they left more chalk arrows than you have found. The next one should be close.",
+        narration: newPlayer
+          ? "Your partner has been chasing Rosa's missing bell across town. They found chalk arrows, brass dust and a floury handprint: the thief came from inside the bakery. The next arrow is somewhere near you."
+          : "Back to the case of Rosa's missing bell. The thief knows the bakery from the inside, and they left more chalk arrows than you have found. The next one should be close.",
         observations: ["(mock mode)"],
         canonAdd: [],
         bindingsAdd: [],

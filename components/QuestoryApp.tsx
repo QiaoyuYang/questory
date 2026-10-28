@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api, type TurnResult } from "@/lib/client/api";
+import { rememberShared, sharedStories } from "@/lib/client/share";
 import type { StorySummary } from "@/lib/types";
 import { HomeScreen } from "./HomeScreen";
+import { JoinScreen } from "./JoinScreen";
 import { StoryScreen } from "./StoryScreen";
 
 const CURRENT_KEY = "questory:current-story";
@@ -27,7 +29,20 @@ function recall(): string | null {
 
 type Screen =
   | { name: "home" }
-  | { name: "story"; storyId: string; initial: TurnResult | null };
+  | { name: "story"; storyId: string; initial: TurnResult | null }
+  | { name: "join"; storyId: string; code: string };
+
+/** An invite link opens the app at /?join=<story id>.<code>. */
+function readInvite(): { storyId: string; code: string } | null {
+  const join = new URLSearchParams(window.location.search).get("join");
+  const [storyId, code] = join?.split(".") ?? [];
+  return storyId && code ? { storyId, code } : null;
+}
+
+/** Leave the invite link behind, so going home doesn't land on it again. */
+function forgetInvite() {
+  if (window.location.search) window.history.replaceState(null, "", window.location.pathname);
+}
 
 export function QuestoryApp() {
   const [screen, setScreen] = useState<Screen | null>(null);
@@ -36,7 +51,7 @@ export function QuestoryApp() {
 
   const refresh = useCallback(async () => {
     try {
-      const result = await api.listStories();
+      const result = await api.listStories(sharedStories());
       setStories(result.stories);
       setMode(result.mode);
       return result.stories;
@@ -48,13 +63,18 @@ export function QuestoryApp() {
 
   useEffect(() => {
     let cancelled = false;
+    const invite = readInvite();
     api
-      .listStories()
+      .listStories(sharedStories())
       .then(
         (result) => {
           if (cancelled) return;
           setStories(result.stories);
           setMode(result.mode);
+          if (invite) {
+            setScreen({ name: "join", ...invite });
+            return;
+          }
           const current = recall();
           const open = current
             ? result.stories.find((story) => story.id === current && story.status === "active")
@@ -64,13 +84,39 @@ export function QuestoryApp() {
         () => {
           if (cancelled) return;
           setStories([]);
-          setScreen({ name: "home" });
+          setScreen(invite ? { name: "join", ...invite } : { name: "home" });
         },
       );
     return () => {
       cancelled = true;
     };
   }, []);
+
+  const goHome = useCallback(() => {
+    remember(null);
+    forgetInvite();
+    setScreen({ name: "home" });
+    void refresh();
+    window.scrollTo({ top: 0 });
+  }, [refresh]);
+
+  // Out of an invite link and into the story, loaded whole: a friend who just joined
+  // needs the chapters before theirs too. A partner's browser remembers the story,
+  // since it belongs to their friend.
+  const openFromInvite = useCallback((storyId: string, partner: boolean) => {
+    if (partner) rememberShared(storyId);
+    remember(storyId);
+    forgetInvite();
+    setScreen({ name: "story", storyId, initial: null });
+    window.scrollTo({ top: 0 });
+  }, []);
+  const joinStoryId = screen?.name === "join" ? screen.storyId : null;
+  const openInvited = useCallback(
+    (role: "owner" | "partner") => {
+      if (joinStoryId) openFromInvite(joinStoryId, role === "partner");
+    },
+    [joinStoryId, openFromInvite],
+  );
 
   if (!screen) {
     return (
@@ -80,18 +126,25 @@ export function QuestoryApp() {
     );
   }
 
+  if (screen.name === "join") {
+    return (
+      <JoinScreen
+        storyId={screen.storyId}
+        code={screen.code}
+        onJoined={(result) => openFromInvite(result.story.id, true)}
+        onOpen={openInvited}
+        onHome={goHome}
+      />
+    );
+  }
+
   if (screen.name === "story") {
     return (
       <StoryScreen
         key={screen.storyId}
         storyId={screen.storyId}
         initial={screen.initial ? { story: screen.initial.story, turns: [screen.initial.turn] } : null}
-        onHome={() => {
-          remember(null);
-          setScreen({ name: "home" });
-          void refresh();
-          window.scrollTo({ top: 0 });
-        }}
+        onHome={goHome}
       />
     );
   }

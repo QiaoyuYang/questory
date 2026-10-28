@@ -2,7 +2,7 @@ import "server-only";
 import { GAME_MASTER, GENRES } from "@/lib/types";
 import { unfinishedBeats } from "./beats";
 import { QUESTS_PER_CHAPTER, STORY_STEPS } from "./rules";
-import type { StoryState } from "./state";
+import { walkPlayer, type StoryState } from "./state";
 
 const SAFETY = `Safety and respect, always:
 - Never ask the player to enter roads or traffic, trespass, climb anything, enter private property or businesses, touch or move other people's things, or approach strangers.
@@ -71,8 +71,15 @@ function genreLine(genre: string): string {
 /** The story so far, as the game master sees it. Includes the hidden plan. */
 export function describeState(state: StoryState, options: { includePlan: boolean }): string {
   const lines: string[] = [];
+  const shared = state.partners.length > 0;
+  const player = walkPlayer(state);
   lines.push(`Genre: ${genreLine(state.genre)}`);
   lines.push(`Story: "${state.title}". The case: ${state.logline}`);
+  if (shared) {
+    lines.push(
+      'Two players share this case and take turns, one chapter each, on their own streets. In narration, call the other one "your partner" and give them credit for what they found.',
+    );
+  }
 
   if (options.includePlan) {
     const { skeleton } = state;
@@ -98,7 +105,10 @@ export function describeState(state: StoryState, options: { includePlan: boolean
   const total = state.questsCompleted + unfinishedBeats(state.skeleton.beats);
   lines.push("", `Evidence the player has found (${state.evidence.length} of ${total}):`);
   if (state.evidence.length === 0) lines.push("- (none yet)");
-  for (const piece of state.evidence) lines.push(`- ${piece.title}${piece.caption ? `: ${piece.caption}` : ""}`);
+  for (const piece of state.evidence) {
+    const finder = shared ? ((piece.by ?? state.playerId) === player ? " (the player found this)" : " (their partner found this)") : "";
+    lines.push(`- ${piece.title}${piece.caption ? `: ${piece.caption}` : ""}${finder}`);
+  }
 
   if (state.bindings.length) {
     lines.push("", "Bindings (story element -> real thing):");
@@ -154,14 +164,20 @@ export function photoTask(state: StoryState, options: { mustProgress: boolean })
     .join("\n");
 }
 
-export function resumeTask(state: StoryState): string {
+export function resumeTask(state: StoryState, options: { newPlayer: boolean }): string {
   return [
     describeState(state, { includePlan: true }),
     "",
-    `The player is starting chapter ${state.chapter}. They may have walked straight on from the last chapter, or come back on another day somewhere else. This photo shows where they are now.`,
-    "Pick the story back up here: remind the player of the case in a few words, connect this place to what came before, and issue the next quest for the current beat. If the quest is in_view, its target must be clearly visible in this photo.",
+    options.newPlayer
+      ? `Someone else picks up the case for chapter ${state.chapter}: the partner of the player who began it. They haven't seen any of the story, and this photo shows where they are, which may be far from where the case began. In the story's voice, tell them the case in a sentence and what their partner found, then connect this place to it. Never call them a new player or mention turns or chapters. Issue the next quest for the current beat. If the quest is in_view, its target must be clearly visible in this photo.`
+      : `The player is starting chapter ${state.chapter}. They may have walked straight on from the last chapter, or come back on another day somewhere else. This photo shows where they are now.`,
+    options.newPlayer
+      ? ""
+      : "Pick the story back up here: remind the player of the case in a few words, connect this place to what came before, and issue the next quest for the current beat. If the quest is in_view, its target must be clearly visible in this photo.",
     "Put every new fact in canonAdd.",
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 export function epilogueTask(state: StoryState): string {

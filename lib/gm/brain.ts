@@ -22,7 +22,8 @@ export type Brain = {
   genesis(genre: string, photo: string): Promise<Result<GenesisOut>>;
   /** Any photo during a walk. `mustProgress` is set when this photo has to move the story. */
   photo(state: StoryState, photo: string, options: { mustProgress: boolean }): Promise<Result<PhotoTurnOut>>;
-  resume(state: StoryState, photo: string): Promise<Result<ResumeOut>>;
+  /** `newPlayer` is a partner joining through the invite link, who hasn't seen the story. */
+  resume(state: StoryState, photo: string, options: { newPlayer: boolean }): Promise<Result<ResumeOut>>;
   epilogue(state: StoryState): Promise<Result<EpilogueOut>>;
 };
 
@@ -59,10 +60,10 @@ export function liveBrain(config: Config): Brain {
         schemaName: "questory_photo",
       }),
 
-    resume: (state, photo) =>
+    resume: (state, photo, options) =>
       respondJson({
         ...gm,
-        content: withPhoto(resumeTask(state), photo),
+        content: withPhoto(resumeTask(state, options), photo),
         schema: ResumeSchema,
         schemaName: "questory_resume",
       }),

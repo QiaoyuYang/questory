@@ -23,6 +23,8 @@ Questory is built for the part where people stop. The story carries on from one 
 
 Every story is a case: one plain question, like "Who took Sir Buttons the garden gnome?", with an answer Wren fixes at the start. A case is six steps forward. Each one turns up a piece of evidence, the last one solves it, and the evidence list shows what you've found and how much is left. The person behind the answer shows up by the second step, so a sharp player can guess it before the end.
 
+A case can be played by two. After chapter 1, the owner sends an invite link, and a friend plays chapter 2 on their own streets: Wren tells them the case and what their partner found, and the evidence list shows who found what. Only the player on the current walk can add to it, so a shared case never has two people writing at once.
+
 Quests are suggestions. If two photos in a row only add side notes, the game master moves the story forward with the next one, whatever it shows.
 
 ### How the game master remembers
@@ -42,6 +44,7 @@ A chapter is three steps forward, so a case takes two chapters. The state is sav
 - **No account.** A random ID in a cookie ties your stories to your browser, and nobody else can open them.
 - **No location.** The app never asks for GPS. Photos are redrawn in the browser before upload, which drops the location data phones store inside photo files. Walk times come from timestamps.
 - **Photos stay out of sight.** They go to the Meta Model API to be read and drawn, then into a private bucket, and they're only served through long random links.
+- **Sharing is opt-in.** An invite link shows only the case and how much evidence is found. A friend sees the story's photos and evidence once they join it.
 - **Delete means delete.** Deleting a story removes it along with its photos and cards.
 - **The limits don't keep addresses.** The per-player daily limit counts by IP address, but stores only a keyed hash that changes every day.
 

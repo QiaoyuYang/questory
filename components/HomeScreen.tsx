@@ -73,6 +73,11 @@ export function HomeScreen({ stories, mode, onStarted, onOpen }: Props) {
                         <span className="block truncate font-sign text-xl leading-tight font-bold">{story.title}</span>
                         <span className="mt-0.5 block text-sm text-concrete">{describe(story)}</span>
                       </span>
+                      {story.role === "partner" && (
+                        <span className="shrink-0 rounded-full bg-lane/15 px-2 py-0.5 text-xs font-semibold text-lane">
+                          Shared
+                        </span>
+                      )}
                       {story.walkActive && (
                         <span className="shrink-0 rounded-full bg-walk/15 px-2 py-0.5 text-xs font-semibold text-walk">
                           Walking

@@ -50,6 +50,11 @@ export function EvidenceList({ story, turns, onZoom }: Props) {
                 <div className="min-w-0">
                   <p className="font-sign text-lg leading-tight font-bold">{card.title}</p>
                   {card.caption && <p className="text-[0.9375rem] text-concrete">{card.caption}</p>}
+                  {story.shared && (
+                    <p className="mt-0.5 text-xs font-semibold tracking-wide text-lane uppercase">
+                      {turn.playedBy === "you" ? "Found by you" : "Found by your partner"}
+                    </p>
+                  )}
                 </div>
               </li>
             );

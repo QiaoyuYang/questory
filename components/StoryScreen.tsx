@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, type TurnResult } from "@/lib/client/api";
+import { shareLink } from "@/lib/client/share";
 import { currentChapter, walkStats } from "@/lib/walk";
 import { GAME_MASTER, type PhotoUpload, type StoryView, type TurnView } from "@/lib/types";
 import { Alert } from "./Alert";
@@ -43,6 +44,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
   const [picked, setPicked] = useState<{ turnId: string; view: SceneView } | null>(null);
   const [zoomed, setZoomed] = useState<Zoomed | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const requested = useRef(new Set<string>());
 
   useEffect(() => {
@@ -103,6 +105,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
 
   async function run(message: string, photo: PhotoUpload | null, task: () => Promise<TurnResult>) {
     setError(null);
+    setNotice(null);
     setPanel(null);
     setBusy({ message, photo });
     try {
@@ -128,6 +131,12 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
   const resume = (photo: PhotoUpload) =>
     run(`${GAME_MASTER} is starting the next chapter…`, photo, () => api.takeTurn(storyId, "resume", photo));
   const end = () => run(`${GAME_MASTER} is closing the chapter…`, null, () => api.endWalk(storyId));
+
+  // While a partner walks, their finds show up here once the page asks again.
+  function reload() {
+    setError(null);
+    api.getStory(storyId).then(setData, (err: Error) => setError({ message: err.message, retry: null }));
+  }
 
   async function remove() {
     setDeleting(true);
@@ -161,7 +170,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
     );
   }
 
-  const walkLive = story.walkActive && story.status === "active";
+  const walkLive = story.walkActive && story.status === "active" && !story.partnerWalking;
   const between = !story.walkActive && story.status === "active";
   const quest = walkLive ? story.quest : null;
   // Only a closer look needs its photo, and only when SAM outlined the target: without
@@ -171,6 +180,31 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
   const view = picked && picked.turnId === scene?.id && views.includes(picked.view) ? picked.view : views[0];
   const outcome = latest ? outcomeLabel(latest) : null;
   const evidenceFound = turns.filter((turn) => turn.card).length;
+
+  // The share sheet only opens straight after a tap, so the link is built right here.
+  // Stories from before invites fetch theirs first, and fall back to copying if the
+  // phone has stopped counting it as a tap by then.
+  async function invite() {
+    if (!story) return;
+    setError(null);
+    try {
+      let url: string;
+      if (story.inviteCode) {
+        const link = new URL("/", window.location.origin);
+        link.searchParams.set("join", `${story.id}.${story.inviteCode}`);
+        url = link.toString();
+      } else {
+        url = (await api.createInvite(storyId)).url;
+      }
+      const result = await shareLink({ title: story.title, text: `Help me solve this case on Questory: ${story.logline}`, url });
+      if (result === "copied") {
+        setPanel(null);
+        setNotice("Invite link copied. Send it to a friend.");
+      }
+    } catch (err) {
+      setError({ message: err instanceof Error ? err.message : "The invite link didn't work. Try again.", retry: null });
+    }
+  }
 
   return (
     <main className="mx-auto w-full max-w-[30rem] px-4 pb-56">
@@ -223,6 +257,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
               <section aria-label={GAME_MASTER} className="mt-5">
                 {outcome && (
                   <p className="font-sign text-lg font-bold text-walk">
+                    {latest.playedBy === "partner" && "Your partner: "}
                     {outcome}
                     {latest.card && <span className="text-concrete"> · new evidence</span>}
                   </p>
@@ -264,6 +299,12 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
                 Take a photo of whatever catches your eye. {GAME_MASTER} will work it into the story.
               </p>
             ))}
+          {story.partnerWalking && (
+            <div className="py-1">
+              <p className="font-sign text-lg font-bold text-lane">Your partner is playing chapter {story.chapter}</p>
+              <p className="text-sm text-concrete">Their evidence shows up here as they find it.</p>
+            </div>
+          )}
           {between && (
             <div className="py-1">
               <p className="font-sign text-lg font-bold text-lane">Chapter {story.chapter} is done</p>
@@ -271,6 +312,15 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
               <p className="text-sm text-concrete">
                 You can start chapter {story.chapter + 1} now or on your next walk.
               </p>
+              {story.invitable && (
+                <button
+                  type="button"
+                  onClick={() => void invite()}
+                  className="mt-0.5 min-h-11 text-[0.9375rem] font-semibold text-lane underline underline-offset-4"
+                >
+                  Or invite a friend to play chapter {story.chapter + 1}
+                </button>
+              )}
             </div>
           )}
           {story.status === "complete" && (
@@ -312,12 +362,22 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
                 </CaptureButton>
               </>
             )}
+            {story.partnerWalking && (
+              <button type="button" onClick={reload} className={`${BUTTON.secondary} flex-1`}>
+                Refresh
+              </button>
+            )}
             {story.status === "complete" && (
               <button type="button" onClick={onHome} className={`${BUTTON.primary} flex-1`}>
                 Start a new story
               </button>
             )}
           </div>
+          {notice && (
+            <p role="status" className="mt-2 text-sm text-walk">
+              {notice}
+            </p>
+          )}
         </BottomBar>
       )}
 
@@ -327,7 +387,8 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
         story={story}
         turns={turns}
         onZoom={setZoomed}
-        onDelete={() => setPanel("delete")}
+        onInvite={story.invitable ? () => void invite() : null}
+        onDelete={story.role === "owner" ? () => setPanel("delete") : null}
       />
       <QuestSheet
         key={quest?.id ?? "open"}
