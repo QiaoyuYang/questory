@@ -40,7 +40,6 @@ export function makeQuest(out: QuestOut, beatId: string | null, turn: number): Q
     id: crypto.randomUUID(),
     title: out.title.trim(),
     objective: out.objective.trim(),
-    hint: out.hint.trim(),
     targetMode: out.targetMode,
     targetPhrase: nounPhrase(out.targetPhrase),
     targetDescription: out.targetDescription.trim(),
@@ -95,6 +94,15 @@ function evidenceCard(card: PhotoTurnOut["card"]): NonNullable<TurnRecord["card"
   };
 }
 
+/**
+ * Keep the answer fitting the evidence. The game master sends a new one when what the
+ * player found points somewhere else; the player never sees the change.
+ */
+export function reviseSecret(state: StoryState, revised: string | null) {
+  const secret = revised?.trim();
+  if (secret) state.skeleton.secret = secret;
+}
+
 /** Apply the game master's reading of a photo to the story. Mutates `state`. */
 export function applyPhotoTurn(state: StoryState, data: PhotoTurnOut, turn: number): PhotoTurnResult {
   // The game master was told this photo has to count, so hold it to that.
@@ -110,6 +118,7 @@ export function applyPhotoTurn(state: StoryState, data: PhotoTurnOut, turn: numb
     beatComplete: moved,
     replanWith: data.planChange === "replan" ? data.revisedBeats : null,
   });
+  reviseSecret(state, data.revisedSecret);
 
   if (card) {
     state.evidence.push({ title: card.title, caption: card.caption, turn, by: state.walk.playerId });

@@ -6,7 +6,11 @@
 /** What players call the game master. */
 export const GAME_MASTER = "Wren";
 
-/** The picker shows each name; the blurb tells the game master what the genre is about. */
+/**
+ * The picker shows each name; the blurb tells the game master what the genre is about.
+ * "custom" is the player's own idea, in their words. A retired genre still plays for
+ * stories started in it, but isn't offered for new ones.
+ */
 export const GENRES = [
   {
     id: "mystery",
@@ -24,22 +28,51 @@ export const GENRES = [
     blurb: "Signals, glitches, and something that doesn't belong here.",
   },
   {
-    id: "everyday",
-    name: "Cozy",
-    blurb: "Small wonders and kind strangers. Low stakes, warm heart.",
-  },
-  {
     id: "comedy",
     name: "Comedy",
     blurb:
       "A silly case treated like the crime of the century: a kidnapped garden gnome, a pigeon on the suspect list, a prize pumpkin gone missing. Everyone takes it far too seriously. Give every reply one funny line, from a character or a deadpan aside. Warm, never mean.",
   },
+  {
+    id: "custom",
+    name: "Your own",
+    blurb: "",
+  },
+  {
+    id: "everyday",
+    name: "Cozy",
+    blurb: "Small wonders and kind strangers. Low stakes, warm heart.",
+    retired: true,
+  },
 ] as const;
 
 export type GenreId = (typeof GENRES)[number]["id"];
 
+/** The genres a new story can start in. */
+export const NEW_GENRES = GENRES.filter((genre) => !("retired" in genre));
+
 export function isGenre(value: unknown): value is GenreId {
-  return GENRES.some((genre) => genre.id === value);
+  return NEW_GENRES.some((genre) => genre.id === value);
+}
+
+/** The longest custom theme, in characters. */
+export const THEME_LENGTH = 60;
+
+/** A custom theme as the game master gets it: one short line with no quotes or breaks to escape from. */
+export function cleanTheme(value: unknown): string {
+  if (typeof value !== "string") return "";
+  return value
+    .replace(/["“”`\\]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, THEME_LENGTH)
+    .trim();
+}
+
+/** How a story's kind reads in a list: the genre's name, or the player's own theme. */
+export function genreLabel(genre: string, theme: string | null): string {
+  if (genre === "custom" && theme) return theme.charAt(0).toUpperCase() + theme.slice(1);
+  return GENRES.find((g) => g.id === genre)?.name ?? genre;
 }
 
 export type TargetOverlay = {
@@ -62,7 +95,6 @@ export type QuestView = {
   id: string;
   title: string;
   objective: string;
-  hint: string;
   targetMode: TargetMode;
 };
 
@@ -105,6 +137,10 @@ export type StoryView = {
   /** The case: the question the story answers. */
   logline: string;
   genre: GenreId;
+  /** The player's own idea, for a custom story. */
+  theme: string | null;
+  /** Chosen when the story starts: one player, or two taking a chapter each. */
+  mode: "solo" | "team";
   chapter: number;
   status: "active" | "complete";
   walkActive: boolean;
@@ -114,9 +150,9 @@ export type StoryView = {
   shared: boolean;
   /** The current walk is the other player's, so the viewer can only watch. */
   partnerWalking: boolean;
-  /** The owner can still invite a friend to take a chapter. */
+  /** A two-player case whose friend hasn't joined yet, seen by its owner. */
   invitable: boolean;
-  /** The invite link's code, for the owner only. Stories from before invites get one when first shared. */
+  /** The invite link's code, for the owner of a two-player case only. */
   inviteCode: string | null;
   quest: QuestView | null;
   /** Steps forward so far. Each one turned up a piece of evidence. */
@@ -137,6 +173,8 @@ export type StorySummary = Pick<
   | "id"
   | "title"
   | "genre"
+  | "theme"
+  | "mode"
   | "chapter"
   | "status"
   | "walkActive"

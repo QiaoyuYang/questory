@@ -19,11 +19,13 @@ Questory is built for the part where people stop. The story carries on from one 
 1. **You take a photo of anything.** It can be what the quest asked for or whatever catches your eye. The browser shrinks it to 1280px and uploads it.
 2. **Muse Wonder plays Wren, the game master.** It reads the photo and the story so far, decides what the photo means, narrates, and leaves the next quest, all as structured JSON. A photo can follow the quest, move the story somewhere new, or add a clue on the side. No photo fails.
 3. **SAM 3.1 grounds the target.** When the next quest asks you to take a closer look at something in your photo ("the blue door"), SAM finds it and the app traces its outline.
-4. **Muse Image draws the evidence.** When a photo moves the story, it becomes an evidence card with the evidence's name and what it proves lettered on. Cards are keepsakes, so they never cover the photo you navigate by.
+4. **Muse Image draws the evidence.** When a photo moves the story, it's redrawn as a picture of the evidence, with its name and what it proves lettered on, in the story's style. These are keepsakes, so they never cover the photo you navigate by.
 
-Every story is a case: one plain question, like "Who took Sir Buttons the garden gnome?", with an answer Wren fixes at the start. A case is six steps forward. Each one turns up a piece of evidence, the last one solves it, and the evidence list shows what you've found and how much is left. The person behind the answer shows up by the second step, so a sharp player can guess it before the end.
+Every story is a case: one plain question, like "Who took Sir Buttons the garden gnome?", and an answer Wren decides at the start. A case is six steps forward. Each one turns up a piece of evidence, the last one solves it, and the evidence list shows what you've found and how much is left. The person behind the answer shows up early, so a sharp player can guess it before the end. If the evidence you find stops pointing at the answer, Wren changes the answer rather than the evidence, and the reveal ties the two together.
 
-A case can be played by two. After chapter 1, the owner sends an invite link, and a friend plays chapter 2 on their own streets: Wren tells them the case and what their partner found, and the evidence list shows who found what. Only the player on the current walk can add to it, so a shared case never has two people writing at once.
+Pick Mystery, Fantasy, Sci-fi or Comedy, or type your own idea, like "a haunted bakery", and Wren builds the case around it.
+
+A case can be played by two. Pick "With a friend" when you start: you play chapter 1, then send a link, and your friend plays chapter 2 on their own streets. Wren tells them the case and what you found, the evidence list shows who found what, and each of you gets your own walking time. Only the player on the current walk can add to it, so a shared case never has two people writing at once, and the other player's screen keeps up by itself.
 
 Quests are suggestions. If two photos in a row only add side notes, the game master moves the story forward with the next one, whatever it shows.
 
@@ -33,7 +35,7 @@ The story state has three layers, and the prompts treat each one differently:
 
 | Layer | What it holds | How it changes |
 | --- | --- | --- |
-| Skeleton | The hidden answer to the case, the premise, antagonist, stakes, ending, and six beats written as goals that work anywhere | Re-planned only when the world forces it, always narrated as a twist, and never changes the answer |
+| Skeleton | The hidden answer to the case, the premise, antagonist, stakes, ending, and six beats written as goals that work anywhere | Re-planned only when the world forces it, and always narrated as a twist. The answer changes only to keep fitting the evidence |
 | Bindings | Which real thing stands in for which story element ("the dead drop" is "the red mailbox") | Freely, every turn |
 | Canon | Facts already established in play | Never contradicted |
 

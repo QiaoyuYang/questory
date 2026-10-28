@@ -17,7 +17,6 @@ const QUEST: QuestOut = {
   title: "The marked door",
   targetMode: "in_view",
   objective: "Walk up to the green door. What number is painted above it?",
-  hint: "Look at the frame.",
   targetPhrase: "green door",
   targetDescription: "the green door on the left",
   successCriteria: "A close look at the door.",
@@ -30,6 +29,8 @@ function story(): StoryState {
     id: "story",
     playerId: "player",
     genre: "mystery",
+    theme: null,
+    mode: "solo",
     createdAt: "2026-10-26T00:00:00.000Z",
     updatedAt: "2026-10-26T00:00:00.000Z",
     title: "The courier's letter",
@@ -55,6 +56,7 @@ function story(): StoryState {
     questsCompleted: 0,
     walk: { active: true, startedAt: "2026-10-26T00:00:00.000Z", questsDone: 0, photosSinceProgress: 0, playerId: null },
     recap: "",
+    lastNarration: "",
     status: "active",
   };
   state.quest = makeQuest(QUEST, "b1", 1);
@@ -75,6 +77,7 @@ function reply(overrides: Partial<PhotoTurnOut> = {}): PhotoTurnOut {
     planChange: "none",
     planReason: "",
     revisedBeats: null,
+    revisedSecret: null,
     recap: null,
     quest: null,
     ...overrides,
@@ -203,6 +206,15 @@ test("every step forward turns up a piece of evidence, painted as a card", () =>
     { title: "The marked door", caption: "Number 14, freshly painted", turn: 2, by: null },
     { title: "New evidence", caption: "", turn: 3, by: null },
   ]);
+});
+
+test("the answer changes only when the game master sends a new one that fits the evidence", () => {
+  const state = story();
+  state.skeleton.secret = "The courier hid it.";
+  applyPhotoTurn(state, reply({ outcome: "follows_quest", revisedSecret: "  " }), 2);
+  assert.equal(state.skeleton.secret, "The courier hid it.");
+  applyPhotoTurn(state, reply({ outcome: "follows_quest", revisedSecret: " The neighbour hid it. " }), 3);
+  assert.equal(state.skeleton.secret, "The neighbour hid it.");
 });
 
 test("evidence remembers who found it, for cases two players share", () => {

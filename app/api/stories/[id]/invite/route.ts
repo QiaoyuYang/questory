@@ -1,6 +1,5 @@
 import { TEAM_SIZE, storyView } from "@/lib/gm/state";
-import { loadInvitedStory, loadOwnStory, respond } from "@/lib/server";
-import { getStore } from "@/lib/store";
+import { loadInvitedStory, respond } from "@/lib/server";
 import type { InviteView } from "@/lib/types";
 
 /** What the invite link shows before a friend joins: the case and where it stands, no photos. */
@@ -26,17 +25,3 @@ export async function GET(request: Request, ctx: RouteContext<"/api/stories/[id]
   });
 }
 
-/** The story's invite link, made the first time its owner asks. */
-export async function POST(request: Request, ctx: RouteContext<"/api/stories/[id]/invite">) {
-  return respond(async () => {
-    const { id } = await ctx.params;
-    const { story } = await loadOwnStory(id);
-    if (!story.invite) {
-      story.invite = { code: crypto.randomUUID(), size: TEAM_SIZE };
-      await getStore().saveStory(story);
-    }
-    const url = new URL("/", request.url);
-    url.searchParams.set("join", `${story.id}.${story.invite.code}`);
-    return { url: url.toString() };
-  });
-}

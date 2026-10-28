@@ -6,7 +6,10 @@
 /** A longer gap between two turns means the player stopped and came back later. */
 export const BREAK_MINUTES = 45;
 
-type Turn = { kind: string; createdAt: string; photoUrl: string | null };
+type Player = "you" | "partner";
+
+/** `playedBy` is set on turns from a shared case; without it, the viewer played the turn. */
+type Turn = { kind: string; createdAt: string; photoUrl: string | null; playedBy?: Player };
 
 export type WalkStats = { minutes: number; places: number };
 
@@ -16,14 +19,26 @@ export function currentChapter<T extends Turn>(turns: T[]): T[] {
   return start === -1 ? turns : turns.slice(start);
 }
 
-/** Minutes between consecutive turns, leaving out breaks, and the number of photos taken. */
-export function walkStats(turns: Turn[]): WalkStats {
+const by = (turn: Turn): Player => turn.playedBy ?? "you";
+
+/**
+ * Minutes on foot and photos taken. Time counts between two turns by the same person,
+ * leaving out breaks, so in a shared case the wait between one player's chapter and
+ * the next player's never counts. With `player`, only that player's share.
+ */
+export function walkStats(turns: Turn[], player?: Player): WalkStats {
+  const counts = (turn: Turn) => player === undefined || by(turn) === player;
   let ms = 0;
   for (let i = 1; i < turns.length; i++) {
-    const gap = Date.parse(turns[i].createdAt) - Date.parse(turns[i - 1].createdAt);
+    const [before, after] = [turns[i - 1], turns[i]];
+    if (by(before) !== by(after) || !counts(after)) continue;
+    const gap = Date.parse(after.createdAt) - Date.parse(before.createdAt);
     if (gap > 0 && gap <= BREAK_MINUTES * 60_000) ms += gap;
   }
-  return { minutes: Math.round(ms / 60_000), places: turns.filter((turn) => turn.photoUrl !== null).length };
+  return {
+    minutes: Math.round(ms / 60_000),
+    places: turns.filter((turn) => turn.photoUrl !== null && counts(turn)).length,
+  };
 }
 
 function plural(count: number, word: string) {

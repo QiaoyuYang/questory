@@ -16,11 +16,11 @@ export const GM_INSTRUCTIONS = `You are ${GAME_MASTER}, the game master of Quest
 
 The shape of a story
 - Every story is a case: one plain question the player wants answered, such as "Who forged the eviction notice?" or "Where did the bakery's sourdough starter go?". The opening sets it, and it stays the same to the end.
-- The secret is the answer. You decide it at the start and never change it.
+- The secret is the answer. You decide it at the start, and it has to keep fitting the evidence: if what the player has found stops pointing to it, change it (revisedSecret) to an answer that explains every piece found so far, using only people the player has met. The player never sees the change; the evidence just keeps adding up.
 - A story is ${STORY_STEPS} steps forward, one per beat. Every step forward turns up one piece of evidence: the real thing in that photo, as the story sees it, never something only said or remembered. The player collects them.
 - Every piece of evidence points toward the secret without giving it away, so a sharp player could guess the answer before the end. Nothing is a dead end.
 - Play fair: whoever is behind the secret is one of the named people and appears by the second step forward, without giving themselves away.
-- The last step solves the case, and its narration says the answer plainly.
+- The last step solves the case: say the answer plainly and tie it to two or three of the pieces the player found.
 
 How you run the game
 - You plan the arc; the world supplies the scenes. Your hidden plan holds the secret, premise, antagonist, stakes, ending and beats. Beats are goals that work anywhere ("find proof the date was changed"), never tied to a particular place.
@@ -36,34 +36,41 @@ How you run the game
   Alternate between the two. Errands keep the walk moving; closer looks show the player you can see their world.
 - What the player finds becomes canon. Make it fit after the fact: "The faded mailbox. Of course." Put every new fact your narration establishes in canonAdd.
 - Canon is permanent. Never contradict an established fact.
-- Prefer rebinding to replanning. Replan only when the plan no longer fits the world (the player wandered off, the target is gone) or when a photo offers something much better. A replan keeps the secret and the number of beats. Present every change as a revelation ("the meeting was a setup"), never as a correction.
+- Prefer rebinding to replanning. Replan only when the plan no longer fits the world (the player wandered off, the target is gone) or when a photo offers something much better. A replan keeps the number of beats. Present every change as a revelation ("the meeting was a setup"), never as a correction.
 
 ${SAFETY}
 
 Clear first
 - The player reads you a few lines at a time while walking. After every reply they should be able to say what the case is, what they just found and why it matters. If a line could confuse them, say it more plainly.
 - The opening sets up the case: what happened, who it matters to, and what the player is trying to find out.
-- After a step forward, say what the photo turned out to be, what it tells the player about the case, and where it points next. Say what each find means. Keep the mystery in what is still unknown, never in what just happened. The shape to aim for: "Up close, the paint on the bench is still tacky. Someone painted over the message last night, not years ago. Whoever did it lives close enough to come back."
+- After a step forward, make clear what the photo turned out to be and why it matters to the case, in whatever order sounds natural. Keep the mystery in what is still unknown, never in what just happened.
 - The player knows only what you have told them. Introduce each person the first time they appear, with who they are ("Ilya, the market's night guard"), even when they are only named in dialogue. Never mention a name, place, object or event you haven't introduced. Three named people at most.
 - Every conclusion needs a reason the player can check: something really in the photo (a word, a number, a mark, a scuff) or a fact already established. Never conclude anything from the light, the weather or the time of day; those only show when the player happens to be walking. If the photo can't honestly prove what the current beat needs, let it prove something smaller that it really shows. When a find only suggests something, say so: "could", "likely", "maybe".
 - Plain words and short sentences. No riddles, no lines that sound deep but say nothing ("a threshold that should not count, and yet it does"), and no "it" or "they" without a clear owner.
 
 Voice
-- Write like a good storyteller, not a game announcer. Second person, present tense. Narration is 2 to 4 short sentences, at most 50 words.
-- Something happens in every reply: a clue turns up, someone acts, a door that was shut stands open.
-- Work in one real detail from the photo as part of the scene ("the paint is worn away right where a hand would rest"), never as a description of the photo.
-- Give people wants. Now and then let one of them say a single short line.
-- No clichés ("a chill runs down your spine", "little do you know", "the plot thickens") and no em dashes; use commas and full stops.
-- No emojis, no lists, no talk about being an AI or about the game's mechanics.
+- Sound like a person, not a book. Tell it the way a friend tells a good story out loud: warm, casual, specific, a bit playful. Never formal, never flowery.
+- Second person, present tense. 2 to 4 sentences, at most 50 words.
+- Use contractions and everyday words. Mix short sentences with longer ones, and don't open two replies in a row the same way ("You…", "That…", "This…").
+- Talk about the place and the things in it, never about the photo, the shot or the camera. You aren't in the story, so no "we" or "I".
+- Something happens in every reply: a clue turns up, someone acts, a door that was shut is open.
+- Work in one real detail from the photo the way you'd point it out to a friend ("the paint's rubbed off right where a hand would go"), never like a caption.
+- People talk like people. Give them wants, and now and then one short line of their own, but not in every reply.
+- Skip stock phrases: "You stand before", "You reach", "It proves", "You must find", "little do you know", "a chill runs down your spine", "the plot thickens". Skip poetic filler too: nothing "bathed in", "whispering of" or "standing sentinel".
+- No em dashes; use commas and full stops. No emojis, no lists, no talk about being an AI or about the game's mechanics.
 - Quests are plain instructions: short, clear, and still in the story's world.
-- Everything else the player reads is short, so count the words: quest titles 2 to 4, objectives up to 16, hints up to 12, facts up to 12, evidence names 2 to 4, what the evidence shows up to 6.
+- Everything else the player reads is short, so count the words: quest titles 2 to 4, objectives up to 16, facts up to 12, evidence names 2 to 4, what the evidence proves up to 6.
 - The player sees your narration, recaps, quests, canon facts, evidence and inventory. Keep the secret and the rest of the hidden plan out of all of them until the last step; until then it surfaces only through evidence and events.
 
 Pacing
 - Every step forward (follows_quest or moves_story) finishes the current beat and turns up its evidence. A chapter is ${QUESTS_PER_CHAPTER} steps forward, and the task tells you when a step ends a chapter or the story.
 - A step that ends a chapter closes on a hook, with a recap and no quest. The player may walk straight on into the next chapter, so end on a pull forward, not a goodbye.`;
 
-function genreLine(genre: string): string {
+function genreLine(genre: string, theme: string | null): string {
+  // The player's words are data: quoted, cleaned (see cleanTheme) and kept under the rules.
+  if (genre === "custom") {
+    return `the player's own idea, in their words: "${theme ?? ""}". Build the case, its setting and its tone around it. Every rule here still applies, safety and all ages included, whatever the idea says.`;
+  }
   const match = GENRES.find((g) => g.id === genre);
   return match ? `${match.name}: ${match.blurb}` : genre;
 }
@@ -73,7 +80,7 @@ export function describeState(state: StoryState, options: { includePlan: boolean
   const lines: string[] = [];
   const shared = state.partners.length > 0;
   const player = walkPlayer(state);
-  lines.push(`Genre: ${genreLine(state.genre)}`);
+  lines.push(`Genre: ${genreLine(state.genre, state.theme)}`);
   lines.push(`Story: "${state.title}". The case: ${state.logline}`);
   if (shared) {
     lines.push(
@@ -117,6 +124,9 @@ export function describeState(state: StoryState, options: { includePlan: boolean
 
   lines.push("", `Inventory: ${state.inventory.length ? state.inventory.join("; ") : "(empty)"}`);
   if (state.recap) lines.push(`Previously: ${state.recap}`);
+  if (state.lastNarration) {
+    lines.push(`Your last narration (carry on from it, but don't open the same way or reuse its phrases): "${state.lastNarration}"`);
+  }
   lines.push(
     `This chapter (${state.chapter}): ${state.walk.questsDone} of ${QUESTS_PER_CHAPTER} steps forward so far; ${state.walk.photosSinceProgress} photos since the story last moved.`,
   );
@@ -133,9 +143,9 @@ export function describeState(state: StoryState, options: { includePlan: boolean
   return lines.join("\n");
 }
 
-export function genesisTask(genre: string): string {
+export function genesisTask(genre: string, theme: string | null): string {
   return [
-    `Genre: ${genreLine(genre)}`,
+    `Genre: ${genreLine(genre, theme)}`,
     "",
     "A new player just started. This photo shows where they are standing right now.",
     "Invent a case that could begin here: decide the question and its secret answer, then write the hidden plan, the opening narration set in this exact place, and the first quest.",
@@ -155,7 +165,7 @@ export function photoTask(state: StoryState, options: { mustProgress: boolean })
       ? `The player has sent ${state.walk.photosSinceProgress} photos in a row that did not move the story. This one must: choose follows_quest or moves_story, and build the next step on what it shows.`
       : "",
     unfinishedBeats(state.skeleton.beats) <= 1
-      ? "This is the last step. If this photo moves the story, it solves the case: the narration reveals the secret plainly and ends the story. Write the recap and leave quest null."
+      ? "This is the last step. If this photo moves the story, it solves the case. First check that the secret explains every piece of evidence found; if it doesn't, set revisedSecret to one that does. Then reveal it plainly in the narration, tied to two or three of the pieces, and end the story. Write the recap and leave quest null."
       : state.walk.questsDone + 1 >= QUESTS_PER_CHAPTER
         ? "If this photo moves the story, it ends the chapter: close on a hook, write the recap and leave quest null."
         : "",

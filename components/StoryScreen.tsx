@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, type TurnResult } from "@/lib/client/api";
+import { markSeen } from "@/lib/client/seen";
 import { shareLink } from "@/lib/client/share";
 import { currentChapter, walkStats } from "@/lib/walk";
 import { GAME_MASTER, type PhotoUpload, type StoryView, type TurnView } from "@/lib/types";
@@ -9,11 +10,10 @@ import { Alert } from "./Alert";
 import { BottomBar } from "./BottomBar";
 import { BUTTON } from "./buttons";
 import { CaptureButton } from "./CaptureButton";
-import { CameraIcon, ChevronLeftIcon, ChevronRightIcon, MagnifierIcon } from "./icons";
-import { outcomeLabel } from "./labels";
+import { CameraIcon, ChevronLeftIcon, MagnifierIcon } from "./icons";
 import { PhotoViewer, type Zoomed } from "./PhotoViewer";
-import { QuestSheet } from "./QuestSheet";
-import { Scene, sceneViews, type SceneView } from "./Scene";
+import { QuestThumb } from "./QuestThumb";
+import { Scene } from "./Scene";
 import { Sheet } from "./Sheet";
 import { StorySheet } from "./StorySheet";
 import { WalkSummary } from "./WalkSummary";
@@ -27,7 +27,10 @@ type Props = {
   onHome: () => void;
 };
 
-type Panel = "story" | "quest" | "end" | "delete" | null;
+type Panel = "story" | "end" | "delete" | "invite" | null;
+
+/** How often a shared case checks on the other player while they have it. */
+const WATCH_MS = 20_000;
 
 function scrollToTop() {
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -39,9 +42,10 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState<{ message: string; photo: PhotoUpload | null } | null>(null);
   const [error, setError] = useState<{ message: string; retry: (() => void) | null } | null>(null);
-  const [panel, setPanel] = useState<Panel>(null);
-  // The picture the player picked for a turn; a new turn starts from its default.
-  const [picked, setPicked] = useState<{ turnId: string; view: SceneView } | null>(null);
+  // A two-player case asks for the friend's link as soon as its opening is in.
+  const [panel, setPanel] = useState<Panel>(() =>
+    initial?.story.invitable && initial.turns.length === 1 ? "invite" : null,
+  );
   const [zoomed, setZoomed] = useState<Zoomed | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -62,6 +66,24 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
   const story = data?.story ?? null;
   const turns = useMemo(() => data?.turns ?? [], [data]);
 
+  // Whatever this screen shows counts as seen, so the story list only flags what the
+  // other player did since.
+  const updatedAt = story?.updatedAt;
+  useEffect(() => {
+    if (updatedAt) markSeen(storyId, updatedAt);
+  }, [storyId, updatedAt]);
+
+  // In a shared case, keep up with the other player while the viewer isn't walking.
+  const watching =
+    story !== null && story.mode === "team" && story.status === "active" && !busy && (!story.walkActive || story.partnerWalking);
+  useEffect(() => {
+    if (!watching) return;
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") api.getStory(storyId).then(setData, () => {});
+    }, WATCH_MS);
+    return () => window.clearInterval(timer);
+  }, [watching, storyId]);
+
   // The turn that issued the current quest: a closer look is outlined on its photo.
   const questTurn = useMemo(() => {
     const questId = story?.quest?.id;
@@ -77,7 +99,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
     );
   }, []);
 
-  // Ask Muse Image for a story card. State only changes when the request settles.
+  // Ask Muse Image to draw the evidence. State only changes when the request settles.
   const requestCard = useCallback(
     (turn: TurnView) => {
       requested.current.add(turn.id);
@@ -89,7 +111,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
     [storyId, replaceTurn],
   );
 
-  // A photo that moved the story gets its card painted automatically ("none" shows as painting).
+  // A photo that moved the story gets its evidence drawn automatically ("none" shows as in progress).
   const cardTurn = latest?.card && latest.photoUrl ? latest : null;
   useEffect(() => {
     if (!cardTurn || requested.current.has(cardTurn.id)) return;
@@ -132,7 +154,6 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
     run(`${GAME_MASTER} is starting the next chapter…`, photo, () => api.takeTurn(storyId, "resume", photo));
   const end = () => run(`${GAME_MASTER} is closing the chapter…`, null, () => api.endWalk(storyId));
 
-  // While a partner walks, their finds show up here once the page asks again.
   function reload() {
     setError(null);
     api.getStory(storyId).then(setData, (err: Error) => setError({ message: err.message, retry: null }));
@@ -147,6 +168,27 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
       setDeleting(false);
       setPanel(null);
       setError({ message: err instanceof Error ? err.message : "The story couldn't be deleted. Try again.", retry: null });
+    }
+  }
+
+  // The share sheet only opens straight after a tap, so the link is built right here
+  // from the code the story was made with.
+  async function invite() {
+    if (!story?.inviteCode) return;
+    setError(null);
+    const link = new URL("/", window.location.origin);
+    link.searchParams.set("join", `${story.id}.${story.inviteCode}`);
+    try {
+      const result = await shareLink({
+        title: story.title,
+        text: `Help me solve this case on Questory: ${story.logline}`,
+        url: link.toString(),
+      });
+      if (result === "cancelled") return;
+      setPanel(null);
+      if (result === "copied") setNotice("Invite link copied. Send it to your friend.");
+    } catch (err) {
+      setError({ message: err instanceof Error ? err.message : "The invite link didn't work. Try again.", retry: null });
     }
   }
 
@@ -173,38 +215,10 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
   const walkLive = story.walkActive && story.status === "active" && !story.partnerWalking;
   const between = !story.walkActive && story.status === "active";
   const quest = walkLive ? story.quest : null;
-  // Only a closer look needs its photo, and only when SAM outlined the target: without
-  // the outline it is the same photo again.
-  const lookTurn = quest?.targetMode === "in_view" && questTurn?.overlay?.outline ? questTurn : null;
-  const views = scene ? sceneViews(scene, lookTurn) : [];
-  const view = picked && picked.turnId === scene?.id && views.includes(picked.view) ? picked.view : views[0];
-  const outcome = latest ? outcomeLabel(latest) : null;
+  // A closer look shows where to look on the photo it came from.
+  const lookTurn = quest?.targetMode === "in_view" ? questTurn : null;
+  const chapter = currentChapter(turns);
   const evidenceFound = turns.filter((turn) => turn.card).length;
-
-  // The share sheet only opens straight after a tap, so the link is built right here.
-  // Stories from before invites fetch theirs first, and fall back to copying if the
-  // phone has stopped counting it as a tap by then.
-  async function invite() {
-    if (!story) return;
-    setError(null);
-    try {
-      let url: string;
-      if (story.inviteCode) {
-        const link = new URL("/", window.location.origin);
-        link.searchParams.set("join", `${story.id}.${story.inviteCode}`);
-        url = link.toString();
-      } else {
-        url = (await api.createInvite(storyId)).url;
-      }
-      const result = await shareLink({ title: story.title, text: `Help me solve this case on Questory: ${story.logline}`, url });
-      if (result === "copied") {
-        setPanel(null);
-        setNotice("Invite link copied. Send it to a friend.");
-      }
-    } catch (err) {
-      setError({ message: err instanceof Error ? err.message : "The invite link didn't work. Try again.", retry: null });
-    }
-  }
 
   return (
     <main className="mx-auto w-full max-w-[30rem] px-4 pb-56">
@@ -221,7 +235,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
           <div className="min-w-0 text-center">
             <h1 className="truncate font-sign text-lg leading-tight font-bold">{story.title}</h1>
             <p className="text-xs text-concrete">
-              {story.status === "complete" ? "Finished" : `Chapter ${story.chapter}`}
+              {story.status === "complete" ? "Solved" : `Chapter ${story.chapter}`}
             </p>
           </div>
           {walkLive && !busy && (
@@ -241,25 +255,12 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
           <Working photo={busy.photo} message={busy.message} />
         ) : (
           <>
-            {scene && view && (
-              <Scene
-                turn={scene}
-                lookTurn={lookTurn}
-                quest={quest}
-                views={views}
-                view={view}
-                onView={(next) => setPicked({ turnId: scene.id, view: next })}
-                onRepaint={() => repaint(scene)}
-                onZoom={setZoomed}
-              />
-            )}
+            {scene && <Scene turn={scene} onRepaint={() => repaint(scene)} onZoom={setZoomed} />}
             {latest && (
               <section aria-label={GAME_MASTER} className="mt-5">
-                {outcome && (
+                {latest.card && (
                   <p className="font-sign text-lg font-bold text-walk">
-                    {latest.playedBy === "partner" && "Your partner: "}
-                    {outcome}
-                    {latest.card && <span className="text-concrete"> · new evidence</span>}
+                    {latest.playedBy === "partner" ? "Your partner found new evidence" : "New evidence"}
                   </p>
                 )}
                 <p className="font-story text-[1.1875rem] leading-[1.6] text-pretty">{latest.narration}</p>
@@ -273,27 +274,24 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
         <BottomBar>
           {error && <Alert message={error.message} retry={error.retry} />}
 
-          {/* The next step is spelled out here, so nobody has to find it. A new one pulses. */}
+          {/* The next step is spelled out here, with where to look for a closer look. A new one pulses. */}
           {walkLive &&
             (quest ? (
-              <button
+              <div
                 key={quest.id}
-                type="button"
-                onClick={() => setPanel("quest")}
-                className="callout block w-full rounded-[14px] border border-lane/50 bg-kerb px-3.5 pt-2 pb-2.5 text-left"
+                className="callout flex w-full items-center gap-3 rounded-[14px] border border-lane/50 bg-kerb px-3.5 py-2.5"
               >
-                <span className="flex min-h-6 items-center gap-2 text-sm">
-                  <span className="shrink-0 text-xs font-bold tracking-wider text-lane uppercase">Next step</span>
-                  <span className="min-w-0 flex-1 truncate font-semibold text-concrete">{quest.title}</span>
-                  <span className="inline-flex shrink-0 items-center font-semibold text-concrete">
-                    {quest.hint && "Hint"}
-                    <ChevronRightIcon className="h-5 w-5" />
-                  </span>
-                </span>
-                <span className="mt-0.5 line-clamp-3 block font-sign text-lg leading-snug font-semibold text-pretty">
-                  {quest.objective}
-                </span>
-              </button>
+                {lookTurn && <QuestThumb turn={lookTurn} onZoom={setZoomed} />}
+                <div className="min-w-0 flex-1">
+                  <p className="flex min-h-6 items-center gap-2 text-sm">
+                    <span className="shrink-0 text-xs font-bold tracking-wider text-lane uppercase">Next step</span>
+                    <span className="min-w-0 truncate font-semibold text-concrete">{quest.title}</span>
+                  </p>
+                  <p className="mt-0.5 line-clamp-3 font-sign text-lg leading-snug font-semibold text-pretty">
+                    {quest.objective}
+                  </p>
+                </div>
+              </div>
             ) : (
               <p className="py-1 text-pretty">
                 Take a photo of whatever catches your eye. {GAME_MASTER} will work it into the story.
@@ -308,25 +306,25 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
           {between && (
             <div className="py-1">
               <p className="font-sign text-lg font-bold text-lane">Chapter {story.chapter} is done</p>
-              <WalkSummary stats={walkStats(currentChapter(turns))} />
+              <WalkSummary stats={walkStats(chapter)} who={chapter[0]?.playedBy} />
               <p className="text-sm text-concrete">
-                You can start chapter {story.chapter + 1} now or on your next walk.
+                {story.invitable
+                  ? `Chapter ${story.chapter + 1} is your friend's, on their own streets.`
+                  : `You can start chapter ${story.chapter + 1} now or on your next walk.`}
               </p>
-              {story.invitable && (
-                <button
-                  type="button"
-                  onClick={() => void invite()}
-                  className="mt-0.5 min-h-11 text-[0.9375rem] font-semibold text-lane underline underline-offset-4"
-                >
-                  Or invite a friend to play chapter {story.chapter + 1}
-                </button>
-              )}
             </div>
           )}
           {story.status === "complete" && (
             <div className="py-1">
               <p className="font-sign text-lg font-bold text-lane">The end</p>
-              <WalkSummary stats={walkStats(turns)} total />
+              {story.shared ? (
+                <>
+                  <WalkSummary stats={walkStats(turns, "you")} />
+                  <WalkSummary stats={walkStats(turns, "partner")} who="partner" />
+                </>
+              ) : (
+                <WalkSummary stats={walkStats(turns)} total />
+              )}
             </div>
           )}
 
@@ -347,21 +345,22 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
               </span>
             </button>
             {walkLive && (
-              <>
-                <CaptureButton onPhoto={takePhoto} onError={photoError} className="flex-1">
-                  <CameraIcon />
-                  Take a photo
-                </CaptureButton>
-              </>
+              <CaptureButton onPhoto={takePhoto} onError={photoError} className="flex-1">
+                <CameraIcon />
+                Take a photo
+              </CaptureButton>
             )}
-            {between && (
-              <>
+            {between &&
+              (story.invitable ? (
+                <button type="button" onClick={() => void invite()} className={`${BUTTON.primary} flex-1`}>
+                  Send your friend the link
+                </button>
+              ) : (
                 <CaptureButton onPhoto={resume} onError={photoError} className="flex-1">
                   <CameraIcon />
                   Start chapter {story.chapter + 1}
                 </CaptureButton>
-              </>
-            )}
+              ))}
             {story.partnerWalking && (
               <button type="button" onClick={reload} className={`${BUTTON.secondary} flex-1`}>
                 Refresh
@@ -369,10 +368,15 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
             )}
             {story.status === "complete" && (
               <button type="button" onClick={onHome} className={`${BUTTON.primary} flex-1`}>
-                Start a new story
+                Back to your stories
               </button>
             )}
           </div>
+          {between && story.invitable && (
+            <CaptureButton onPhoto={resume} onError={photoError} variant="link" className="mt-1">
+              Or play chapter {story.chapter + 1} yourself
+            </CaptureButton>
+          )}
           {notice && (
             <p role="status" className="mt-2 text-sm text-walk">
               {notice}
@@ -390,14 +394,15 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
         onInvite={story.invitable ? () => void invite() : null}
         onDelete={story.role === "owner" ? () => setPanel("delete") : null}
       />
-      <QuestSheet
-        key={quest?.id ?? "open"}
-        open={panel === "quest"}
-        onClose={() => setPanel(null)}
-        quest={quest}
-        onPhoto={takePhoto}
-        onError={photoError}
-      />
+      <Sheet open={panel === "invite"} onClose={() => setPanel(null)} title="Invite your friend">
+        <p className="text-lg text-pretty">
+          You play chapter 1 here. Then your friend plays chapter 2 on their own streets, and you solve it together.
+        </p>
+        <button type="button" onClick={() => void invite()} className={`${BUTTON.primary} mt-6 w-full`}>
+          Send the link
+        </button>
+        <p className="mt-3 text-sm text-concrete">Not now? It&apos;s in the Evidence sheet whenever you&apos;re ready.</p>
+      </Sheet>
       <Sheet open={panel === "end"} onClose={() => setPanel(null)} title="End this walk?" done={false}>
         <p className="text-lg text-pretty">
           {GAME_MASTER} will end chapter {story.chapter} now, on a cliffhanger, even if you&apos;re partway through it.
@@ -420,7 +425,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
         </div>
       </Sheet>
       <Sheet open={panel === "delete"} onClose={() => setPanel(null)} title="Delete this story?" done={false}>
-        <p className="text-lg text-pretty">Its photos and evidence cards are deleted too. You can&apos;t undo this.</p>
+        <p className="text-lg text-pretty">Its photos and evidence are deleted too. You can&apos;t undo this.</p>
         <div className="mt-6 flex flex-col gap-2.5">
           <button type="button" onClick={() => void remove()} disabled={deleting} className={BUTTON.danger}>
             {deleting ? "Deleting…" : "Delete story"}

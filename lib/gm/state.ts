@@ -26,7 +26,6 @@ export const QuestStateSchema = z.object({
   id: z.string(),
   title: z.string(),
   objective: z.string(),
-  hint: z.string(),
   targetMode: z.enum(["in_view", "seek"]),
   targetPhrase: z.string(),
   targetDescription: z.string(),
@@ -53,6 +52,10 @@ export const StoryStateSchema = z.object({
   /** The invite link's code and how many players the case takes, made when the owner first shares it. */
   invite: z.object({ code: z.string(), size: z.number() }).nullable().default(null),
   genre: GenreSchema,
+  /** The player's own idea for a custom story, already cleaned (see cleanTheme). */
+  theme: z.string().nullable().default(null),
+  /** One player, or two taking a chapter each. Stories saved before it are solo. */
+  mode: z.enum(["solo", "team"]).default("solo"),
   createdAt: z.string(),
   updatedAt: z.string(),
   title: z.string(),
@@ -93,6 +96,8 @@ export const StoryStateSchema = z.object({
     playerId: z.string().nullable().default(null),
   }),
   recap: z.string(),
+  /** The game master's last narration, so the next one can carry on from it without repeating it. */
+  lastNarration: z.string().default(""),
   status: z.enum(["active", "complete"]),
 });
 export type StoryState = z.infer<typeof StoryStateSchema>;
@@ -151,7 +156,6 @@ export function questView(quest: QuestState | null): QuestView | null {
     id: quest.id,
     title: quest.title,
     objective: quest.objective,
-    hint: quest.hint,
     targetMode: quest.targetMode,
   };
 }
@@ -181,14 +185,16 @@ export function storyView(state: StoryState, viewerId: string): StoryView {
     title: state.title,
     logline: state.logline,
     genre: state.genre as StoryView["genre"],
+    theme: state.theme,
+    mode: state.mode,
     chapter: state.chapter,
     status: state.status,
     walkActive: state.walk.active,
     role: viewerId === state.playerId ? "owner" : "partner",
     shared: state.partners.length > 0,
     partnerWalking: state.walk.active && walkPlayer(state) !== viewerId,
-    invitable: viewerId === state.playerId && !complete && state.partners.length < size - 1,
-    inviteCode: viewerId === state.playerId ? (state.invite?.code ?? null) : null,
+    invitable: state.mode === "team" && viewerId === state.playerId && !complete && state.partners.length < size - 1,
+    inviteCode: state.mode === "team" && viewerId === state.playerId ? (state.invite?.code ?? null) : null,
     quest: questView(state.quest),
     questsCompleted: state.questsCompleted,
     // Every step forward finishes a beat and turns up a piece of evidence.
@@ -207,6 +213,8 @@ export function storySummary(state: StoryState, viewerId: string): StorySummary 
     id: view.id,
     title: view.title,
     genre: view.genre,
+    theme: view.theme,
+    mode: view.mode,
     chapter: view.chapter,
     status: view.status,
     walkActive: view.walkActive,

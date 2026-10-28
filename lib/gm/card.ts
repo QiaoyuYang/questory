@@ -20,8 +20,12 @@ const GENRE_STYLE: Record<string, string> = {
  * The instruction Muse Image gets for an evidence card: the photo that moved the story,
  * painted as a keepsake. The player never navigates by it, so a stylized scene is fine.
  */
-export function storyCardPrompt(genre: string, card: NonNullable<TurnRecord["card"]>): string {
-  const style = GENRE_STYLE[genre] ?? GENRE_STYLE.everyday;
+export function storyCardPrompt(genre: string, card: NonNullable<TurnRecord["card"]>, theme: string | null): string {
+  // A custom story's theme is the player's words, cleaned and quoted (see cleanTheme).
+  const style =
+    genre === "custom" && theme
+      ? `an illustrated storybook look that suits "${theme}"`
+      : (GENRE_STYLE[genre] ?? GENRE_STYLE.everyday);
   // A long caption can only be lettered small. The card reads better without it.
   const caption = card.caption.split(/\s+/).length <= CAPTION_WORDS ? card.caption : "";
   return [

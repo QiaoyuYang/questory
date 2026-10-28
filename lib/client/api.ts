@@ -36,8 +36,9 @@ export const api = {
 
   getStory: (id: string) => call<{ story: StoryView; turns: TurnView[] }>(`/api/stories/${id}`),
 
-  startStory: (genre: GenreId, photo: PhotoUpload) =>
-    call<TurnResult>("/api/stories", { method: "POST", body: JSON.stringify({ genre, ...photo }) }),
+  /** `theme` is the player's own idea for a custom story; mode "team" makes a two-player case. */
+  startStory: (story: { genre: GenreId; theme: string; mode: "solo" | "team" }, photo: PhotoUpload) =>
+    call<TurnResult>("/api/stories", { method: "POST", body: JSON.stringify({ ...story, ...photo }) }),
 
   takeTurn: (id: string, kind: "photo" | "resume", photo: PhotoUpload) =>
     call<TurnResult>(`/api/stories/${id}/turns`, {
@@ -55,7 +56,6 @@ export const api = {
   inviteInfo: (id: string, code: string) =>
     call<{ invite: InviteView }>(`/api/stories/${id}/invite?code=${encodeURIComponent(code)}`),
 
-  createInvite: (id: string) => call<{ url: string }>(`/api/stories/${id}/invite`, { method: "POST" }),
 
   endWalk: (id: string) => call<TurnResult>(`/api/stories/${id}/end`, { method: "POST" }),
 

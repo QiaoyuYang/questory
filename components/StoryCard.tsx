@@ -20,7 +20,7 @@ export function StoryCard({ turn, onRepaint, onZoom }: Props) {
   const ready = turn.cardStatus === "ready" && turn.cardUrl !== null;
   const failed = turn.cardStatus === "failed";
   const src = ready ? turn.cardUrl! : turn.photoUrl;
-  const alt = ready ? `Evidence card: ${turn.card.title}` : "The photo you sent";
+  const alt = ready ? `Evidence: ${turn.card.title}` : "The photo you sent";
 
   return (
     <div className="relative">
@@ -41,7 +41,7 @@ export function StoryCard({ turn, onRepaint, onZoom }: Props) {
           <span className="pointer-events-auto inline-flex items-center gap-2 rounded-full bg-black/65 px-3.5 py-2 text-[0.9375rem] font-semibold backdrop-blur">
             {failed ? (
               <>
-                Your card didn&apos;t come out.
+                This picture didn&apos;t come out.
                 <button type="button" onClick={onRepaint} className="text-lane underline underline-offset-4">
                   Try again
                 </button>
@@ -56,7 +56,7 @@ export function StoryCard({ turn, onRepaint, onZoom }: Props) {
         </div>
       )}
       <p className="sr-only" aria-live="polite">
-        {ready ? `Evidence card: ${turn.card.title}` : failed ? "Your card didn't come out." : "Analyzing the evidence."}
+        {ready ? `Evidence: ${turn.card.title}` : failed ? "This picture didn't come out." : "Analyzing the evidence."}
       </p>
     </div>
   );

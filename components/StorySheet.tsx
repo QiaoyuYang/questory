@@ -3,9 +3,7 @@
 
 import { useState } from "react";
 import type { StoryView, TurnView } from "@/lib/types";
-import { BUTTON } from "./buttons";
 import { EvidenceList } from "./EvidenceList";
-import { turnLabel } from "./labels";
 import type { Zoomed } from "./PhotoViewer";
 import { Segmented } from "./Segmented";
 import { Sheet } from "./Sheet";
@@ -24,7 +22,7 @@ type Props = {
   story: StoryView;
   turns: TurnView[];
   onZoom: (image: Zoomed) => void;
-  /** Only while the owner can still bring in a friend. */
+  /** Only while a two-player case waits for its friend. */
   onInvite: (() => void) | null;
   /** Only the owner can delete a story. */
   onDelete: (() => void) | null;
@@ -38,6 +36,14 @@ export function StorySheet({ open, onClose, story, turns, onZoom, onInvite, onDe
     <Sheet open={open} onClose={onClose} title={story.title}>
       {/* The case the evidence adds up to. */}
       <p className="font-story text-lg leading-snug italic text-pretty">{story.logline}</p>
+      {onInvite && (
+        <p className="mt-2 text-[0.9375rem] text-concrete">
+          Your friend hasn&apos;t joined yet.{" "}
+          <button type="button" onClick={onInvite} className="font-semibold text-lane underline underline-offset-4">
+            Send the link
+          </button>
+        </p>
+      )}
       <Segmented className="mt-4" label="Story sections" options={TABS} value={tab} onChange={setTab} />
 
       <div className="mt-5">
@@ -78,13 +84,14 @@ export function StorySheet({ open, onClose, story, turns, onZoom, onInvite, onDe
           <ol className="space-y-5">
             {[...turns].reverse().map((turn) => {
               const src = turn.cardUrl ?? turn.photoUrl;
+              const alt = turn.card ? `Evidence: ${turn.card.title}` : "Your photo";
               return (
                 <li key={turn.id} className="flex gap-3">
                   {src ? (
                     <button
                       type="button"
                       aria-label="Open this picture full screen"
-                      onClick={() => onZoom({ src, alt: turnLabel(turn), size: turn.photoSize, overlay: null })}
+                      onClick={() => onZoom({ src, alt, size: turn.photoSize, overlay: null })}
                       className="h-16 w-16 shrink-0 cursor-zoom-in overflow-hidden rounded-[10px]"
                     >
                       <img src={src} alt="" className="h-full w-full object-cover" />
@@ -92,29 +99,13 @@ export function StorySheet({ open, onClose, story, turns, onZoom, onInvite, onDe
                   ) : (
                     <div className="h-16 w-16 shrink-0 rounded-[10px] bg-asphalt" />
                   )}
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-concrete">{turnLabel(turn)}</p>
-                    <p className="font-story text-[0.98rem] leading-relaxed text-pretty">{turn.narration}</p>
-                  </div>
+                  <p className="min-w-0 font-story text-[0.98rem] leading-relaxed text-pretty">{turn.narration}</p>
                 </li>
               );
             })}
           </ol>
         )}
       </div>
-
-      {onInvite && (
-        <section className="mt-8 rounded-[14px] bg-asphalt px-4 py-3.5">
-          <h3 className="font-sign text-lg font-bold">Play it with a friend</h3>
-          <p className="mt-1 text-[0.9375rem] text-concrete text-pretty">
-            Send a link. Your friend plays the next chapter on their own streets, and you both see the story&apos;s
-            photos and evidence.
-          </p>
-          <button type="button" onClick={onInvite} className={`${BUTTON.secondary} mt-3 w-full`}>
-            Invite a friend
-          </button>
-        </section>
-      )}
 
       {onDelete && (
         <button type="button" onClick={onDelete} className="mt-8 min-h-11 font-semibold text-hand">

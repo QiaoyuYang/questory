@@ -19,7 +19,8 @@ export type Result<T> = { data: T; usage: Usage };
 
 /** The game master's decisions. One implementation calls the Meta Model API; the other is scripted. */
 export type Brain = {
-  genesis(genre: string, photo: string): Promise<Result<GenesisOut>>;
+  /** `theme` is the player's own idea, for a custom story. */
+  genesis(genre: string, theme: string | null, photo: string): Promise<Result<GenesisOut>>;
   /** Any photo during a walk. `mustProgress` is set when this photo has to move the story. */
   photo(state: StoryState, photo: string, options: { mustProgress: boolean }): Promise<Result<PhotoTurnOut>>;
   /** `newPlayer` is a partner joining through the invite link, who hasn't seen the story. */
@@ -44,10 +45,10 @@ export function liveBrain(config: Config): Brain {
   };
 
   return {
-    genesis: (genre, photo) =>
+    genesis: (genre, theme, photo) =>
       respondJson({
         ...gm,
-        content: withPhoto(genesisTask(genre), photo),
+        content: withPhoto(genesisTask(genre, theme), photo),
         schema: GenesisSchema,
         schemaName: "questory_genesis",
       }),

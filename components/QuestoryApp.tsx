@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api, type TurnResult } from "@/lib/client/api";
-import { rememberShared, sharedStories } from "@/lib/client/share";
+import { forgetShared, rememberShared, sharedStories } from "@/lib/client/share";
 import type { StorySummary } from "@/lib/types";
 import { HomeScreen } from "./HomeScreen";
 import { JoinScreen } from "./JoinScreen";
@@ -92,6 +92,15 @@ export function QuestoryApp() {
     };
   }, []);
 
+  const removeStory = useCallback(
+    async (story: StorySummary) => {
+      if (story.role === "owner") await api.deleteStory(story.id);
+      else forgetShared(story.id);
+      await refresh();
+    },
+    [refresh],
+  );
+
   const goHome = useCallback(() => {
     remember(null);
     forgetInvite();
@@ -153,6 +162,7 @@ export function QuestoryApp() {
     <HomeScreen
       stories={stories}
       mode={mode}
+      onRemove={removeStory}
       onStarted={(result) => {
         remember(result.story.id);
         setScreen({ name: "story", storyId: result.story.id, initial: result });

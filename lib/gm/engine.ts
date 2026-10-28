@@ -10,7 +10,7 @@ import { visitorKey } from "@/lib/visitor";
 import { activateNextBeat, activeBeatId, makeBeats, replan } from "./beats";
 import { getBrain } from "./brain";
 import { storyCardPrompt } from "./card";
-import { addCanon, applyPhotoTurn, makeQuest, mustMoveStory } from "./rules";
+import { addCanon, applyPhotoTurn, makeQuest, mustMoveStory, reviseSecret } from "./rules";
 import { TEAM_SIZE, walkPlayer, type QuestState, type StoryState, type TurnRecord } from "./state";
 
 export class GameRuleError extends Error {}
@@ -114,6 +114,7 @@ function newTurn(
 
 async function commit(state: StoryState, turn: TurnRecord) {
   state.turnCount = turn.number;
+  state.lastNarration = turn.narration;
   state.updatedAt = now();
   const store = getStore();
   await store.saveTurn(turn);
@@ -121,14 +122,22 @@ async function commit(state: StoryState, turn: TurnRecord) {
   return { state, turn };
 }
 
+type NewStory = {
+  genre: string;
+  /** The player's own idea, cleaned, for a custom story. */
+  theme: string | null;
+  mode: "solo" | "team";
+};
+
 /** First photo of a new story: the game master invents the plan and the first quest. */
-export async function startStory(playerId: string, genre: string, photo: Photo) {
+export async function startStory(playerId: string, story: NewStory, photo: Photo) {
+  const { genre, theme, mode } = story;
   const config = getConfig();
   const store = getStore();
   await spendCall(config, playerId);
   const [photoId, genesis] = await Promise.all([
     store.putImage({ bytes: photo.bytes, mime: photo.mime }),
-    getBrain(config).genesis(genre, photo.dataUrl),
+    getBrain(config).genesis(genre, theme, photo.dataUrl),
   ]);
   const { data, usage } = genesis;
   logUsage("genesis", usage);
@@ -139,6 +148,8 @@ export async function startStory(playerId: string, genre: string, photo: Photo) 
     id: crypto.randomUUID(),
     playerId,
     genre,
+    theme,
+    mode,
     createdAt,
     updatedAt: createdAt,
     title: data.title.trim(),
@@ -155,7 +166,7 @@ export async function startStory(playerId: string, genre: string, photo: Photo) 
     partners: [],
     // Made now so the share sheet can open the moment the owner taps Invite: phones only
     // allow it straight after a tap, with no network wait in between.
-    invite: { code: crypto.randomUUID(), size: TEAM_SIZE },
+    invite: mode === "team" ? { code: crypto.randomUUID(), size: TEAM_SIZE } : null,
     canon: [],
     bindings: [],
     inventory: [],
@@ -166,6 +177,7 @@ export async function startStory(playerId: string, genre: string, photo: Photo) 
     questsCompleted: 0,
     walk: { active: true, startedAt: createdAt, questsDone: 0, photosSinceProgress: 0, playerId },
     recap: "",
+    lastNarration: "",
     status: "active",
   };
 
@@ -208,6 +220,7 @@ export async function takePhoto(state: StoryState, photo: Photo, playerId: strin
 
   const turn = newTurn(state, "photo", playerId, photoId, photo);
   const applied = applyPhotoTurn(state, data, turn.number);
+  if (data.revisedSecret?.trim()) console.info(`[questory] the answer changed to fit the evidence: ${data.revisedSecret}`);
   turn.outcome = applied.outcome;
   turn.card = applied.card;
   turn.narration = data.narration.trim();
@@ -257,6 +270,7 @@ export async function resumeStory(state: StoryState, photo: Photo, playerId: str
   turn.canonAdded = addCanon(state, data.canonAdd, turn.number);
   state.bindings.push(...data.bindingsAdd.map((b) => ({ ...b, turn: turn.number })));
   if (data.planChange === "replan") state.skeleton.beats = replan(state.skeleton.beats, data.revisedBeats);
+  reviseSecret(state, data.revisedSecret);
   state.skeleton.beats = activateNextBeat(state.skeleton.beats);
   state.quest = makeQuest(data.quest, activeBeatId(state.skeleton.beats), turn.number);
   turn.quest = state.quest;
@@ -309,7 +323,7 @@ export async function paintCard(state: StoryState, turn: TurnRecord, playerId: s
   turn.cardStatus = "pending";
   await store.saveTurn(turn);
   try {
-    const card = await editPhoto(photo, storyCardPrompt(state.genre, turn.card), turn.photoSize, {
+    const card = await editPhoto(photo, storyCardPrompt(state.genre, turn.card, state.theme), turn.photoSize, {
       baseURL: config.meta.baseURL,
       apiKey: config.meta.apiKey,
       model: config.meta.imageModel,

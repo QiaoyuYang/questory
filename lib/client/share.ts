@@ -28,6 +28,14 @@ export function sharedStories(): string[] {
   }
 }
 
+export function forgetShared(storyId: string) {
+  try {
+    localStorage.setItem(SHARED_KEY, JSON.stringify(sharedStories().filter((id) => id !== storyId)));
+  } catch {
+    // Nothing to forget without storage.
+  }
+}
+
 export function rememberShared(storyId: string) {
   try {
     const ids = sharedStories().filter((id) => id !== storyId);
