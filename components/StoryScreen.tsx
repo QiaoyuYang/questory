@@ -29,8 +29,22 @@ type Props = {
 
 type Panel = "story" | "end" | "delete" | "invite" | null;
 
+/** What the screen shows while it waits: the photo being worked on, and what's happening. */
+type Hold = { message: string; src: string | null; size: { width: number; height: number } | null };
+
 /** How often a shared case checks on the other player while they have it. */
 const WATCH_MS = 20_000;
+/** How often the screen checks on evidence being drawn somewhere else. */
+const DRAWING_MS = 5_000;
+/** Evidence that still has no picture after this long gets drawn again. */
+const STALE_MS = 3 * 60_000;
+
+const ANALYZING = "Analyzing the evidence…";
+
+/** A photo that turned up evidence whose picture isn't drawn yet. */
+function awaitsPicture(turn: TurnView): boolean {
+  return turn.card !== null && turn.photoUrl !== null && (turn.cardStatus === "none" || turn.cardStatus === "pending");
+}
 
 function scrollToTop() {
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -40,7 +54,7 @@ function scrollToTop() {
 export function StoryScreen({ storyId, initial, onHome }: Props) {
   const [data, setData] = useState<Loaded | null>(initial);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [busy, setBusy] = useState<{ message: string; photo: PhotoUpload | null } | null>(null);
+  const [busy, setBusy] = useState<Hold | null>(null);
   const [error, setError] = useState<{ message: string; retry: (() => void) | null } | null>(null);
   // A two-player case asks for the friend's link as soon as its opening is in.
   const [panel, setPanel] = useState<Panel>(() =>
@@ -66,24 +80,6 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
   const story = data?.story ?? null;
   const turns = useMemo(() => data?.turns ?? [], [data]);
 
-  // Whatever this screen shows counts as seen, so the story list only flags what the
-  // other player did since.
-  const updatedAt = story?.updatedAt;
-  useEffect(() => {
-    if (updatedAt) markSeen(storyId, updatedAt);
-  }, [storyId, updatedAt]);
-
-  // In a shared case, keep up with the other player while the viewer isn't walking.
-  const watching =
-    story !== null && story.mode === "team" && story.status === "active" && !busy && (!story.walkActive || story.partnerWalking);
-  useEffect(() => {
-    if (!watching) return;
-    const timer = window.setInterval(() => {
-      if (document.visibilityState === "visible") api.getStory(storyId).then(setData, () => {});
-    }, WATCH_MS);
-    return () => window.clearInterval(timer);
-  }, [watching, storyId]);
-
   // The turn that issued the current quest: a closer look is outlined on its photo.
   const questTurn = useMemo(() => {
     const questId = story?.quest?.id;
@@ -99,42 +95,74 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
     );
   }, []);
 
-  // Ask Muse Image to draw the evidence. State only changes when the request settles.
-  const requestCard = useCallback(
+  // Ask Muse Image to draw the evidence. Settles with the turn as it came out, failed included.
+  const paint = useCallback(
     (turn: TurnView) => {
       requested.current.add(turn.id);
-      api.paintCard(storyId, turn.id).then(
-        (result) => replaceTurn(result.turn),
-        () => replaceTurn({ ...turn, cardStatus: "failed" }),
+      return api.paintCard(storyId, turn.id).then(
+        (result) => result.turn,
+        (): TurnView => ({ ...turn, cardStatus: "failed" }),
       );
     },
-    [storyId, replaceTurn],
+    [storyId],
   );
 
-  // A photo that moved the story gets its evidence drawn automatically ("none" shows as in progress).
-  const cardTurn = latest?.card && latest.photoUrl ? latest : null;
+  // New evidence waits for its picture, so the story and the picture show up together.
+  // run() waits for the viewer's own photos. This covers a picture still being drawn
+  // after a reload or on the other player's phone: whoever took the photo draws it, and
+  // anyone else checks back until it's done.
+  const drawing = latest && awaitsPicture(latest) ? latest : null;
   useEffect(() => {
-    if (!cardTurn || requested.current.has(cardTurn.id)) return;
-    const stale =
-      cardTurn.cardStatus === "pending" && Date.now() - Date.parse(cardTurn.createdAt) > 3 * 60_000;
-    if (cardTurn.cardStatus === "none" || stale) requestCard(cardTurn);
-  }, [cardTurn, requestCard]);
+    if (!drawing || requested.current.has(drawing.id)) return;
+    const stale = Date.now() - Date.parse(drawing.createdAt) > STALE_MS;
+    if ((drawing.playedBy === "you" && drawing.cardStatus === "none") || stale) {
+      void paint(drawing).then(replaceTurn);
+      return;
+    }
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") api.getStory(storyId).then(setData, () => {});
+    }, DRAWING_MS);
+    return () => window.clearInterval(timer);
+  }, [drawing, paint, replaceTurn, storyId]);
+
+  // Whatever this screen shows counts as seen, so the story list only flags what the
+  // other player did since. Evidence still waiting for its picture isn't shown yet.
+  const updatedAt = story?.updatedAt;
+  const shown = drawing === null;
+  useEffect(() => {
+    if (updatedAt && shown) markSeen(storyId, updatedAt);
+  }, [storyId, updatedAt, shown]);
+
+  const hold: Hold | null =
+    busy ?? (drawing && { message: ANALYZING, src: drawing.photoUrl, size: drawing.photoSize });
+
+  // In a shared case, keep up with the other player while the viewer isn't walking.
+  const watching =
+    story !== null && story.mode === "team" && story.status === "active" && !hold && (!story.walkActive || story.partnerWalking);
+  useEffect(() => {
+    if (!watching) return;
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") api.getStory(storyId).then(setData, () => {});
+    }, WATCH_MS);
+    return () => window.clearInterval(timer);
+  }, [watching, storyId]);
 
   const repaint = (turn: TurnView) => {
     replaceTurn({ ...turn, cardStatus: "pending" });
-    requestCard(turn);
+    void paint(turn).then(replaceTurn);
   };
 
   async function run(message: string, photo: PhotoUpload | null, task: () => Promise<TurnResult>) {
     setError(null);
     setNotice(null);
     setPanel(null);
-    setBusy({ message, photo });
+    setBusy({ message, src: photo?.photo ?? null, size: photo && { width: photo.width, height: photo.height } });
     try {
       const result = await task();
+      const turn = awaitsPicture(result.turn) ? await paint(result.turn) : result.turn;
       setData((current) => ({
         story: result.story,
-        turns: [...(current?.turns ?? []), result.turn],
+        turns: [...(current?.turns ?? []), turn],
       }));
       scrollToTop();
     } catch (err) {
@@ -149,7 +177,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
 
   const photoError = (message: string) => setError({ message, retry: null });
   const takePhoto = (photo: PhotoUpload) =>
-    run(`${GAME_MASTER} is taking a look…`, photo, () => api.takeTurn(storyId, "photo", photo));
+    run(ANALYZING, photo, () => api.takeTurn(storyId, "photo", photo));
   const resume = (photo: PhotoUpload) =>
     run(`${GAME_MASTER} is starting the next chapter…`, photo, () => api.takeTurn(storyId, "resume", photo));
   const end = () => run(`${GAME_MASTER} is closing the chapter…`, null, () => api.endWalk(storyId));
@@ -238,7 +266,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
               {story.status === "complete" ? "Solved" : `Chapter ${story.chapter}`}
             </p>
           </div>
-          {walkLive && !busy && (
+          {walkLive && !hold && (
             <button
               type="button"
               onClick={() => setPanel("end")}
@@ -251,13 +279,13 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
       </header>
 
       <div className="mt-2">
-        {busy ? (
-          <Working photo={busy.photo} message={busy.message} />
+        {hold ? (
+          <Working src={hold.src} size={hold.size} message={hold.message} />
         ) : (
           <>
             {scene && <Scene turn={scene} onRepaint={() => repaint(scene)} onZoom={setZoomed} />}
             {latest && (
-              <section aria-label={GAME_MASTER} className="mt-5">
+              <section aria-label={GAME_MASTER} className="fade-in mt-5">
                 {latest.card && (
                   <p className="font-sign text-lg font-bold text-walk">
                     {latest.playedBy === "partner" ? "Your partner found new evidence" : "New evidence"}
@@ -270,7 +298,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
         )}
       </div>
 
-      {!busy && (
+      {!hold && (
         <BottomBar>
           {error && <Alert message={error.message} retry={error.retry} />}
 

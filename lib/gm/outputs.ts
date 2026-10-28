@@ -113,7 +113,7 @@ export const GenesisSchema = z.object({
     `Private: exactly ${STORY_STEPS} beats in order, one per step forward. Each is a goal that works anywhere and ends in one piece of evidence that points toward the secret, e.g. "Find proof the notice's date was changed".`,
   ),
   characters: list(z.object({ name: text(LABEL), role: text(LABEL), notes: text(SENTENCE) })).describe(
-    "Private: everyone the story will name, at most 3, including whoever is behind the secret.",
+    "Private: the whole cast, at most 2, including whoever is behind the secret. Nobody else appears in the story.",
   ),
   narration: prose(NARRATION).describe(
     "The opening: 2 to 4 short sentences, at most 50 words, set in the place in the photo. It says what happened, who it matters to, and what the player is trying to find out.",

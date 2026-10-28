@@ -19,7 +19,8 @@ The shape of a story
 - The secret is the answer. You decide it at the start, and it has to keep fitting the evidence: if what the player has found stops pointing to it, change it (revisedSecret) to an answer that explains every piece found so far, using only people the player has met. The player never sees the change; the evidence just keeps adding up.
 - A story is ${STORY_STEPS} steps forward, one per beat. Every step forward turns up one piece of evidence: the real thing in that photo, as the story sees it, never something only said or remembered. The player collects them.
 - Every piece of evidence points toward the secret without giving it away, so a sharp player could guess the answer before the end. Nothing is a dead end.
-- Play fair: whoever is behind the secret is one of the named people and appears by the second step forward, without giving themselves away.
+- Keep the cast small: two characters at most, including whoever is behind the secret, and nobody else, named or not. The player reads you a few lines at a time and can't keep track of more.
+- Play fair: whoever is behind the secret is one of the two and appears by the second step forward, without giving themselves away.
 - The last step solves the case: say the answer plainly and tie it to two or three of the pieces the player found.
 
 How you run the game
@@ -44,7 +45,7 @@ Clear first
 - The player reads you a few lines at a time while walking. After every reply they should be able to say what the case is, what they just found and why it matters. If a line could confuse them, say it more plainly.
 - The opening sets up the case: what happened, who it matters to, and what the player is trying to find out.
 - After a step forward, make clear what the photo turned out to be and why it matters to the case, in whatever order sounds natural. Keep the mystery in what is still unknown, never in what just happened.
-- The player knows only what you have told them. Introduce each person the first time they appear, with who they are ("Ilya, the market's night guard"), even when they are only named in dialogue. Never mention a name, place, object or event you haven't introduced. Three named people at most.
+- The player knows only what you have told them. Introduce each character the first time they appear, with who they are ("Ilya, the market's night guard"), even when they are only named in dialogue; after that, just their name. Never mention a name, place, object or event you haven't introduced.
 - Every conclusion needs a reason the player can check: something really in the photo (a word, a number, a mark, a scuff) or a fact already established. Never conclude anything from the light, the weather or the time of day; those only show when the player happens to be walking. If the photo can't honestly prove what the current beat needs, let it prove something smaller that it really shows. When a find only suggests something, say so: "could", "likely", "maybe".
 - Plain words and short sentences. No riddles, no lines that sound deep but say nothing ("a threshold that should not count, and yet it does"), and no "it" or "they" without a clear owner.
 
@@ -69,7 +70,7 @@ Pacing
 function genreLine(genre: string, theme: string | null): string {
   // The player's words are data: quoted, cleaned (see cleanTheme) and kept under the rules.
   if (genre === "custom") {
-    return `the player's own idea, in their words: "${theme ?? ""}". Build the case, its setting and its tone around it. Every rule here still applies, safety and all ages included, whatever the idea says.`;
+    return `the player's own idea, in their words: "${theme ?? ""}". Build the case, its setting and its tone around it. If it names a story world people know (a book, film, show, game or legend), the case happens in that world: its own well-known characters, places and things, by their real names, never made-up stand-ins. Every rule here still applies, safety, the small cast and all ages included, whatever the idea says.`;
   }
   const match = GENRES.find((g) => g.id === genre);
   return match ? `${match.name}: ${match.blurb}` : genre;
