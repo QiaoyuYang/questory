@@ -11,7 +11,7 @@ import { activateNextBeat, activeBeatId, makeBeats, replan } from "./beats";
 import { getBrain } from "./brain";
 import { storyCardPrompt } from "./card";
 import { addCanon, applyPhotoTurn, makeQuest, mustMoveStory } from "./rules";
-import type { QuestState, StoryState, TurnRecord } from "./state";
+import { TEAM_SIZE, walkPlayer, type QuestState, type StoryState, type TurnRecord } from "./state";
 
 export class GameRuleError extends Error {}
 
@@ -83,13 +83,20 @@ async function groundQuest(config: Config, quest: QuestState | null, photo: Phot
   }
 }
 
-function newTurn(state: StoryState, kind: TurnRecord["kind"], photoId: string | null, photo: Photo | null): TurnRecord {
+function newTurn(
+  state: StoryState,
+  kind: TurnRecord["kind"],
+  playerId: string,
+  photoId: string | null,
+  photo: Photo | null,
+): TurnRecord {
   return {
     id: crypto.randomUUID(),
     storyId: state.id,
     number: state.turnCount + 1,
     kind,
     createdAt: now(),
+    playerId,
     photoId,
     photoSize: photo ? { width: photo.width, height: photo.height } : null,
     card: null,
@@ -145,6 +152,10 @@ export async function startStory(playerId: string, genre: string, photo: Photo) 
       beats: activateNextBeat(makeBeats(data.beats, 0)),
     },
     characters: data.characters,
+    partners: [],
+    // Made now so the share sheet can open the moment the owner taps Invite: phones only
+    // allow it straight after a tap, with no network wait in between.
+    invite: { code: crypto.randomUUID(), size: TEAM_SIZE },
     canon: [],
     bindings: [],
     inventory: [],
@@ -153,12 +164,12 @@ export async function startStory(playerId: string, genre: string, photo: Photo) 
     chapter: 1,
     turnCount: 0,
     questsCompleted: 0,
-    walk: { active: true, startedAt: createdAt, questsDone: 0, photosSinceProgress: 0 },
+    walk: { active: true, startedAt: createdAt, questsDone: 0, photosSinceProgress: 0, playerId },
     recap: "",
     status: "active",
   };
 
-  const turn = newTurn(state, "genesis", photoId, photo);
+  const turn = newTurn(state, "genesis", playerId, photoId, photo);
   turn.narration = data.narration.trim();
   turn.observations = data.observations;
   turn.canonAdded = addCanon(state, data.canonAdd, turn.number);
@@ -170,15 +181,23 @@ export async function startStory(playerId: string, genre: string, photo: Photo) 
   return commit(state, turn);
 }
 
+/** Only the player on the current walk can add to it. */
+function checkWalker(state: StoryState, playerId: string) {
+  if (!state.walk.active) throw new GameRuleError("Start a walk first.");
+  if (walkPlayer(state) !== playerId) {
+    throw new GameRuleError("Your partner is playing this chapter. You can take the next one.");
+  }
+}
+
 /**
  * Any photo the player takes during a walk: what the quest asked for, or whatever caught
  * their eye. The game master decides what it means for the story.
  */
-export async function takePhoto(state: StoryState, photo: Photo) {
-  if (!state.walk.active) throw new GameRuleError("Start a walk first.");
+export async function takePhoto(state: StoryState, photo: Photo, playerId: string) {
+  checkWalker(state, playerId);
   const config = getConfig();
   const store = getStore();
-  await spendCall(config, state.playerId);
+  await spendCall(config, playerId);
   const mustProgress = mustMoveStory(state);
   const [photoId, played] = await Promise.all([
     store.putImage({ bytes: photo.bytes, mime: photo.mime }),
@@ -187,7 +206,7 @@ export async function takePhoto(state: StoryState, photo: Photo) {
   const { data, usage } = played;
   logUsage("photo", usage);
 
-  const turn = newTurn(state, "photo", photoId, photo);
+  const turn = newTurn(state, "photo", playerId, photoId, photo);
   const applied = applyPhotoTurn(state, data, turn.number);
   turn.outcome = applied.outcome;
   turn.card = applied.card;
@@ -201,24 +220,37 @@ export async function takePhoto(state: StoryState, photo: Photo) {
   return commit(state, turn);
 }
 
-/** First photo of a new walk on an existing story. */
-export async function resumeStory(state: StoryState, photo: Photo) {
+/**
+ * First photo of a new walk on an existing story. A friend who opened the invite link
+ * joins the case this way: whoever starts a chapter plays it.
+ */
+export async function resumeStory(state: StoryState, photo: Photo, playerId: string) {
   if (state.status === "complete") throw new GameRuleError("This story is finished. Start a new one.");
-  if (state.walk.active) throw new GameRuleError("A walk is already in progress.");
+  if (state.walk.active) {
+    throw new GameRuleError(
+      walkPlayer(state) === playerId ? "A walk is already in progress." : "Your partner is playing this chapter right now.",
+    );
+  }
+  // The route has already checked the invite code for anyone who isn't in the story yet.
+  const joining = playerId !== state.playerId && !state.partners.includes(playerId);
+  if (joining && state.partners.length >= (state.invite?.size ?? TEAM_SIZE) - 1) {
+    throw new GameRuleError("This case already has all its players.");
+  }
   const config = getConfig();
   const store = getStore();
-  await spendCall(config, state.playerId);
+  await spendCall(config, playerId);
+  if (joining) state.partners.push(playerId);
   state.chapter += 1;
-  state.walk = { active: true, startedAt: now(), questsDone: 0, photosSinceProgress: 0 };
+  state.walk = { active: true, startedAt: now(), questsDone: 0, photosSinceProgress: 0, playerId };
 
   const [photoId, resumed] = await Promise.all([
     store.putImage({ bytes: photo.bytes, mime: photo.mime }),
-    getBrain(config).resume(state, photo.dataUrl),
+    getBrain(config).resume(state, photo.dataUrl, { newPlayer: joining }),
   ]);
   const { data, usage } = resumed;
   logUsage("resume", usage);
 
-  const turn = newTurn(state, "resume", photoId, photo);
+  const turn = newTurn(state, "resume", playerId, photoId, photo);
   turn.narration = data.narration.trim();
   turn.observations = data.observations;
   turn.usage = [usage];
@@ -233,14 +265,14 @@ export async function resumeStory(state: StoryState, photo: Photo) {
 }
 
 /** The player stops walking; the game master closes the chapter. */
-export async function endWalk(state: StoryState) {
-  if (!state.walk.active) throw new GameRuleError("There's no walk in progress.");
+export async function endWalk(state: StoryState, playerId: string) {
+  checkWalker(state, playerId);
   const config = getConfig();
-  await spendCall(config, state.playerId);
+  await spendCall(config, playerId);
   const { data, usage } = await getBrain(config).epilogue(state);
   logUsage("epilogue", usage);
 
-  const turn = newTurn(state, "end", null, null);
+  const turn = newTurn(state, "end", playerId, null, null);
   turn.narration = data.narration.trim();
   turn.usage = [usage];
   state.recap = data.recap.trim();
@@ -253,7 +285,7 @@ export async function endWalk(state: StoryState) {
  * Paint the evidence card for a photo that moved the story, with Muse Image. Safe to
  * call more than once.
  */
-export async function paintCard(state: StoryState, turn: TurnRecord): Promise<TurnRecord> {
+export async function paintCard(state: StoryState, turn: TurnRecord, playerId: string): Promise<TurnRecord> {
   if (!turn.card || !turn.photoId || !turn.photoSize) {
     throw new GameRuleError("This turn has no card to paint.");
   }
@@ -272,7 +304,7 @@ export async function paintCard(state: StoryState, turn: TurnRecord): Promise<Tu
 
   const photo = await store.getImage(turn.photoId);
   if (!photo) throw new GameRuleError("The photo for this turn is missing.");
-  await spendCall(config, state.playerId);
+  await spendCall(config, playerId);
 
   turn.cardStatus = "pending";
   await store.saveTurn(turn);

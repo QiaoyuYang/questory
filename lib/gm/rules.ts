@@ -112,7 +112,7 @@ export function applyPhotoTurn(state: StoryState, data: PhotoTurnOut, turn: numb
   });
 
   if (card) {
-    state.evidence.push({ title: card.title, caption: card.caption, turn });
+    state.evidence.push({ title: card.title, caption: card.caption, turn, by: state.walk.playerId });
     state.questsCompleted += 1;
     state.walk.questsDone += 1;
     state.walk.photosSinceProgress = 0;

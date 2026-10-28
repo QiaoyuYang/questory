@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import type { StoryView, TurnView } from "@/lib/types";
+import { BUTTON } from "./buttons";
 import { EvidenceList } from "./EvidenceList";
 import { turnLabel } from "./labels";
 import type { Zoomed } from "./PhotoViewer";
@@ -23,11 +24,14 @@ type Props = {
   story: StoryView;
   turns: TurnView[];
   onZoom: (image: Zoomed) => void;
-  onDelete: () => void;
+  /** Only while the owner can still bring in a friend. */
+  onInvite: (() => void) | null;
+  /** Only the owner can delete a story. */
+  onDelete: (() => void) | null;
 };
 
 /** Everything the story has built up, kept out of the way until the player asks for it. */
-export function StorySheet({ open, onClose, story, turns, onZoom, onDelete }: Props) {
+export function StorySheet({ open, onClose, story, turns, onZoom, onInvite, onDelete }: Props) {
   const [tab, setTab] = useState<Tab>("evidence");
 
   return (
@@ -99,9 +103,24 @@ export function StorySheet({ open, onClose, story, turns, onZoom, onDelete }: Pr
         )}
       </div>
 
-      <button type="button" onClick={onDelete} className="mt-8 min-h-11 font-semibold text-hand">
-        Delete this story
-      </button>
+      {onInvite && (
+        <section className="mt-8 rounded-[14px] bg-asphalt px-4 py-3.5">
+          <h3 className="font-sign text-lg font-bold">Play it with a friend</h3>
+          <p className="mt-1 text-[0.9375rem] text-concrete text-pretty">
+            Send a link. Your friend plays the next chapter on their own streets, and you both see the story&apos;s
+            photos and evidence.
+          </p>
+          <button type="button" onClick={onInvite} className={`${BUTTON.secondary} mt-3 w-full`}>
+            Invite a friend
+          </button>
+        </section>
+      )}
+
+      {onDelete && (
+        <button type="button" onClick={onDelete} className="mt-8 min-h-11 font-semibold text-hand">
+          Delete this story
+        </button>
+      )}
     </Sheet>
   );
 }

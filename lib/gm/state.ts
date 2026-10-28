@@ -46,7 +46,12 @@ export type Beat = z.infer<typeof BeatSchema>;
 export const StoryStateSchema = z.object({
   version: z.literal(1),
   id: z.string(),
+  /** The player who started the story. */
   playerId: z.string(),
+  /** Players who joined through the invite link and took a chapter. Stories saved before it start empty. */
+  partners: z.array(z.string()).default([]),
+  /** The invite link's code and how many players the case takes, made when the owner first shares it. */
+  invite: z.object({ code: z.string(), size: z.number() }).nullable().default(null),
   genre: GenreSchema,
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -67,7 +72,12 @@ export const StoryStateSchema = z.object({
   bindings: z.array(z.object({ abstract: z.string(), concrete: z.string(), turn: z.number() })),
   inventory: z.array(z.string()),
   /** One piece per step forward, named on that step's card. Stories saved before it start empty. */
-  evidence: z.array(z.object({ title: z.string(), caption: z.string(), turn: z.number() })).default([]),
+  evidence: z
+    .array(
+      // `by` is who found it; null on evidence from before stories could be shared, which the owner found.
+      z.object({ title: z.string(), caption: z.string(), turn: z.number(), by: z.string().nullable().default(null) }),
+    )
+    .default([]),
   quest: QuestStateSchema.nullable(),
   chapter: z.number(),
   turnCount: z.number(),
@@ -79,6 +89,8 @@ export const StoryStateSchema = z.object({
     questsDone: z.number(),
     /** Photos in a row that left the story where it was. Stories saved before this field start at 0. */
     photosSinceProgress: z.number().default(0),
+    /** Who is playing this walk. Only they can send photos or end it. Null means the owner. */
+    playerId: z.string().nullable().default(null),
   }),
   recap: z.string(),
   status: z.enum(["active", "complete"]),
@@ -113,6 +125,8 @@ export const TurnRecordSchema = z.object({
       outline: z.object({ path: z.string(), transform: z.string() }).nullable(),
     })
     .nullable(),
+  /** Who played the turn. Null on turns from before stories could be shared, which the owner played. */
+  playerId: z.string().nullable().default(null),
   canonAdded: z.array(z.string()),
   observations: z.array(z.string()),
   usage: z.array(
@@ -150,8 +164,18 @@ function viewOutcome(turn: TurnRecord): Outcome | null {
   return null;
 }
 
-export function storyView(state: StoryState): StoryView {
+/** Who is playing the current walk. Walks from before stories could be shared were the owner's. */
+export function walkPlayer(state: StoryState): string {
+  return state.walk.playerId ?? state.playerId;
+}
+
+/** Players a case takes when its owner invites a friend. */
+export const TEAM_SIZE = 2;
+
+/** The story as `viewerId` sees it: the owner, or a partner who joined through the invite. */
+export function storyView(state: StoryState, viewerId: string): StoryView {
   const complete = state.status === "complete";
+  const size = state.invite?.size ?? TEAM_SIZE;
   return {
     id: state.id,
     title: state.title,
@@ -160,6 +184,11 @@ export function storyView(state: StoryState): StoryView {
     chapter: state.chapter,
     status: state.status,
     walkActive: state.walk.active,
+    role: viewerId === state.playerId ? "owner" : "partner",
+    shared: state.partners.length > 0,
+    partnerWalking: state.walk.active && walkPlayer(state) !== viewerId,
+    invitable: viewerId === state.playerId && !complete && state.partners.length < size - 1,
+    inviteCode: viewerId === state.playerId ? (state.invite?.code ?? null) : null,
     quest: questView(state.quest),
     questsCompleted: state.questsCompleted,
     // Every step forward finishes a beat and turns up a piece of evidence.
@@ -172,8 +201,8 @@ export function storyView(state: StoryState): StoryView {
   };
 }
 
-export function storySummary(state: StoryState): StorySummary {
-  const view = storyView(state);
+export function storySummary(state: StoryState, viewerId: string): StorySummary {
+  const view = storyView(state, viewerId);
   return {
     id: view.id,
     title: view.title,
@@ -181,16 +210,19 @@ export function storySummary(state: StoryState): StorySummary {
     chapter: view.chapter,
     status: view.status,
     walkActive: view.walkActive,
+    role: view.role,
     questsCompleted: view.questsCompleted,
     evidenceTotal: view.evidenceTotal,
     updatedAt: view.updatedAt,
   };
 }
 
-export function turnView(turn: TurnRecord): TurnView {
+/** A turn as `viewerId` sees it. Turns without a player are the owner's. */
+export function turnView(turn: TurnRecord, viewerId: string, ownerId: string): TurnView {
   return {
     id: turn.id,
     number: turn.number,
+    playedBy: (turn.playerId ?? ownerId) === viewerId ? "you" : "partner",
     kind: turn.kind === "complete" || turn.kind === "show" ? "photo" : turn.kind,
     createdAt: turn.createdAt,
     photoUrl: mediaUrl(turn.photoId),

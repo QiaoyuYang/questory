@@ -43,6 +43,8 @@ function story(): StoryState {
       beats: activateNextBeat(makeBeats(["one", "two", "three"], 0)),
     },
     characters: [],
+    partners: [],
+    invite: null,
     canon: [{ fact: "The courier marks hiding places with chalk.", turn: 1 }],
     bindings: [],
     inventory: [],
@@ -51,7 +53,7 @@ function story(): StoryState {
     chapter: 1,
     turnCount: 1,
     questsCompleted: 0,
-    walk: { active: true, startedAt: "2026-10-26T00:00:00.000Z", questsDone: 0, photosSinceProgress: 0 },
+    walk: { active: true, startedAt: "2026-10-26T00:00:00.000Z", questsDone: 0, photosSinceProgress: 0, playerId: null },
     recap: "",
     status: "active",
   };
@@ -198,9 +200,16 @@ test("every step forward turns up a piece of evidence, painted as a card", () =>
   const blank = { title: ".", proves: ".", flourish: "" };
   assert.equal(applyPhotoTurn(state, reply({ outcome: "moves_story", card: blank }), 3).card?.title, "New evidence");
   assert.deepEqual(state.evidence, [
-    { title: "The marked door", caption: "Number 14, freshly painted", turn: 2 },
-    { title: "New evidence", caption: "", turn: 3 },
+    { title: "The marked door", caption: "Number 14, freshly painted", turn: 2, by: null },
+    { title: "New evidence", caption: "", turn: 3, by: null },
   ]);
+});
+
+test("evidence remembers who found it, for cases two players share", () => {
+  const state = story();
+  state.walk.playerId = "friend";
+  applyPhotoTurn(state, reply({ outcome: "follows_quest" }), 2);
+  assert.equal(state.evidence[0].by, "friend");
 });
 
 test("target phrases lose leading articles and trailing punctuation", () => {

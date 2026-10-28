@@ -1,5 +1,6 @@
 import type {
   GenreId,
+  InviteView,
   PhotoUpload,
   StorySummary,
   StoryView,
@@ -27,7 +28,11 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
 export type TurnResult = { story: StoryView; turn: TurnView };
 
 export const api = {
-  listStories: () => call<{ stories: StorySummary[]; mode: "mock" | "live" }>("/api/stories"),
+  /** `shared` lists stories this browser joined as a partner. */
+  listStories: (shared: string[]) =>
+    call<{ stories: StorySummary[]; mode: "mock" | "live" }>(
+      shared.length ? `/api/stories?shared=${shared.map(encodeURIComponent).join(",")}` : "/api/stories",
+    ),
 
   getStory: (id: string) => call<{ story: StoryView; turns: TurnView[] }>(`/api/stories/${id}`),
 
@@ -39,6 +44,18 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ kind, ...photo }),
     }),
+
+  /** A friend joins a shared case by starting its next chapter. */
+  joinStory: (id: string, code: string, photo: PhotoUpload) =>
+    call<TurnResult>(`/api/stories/${id}/turns`, {
+      method: "POST",
+      body: JSON.stringify({ kind: "resume", code, ...photo }),
+    }),
+
+  inviteInfo: (id: string, code: string) =>
+    call<{ invite: InviteView }>(`/api/stories/${id}/invite?code=${encodeURIComponent(code)}`),
+
+  createInvite: (id: string) => call<{ url: string }>(`/api/stories/${id}/invite`, { method: "POST" }),
 
   endWalk: (id: string) => call<TurnResult>(`/api/stories/${id}/end`, { method: "POST" }),
 

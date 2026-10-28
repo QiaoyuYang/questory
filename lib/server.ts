@@ -1,4 +1,5 @@
 import "server-only";
+import { timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { DailyLimitError, GameRuleError } from "@/lib/gm/engine";
 import type { StoryState } from "@/lib/gm/state";
@@ -31,12 +32,39 @@ export async function getPlayerId(): Promise<string> {
   return id;
 }
 
-/** Load a story that belongs to the current player. */
-export async function loadOwnStory(storyId: string): Promise<StoryState> {
+type Loaded = { story: StoryState; playerId: string };
+
+/** Load a story the current player started, or joined as a partner. */
+export async function loadStory(storyId: string): Promise<Loaded> {
   const playerId = await getPlayerId();
   const story = await getStore().getStory(storyId);
-  if (!story || story.playerId !== playerId) throw new NotFoundError("That story doesn't exist.");
-  return story;
+  if (!story || (story.playerId !== playerId && !story.partners.includes(playerId))) {
+    throw new NotFoundError("That story doesn't exist.");
+  }
+  return { story, playerId };
+}
+
+/** Load a story the current player started. Only its owner can invite a friend or delete it. */
+export async function loadOwnStory(storyId: string): Promise<Loaded> {
+  const loaded = await loadStory(storyId);
+  if (loaded.story.playerId !== loaded.playerId) throw new NotFoundError("That story doesn't exist.");
+  return loaded;
+}
+
+function sameCode(a: string, b: string) {
+  const left = Buffer.from(a);
+  const right = Buffer.from(b);
+  return left.length === right.length && timingSafeEqual(left, right);
+}
+
+/** Load a story through its invite link, for a friend who may not have joined yet. */
+export async function loadInvitedStory(storyId: string, code: string): Promise<Loaded> {
+  const playerId = await getPlayerId();
+  const story = await getStore().getStory(storyId);
+  if (!story?.invite || !sameCode(story.invite.code, code)) {
+    throw new NotFoundError("This invite link doesn't work. Ask your friend for a new one.");
+  }
+  return { story, playerId };
 }
 
 export async function readJsonBody<T>(request: Request): Promise<Partial<T>> {

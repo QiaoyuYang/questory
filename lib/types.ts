@@ -80,6 +80,8 @@ export type CardStatus = "none" | "pending" | "ready" | "failed";
 export type TurnView = {
   id: string;
   number: number;
+  /** In a shared story, whether the viewer or their partner played this turn. */
+  playedBy: "you" | "partner";
   kind: TurnKind;
   createdAt: string;
   photoUrl: string | null;
@@ -106,6 +108,16 @@ export type StoryView = {
   chapter: number;
   status: "active" | "complete";
   walkActive: boolean;
+  /** The owner started the story; a partner joined it through the invite link. */
+  role: "owner" | "partner";
+  /** True once a partner has joined. */
+  shared: boolean;
+  /** The current walk is the other player's, so the viewer can only watch. */
+  partnerWalking: boolean;
+  /** The owner can still invite a friend to take a chapter. */
+  invitable: boolean;
+  /** The invite link's code, for the owner only. Stories from before invites get one when first shared. */
+  inviteCode: string | null;
   quest: QuestView | null;
   /** Steps forward so far. Each one turned up a piece of evidence. */
   questsCompleted: number;
@@ -122,8 +134,34 @@ export type StoryView = {
 
 export type StorySummary = Pick<
   StoryView,
-  "id" | "title" | "genre" | "chapter" | "status" | "walkActive" | "questsCompleted" | "evidenceTotal" | "updatedAt"
+  | "id"
+  | "title"
+  | "genre"
+  | "chapter"
+  | "status"
+  | "walkActive"
+  | "role"
+  | "questsCompleted"
+  | "evidenceTotal"
+  | "updatedAt"
 >;
+
+/** What an invite link shows before the friend joins: enough to decide, no photos. */
+export type InviteView = {
+  title: string;
+  /** The case: the question the story answers. */
+  logline: string;
+  genre: GenreId;
+  chapter: number;
+  status: "active" | "complete";
+  walkActive: boolean;
+  questsCompleted: number;
+  evidenceTotal: number;
+  /** Who is opening the link: its owner, a partner who already joined, or a friend who hasn't yet. */
+  role: "owner" | "partner" | "guest";
+  /** No seat left for a new player. */
+  full: boolean;
+};
 
 export type PhotoUpload = {
   /** A JPEG, PNG or WebP data URL. The browser downscales photos before upload. */
