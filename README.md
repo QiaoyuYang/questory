@@ -19,7 +19,9 @@ Questory is built for the part where people stop. The story carries on from one 
 1. **You take a photo of anything.** It can be what the quest asked for or whatever catches your eye. The browser shrinks it to 1280px and uploads it.
 2. **Muse Wonder plays Wren, the game master.** It reads the photo and the story so far, decides what the photo means, narrates, and leaves the next quest, all as structured JSON. A photo can follow the quest, move the story somewhere new, or add a clue on the side. No photo fails.
 3. **SAM 3.1 grounds the target.** When the next quest asks you to take a closer look at something in your photo ("the blue door"), SAM finds it and the app traces its outline.
-4. **Muse Image paints a story card.** When a photo moves the story, it becomes a card with a title and caption drawn on. Cards are keepsakes, so they never cover the photo you navigate by.
+4. **Muse Image draws the evidence.** When a photo moves the story, it becomes an evidence card with the evidence's name and what it proves lettered on. Cards are keepsakes, so they never cover the photo you navigate by.
+
+Every story is a case: one plain question, like "Who took Sir Buttons the garden gnome?", with an answer Wren fixes at the start. A case is six steps forward. Each one turns up a piece of evidence, the last one solves it, and the evidence list shows what you've found and how much is left. The person behind the answer shows up by the second step, so a sharp player can guess it before the end.
 
 Quests are suggestions. If two photos in a row only add side notes, the game master moves the story forward with the next one, whatever it shows.
 
@@ -29,11 +31,11 @@ The story state has three layers, and the prompts treat each one differently:
 
 | Layer | What it holds | How it changes |
 | --- | --- | --- |
-| Skeleton | Hidden premise, antagonist, stakes, ending, and 5 to 7 beats written as goals that work anywhere | Re-planned only when the world forces it, and always narrated as a twist |
+| Skeleton | The hidden answer to the case, the premise, antagonist, stakes, ending, and six beats written as goals that work anywhere | Re-planned only when the world forces it, always narrated as a twist, and never changes the answer |
 | Bindings | Which real thing stands in for which story element ("the dead drop" is "the red mailbox") | Freely, every turn |
 | Canon | Facts already established in play | Never contradicted |
 
-A chapter is about three steps forward. The state is saved after every turn, so the next chapter can start right away or on another walk. The skeleton is never sent to the browser.
+A chapter is three steps forward, so a case takes two chapters. The state is saved after every turn, so the next chapter can start right away or on another walk. The skeleton is never sent to the browser, and the answer reaches it only once the case is solved.
 
 ## Run it
 

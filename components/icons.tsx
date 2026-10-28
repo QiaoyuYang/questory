@@ -30,11 +30,20 @@ export function CameraIcon(props: Props) {
   );
 }
 
-export function BookIcon(props: Props) {
+export function MagnifierIcon(props: Props) {
   return (
     <Icon {...props}>
-      <path d="M12 6.5C10 5 7 4.5 4 5v13c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5V5c-3-.5-6 0-8 1.5z" />
-      <path d="M12 6.5v13" />
+      <circle cx="10.5" cy="10.5" r="6" />
+      <path d="M15 15l5 5" />
+    </Icon>
+  );
+}
+
+export function LockIcon(props: Props) {
+  return (
+    <Icon {...props}>
+      <rect x="5" y="11" width="14" height="9" rx="1.5" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
     </Icon>
   );
 }

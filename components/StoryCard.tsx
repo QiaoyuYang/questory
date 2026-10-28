@@ -20,7 +20,7 @@ export function StoryCard({ turn, onRepaint, onZoom }: Props) {
   const ready = turn.cardStatus === "ready" && turn.cardUrl !== null;
   const failed = turn.cardStatus === "failed";
   const src = ready ? turn.cardUrl! : turn.photoUrl;
-  const alt = ready ? `Story card: ${turn.card.title}` : "The photo you sent";
+  const alt = ready ? `Evidence card: ${turn.card.title}` : "The photo you sent";
 
   return (
     <div className="relative">
@@ -56,7 +56,7 @@ export function StoryCard({ turn, onRepaint, onZoom }: Props) {
         </div>
       )}
       <p className="sr-only" aria-live="polite">
-        {ready ? `Card earned: ${turn.card.title}` : failed ? "Your card didn't come out." : "Drawing your card."}
+        {ready ? `Evidence card: ${turn.card.title}` : failed ? "Your card didn't come out." : "Drawing your card."}
       </p>
     </div>
   );

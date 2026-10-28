@@ -28,6 +28,12 @@ export const GENRES = [
     name: "Cozy",
     blurb: "Small wonders and kind strangers. Low stakes, warm heart.",
   },
+  {
+    id: "comedy",
+    name: "Comedy",
+    blurb:
+      "A silly case treated like the crime of the century: a kidnapped garden gnome, a pigeon on the suspect list, a prize pumpkin gone missing. Everyone takes it far too seriously. Give every reply one funny line, from a character or a deadpan aside. Warm, never mean.",
+  },
 ] as const;
 
 export type GenreId = (typeof GENRES)[number]["id"];
@@ -79,7 +85,7 @@ export type TurnView = {
   createdAt: string;
   photoUrl: string | null;
   photoSize: { width: number; height: number } | null;
-  /** Set when the photo moved the story and earned a card. */
+  /** Set when the photo moved the story: the evidence it turned up, painted as a card. */
   card: { title: string; caption: string } | null;
   cardUrl: string | null;
   cardStatus: CardStatus;
@@ -95,13 +101,19 @@ export type TurnView = {
 export type StoryView = {
   id: string;
   title: string;
+  /** The case: the question the story answers. */
   logline: string;
   genre: GenreId;
   chapter: number;
   status: "active" | "complete";
   walkActive: boolean;
   quest: QuestView | null;
+  /** Steps forward so far. Each one turned up a piece of evidence. */
   questsCompleted: number;
+  /** Pieces of evidence that solve the case. */
+  evidenceTotal: number;
+  /** The answer to the case, once the story is over. */
+  secret: string | null;
   inventory: string[];
   /** Facts established so far, in the order they happened. */
   canon: string[];
@@ -111,7 +123,7 @@ export type StoryView = {
 
 export type StorySummary = Pick<
   StoryView,
-  "id" | "title" | "genre" | "chapter" | "status" | "walkActive" | "questsCompleted" | "updatedAt"
+  "id" | "title" | "genre" | "chapter" | "status" | "walkActive" | "questsCompleted" | "evidenceTotal" | "updatedAt"
 >;
 
 export type PhotoUpload = {

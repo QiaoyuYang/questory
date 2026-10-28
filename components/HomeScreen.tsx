@@ -22,9 +22,8 @@ function genreName(id: string) {
 }
 
 function describe(story: StorySummary) {
-  const quests = story.questsCompleted === 1 ? "1 quest" : `${story.questsCompleted} quests`;
-  if (story.status === "complete") return `${genreName(story.genre)} · finished · ${quests}`;
-  return `${genreName(story.genre)} · chapter ${story.chapter} · ${quests}`;
+  if (story.status === "complete") return `${genreName(story.genre)} · solved`;
+  return `${genreName(story.genre)} · chapter ${story.chapter} · evidence ${story.questsCompleted}/${story.evidenceTotal}`;
 }
 
 export function HomeScreen({ stories, mode, onStarted, onOpen }: Props) {
@@ -91,8 +90,8 @@ export function HomeScreen({ stories, mode, onStarted, onOpen }: Props) {
                 Your street is page one.
               </h1>
               <p className="mt-3 max-w-[34ch] text-concrete">
-                Take a photo of where you&apos;re standing. {GAME_MASTER}, your storyteller, writes a story around it,
-                and every photo you take on your walk becomes part of it.
+                Take a photo of where you&apos;re standing, and {GAME_MASTER}, your storyteller, opens a case right
+                there. Walk, follow the next step, and collect six pieces of evidence to solve it.
               </p>
             </section>
           )}
@@ -105,7 +104,8 @@ export function HomeScreen({ stories, mode, onStarted, onOpen }: Props) {
                 return (
                   <label
                     key={option.id}
-                    className={`relative flex min-h-14 cursor-pointer items-center justify-center rounded-[12px] border-2 px-3 transition-colors has-[:focus-visible]:outline has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-3 has-[:focus-visible]:outline-paint ${
+                    // An odd tile out spans the row.
+                    className={`relative flex min-h-14 cursor-pointer items-center justify-center rounded-[12px] border-2 px-3 transition-colors odd:last:col-span-2 has-[:focus-visible]:outline has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-3 has-[:focus-visible]:outline-paint ${
                       selected ? "border-lane bg-kerb" : "border-seam hover:border-concrete"
                     }`}
                   >

@@ -12,10 +12,12 @@ const GENRE_STYLE: Record<string, string> = {
     "a holographic heads-up display: thin cyan wireframe brackets, faint scan lines",
   everyday:
     "a cozy sketchbook: loose ink lines, light watercolor washes, small friendly doodles",
+  comedy:
+    "a Sunday comic strip: bold ink outlines, flat bright colors, a starburst title banner, a few playful motion lines",
 };
 
 /**
- * The instruction Muse Image gets for a story card: the photo that moved the story,
+ * The instruction Muse Image gets for an evidence card: the photo that moved the story,
  * painted as a keepsake. The player never navigates by it, so a stylized scene is fine.
  */
 export function storyCardPrompt(genre: string, card: NonNullable<TurnRecord["card"]>): string {
@@ -23,7 +25,7 @@ export function storyCardPrompt(genre: string, card: NonNullable<TurnRecord["car
   // A long caption can only be lettered small. The card reads better without it.
   const caption = card.caption.split(/\s+/).length <= CAPTION_WORDS ? card.caption : "";
   return [
-    "Turn this real street photo into a story card for a walking adventure game. The player just found something here that moved the story forward.",
+    "Turn this real photo into a card for a walking story game. The player just found a piece of evidence here that moves the story forward.",
     "Keep the real scene recognizable: the same place, the same main objects, the same light.",
     `Overlay style: ${style}.`,
     // People read the card on a phone, so the words are few and big.
