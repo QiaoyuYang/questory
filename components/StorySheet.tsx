@@ -24,12 +24,10 @@ type Props = {
   onZoom: (image: Zoomed) => void;
   /** Only while a two-player case waits for its friend. */
   onInvite: (() => void) | null;
-  /** Only the owner can delete a story. */
-  onDelete: (() => void) | null;
 };
 
 /** Everything the story has built up, kept out of the way until the player asks for it. */
-export function StorySheet({ open, onClose, story, turns, onZoom, onInvite, onDelete }: Props) {
+export function StorySheet({ open, onClose, story, turns, onZoom, onInvite }: Props) {
   const [tab, setTab] = useState<Tab>("evidence");
 
   return (
@@ -106,12 +104,6 @@ export function StorySheet({ open, onClose, story, turns, onZoom, onInvite, onDe
           </ol>
         )}
       </div>
-
-      {onDelete && (
-        <button type="button" onClick={onDelete} className="mt-8 min-h-11 font-semibold text-hand">
-          Delete this story
-        </button>
-      )}
     </Sheet>
   );
 }

@@ -27,7 +27,7 @@ type Props = {
   onHome: () => void;
 };
 
-type Panel = "story" | "end" | "delete" | null;
+type Panel = "story" | "end" | null;
 
 /** What the screen shows while it waits: the photo being worked on, and what's happening. */
 type Hold = { message: string; src: string | null; size: { width: number; height: number } | null };
@@ -58,7 +58,6 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
   const [error, setError] = useState<{ message: string; retry: (() => void) | null } | null>(null);
   const [panel, setPanel] = useState<Panel>(null);
   const [zoomed, setZoomed] = useState<Zoomed | null>(null);
-  const [deleting, setDeleting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const requested = useRef(new Set<string>());
 
@@ -182,18 +181,6 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
   function reload() {
     setError(null);
     api.getStory(storyId).then(setData, (err: Error) => setError({ message: err.message, retry: null }));
-  }
-
-  async function remove() {
-    setDeleting(true);
-    try {
-      await api.deleteStory(storyId);
-      onHome();
-    } catch (err) {
-      setDeleting(false);
-      setPanel(null);
-      setError({ message: err instanceof Error ? err.message : "The story couldn't be deleted. Try again.", retry: null });
-    }
   }
 
   // The share sheet only opens straight after a tap, so the link is built right here
@@ -426,7 +413,6 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
         turns={turns}
         onZoom={setZoomed}
         onInvite={story.invitable ? () => void invite() : null}
-        onDelete={story.role === "owner" ? () => setPanel("delete") : null}
       />
       <Sheet open={panel === "end"} onClose={() => setPanel(null)} title="End this walk?" done={false}>
         <p className="text-lg text-pretty">
@@ -446,17 +432,6 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
           </button>
           <button type="button" onClick={() => setPanel(null)} className={BUTTON.secondary}>
             Keep walking
-          </button>
-        </div>
-      </Sheet>
-      <Sheet open={panel === "delete"} onClose={() => setPanel(null)} title="Delete this story?" done={false}>
-        <p className="text-lg text-pretty">Its photos and evidence are deleted too. You can&apos;t undo this.</p>
-        <div className="mt-6 flex flex-col gap-2.5">
-          <button type="button" onClick={() => void remove()} disabled={deleting} className={BUTTON.danger}>
-            {deleting ? "Deleting…" : "Delete story"}
-          </button>
-          <button type="button" onClick={() => setPanel(null)} className={BUTTON.secondary}>
-            Keep it
           </button>
         </div>
       </Sheet>
