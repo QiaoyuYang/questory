@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, type TurnResult } from "@/lib/client/api";
 import { markSeen } from "@/lib/client/seen";
-import { shareLink } from "@/lib/client/share";
+import { inviteLink, shareLink } from "@/lib/client/share";
 import { currentChapter, walkStats } from "@/lib/walk";
 import { GAME_MASTER, type PhotoUpload, type StoryView, type TurnView } from "@/lib/types";
 import { Alert } from "./Alert";
@@ -27,7 +27,7 @@ type Props = {
   onHome: () => void;
 };
 
-type Panel = "story" | "end" | "delete" | "invite" | null;
+type Panel = "story" | "end" | "delete" | null;
 
 /** What the screen shows while it waits: the photo being worked on, and what's happening. */
 type Hold = { message: string; src: string | null; size: { width: number; height: number } | null };
@@ -56,10 +56,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState<Hold | null>(null);
   const [error, setError] = useState<{ message: string; retry: (() => void) | null } | null>(null);
-  // A two-player case asks for the friend's link as soon as its opening is in.
-  const [panel, setPanel] = useState<Panel>(() =>
-    initial?.story.invitable && initial.turns.length === 1 ? "invite" : null,
-  );
+  const [panel, setPanel] = useState<Panel>(null);
   const [zoomed, setZoomed] = useState<Zoomed | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -204,13 +201,11 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
   async function invite() {
     if (!story?.inviteCode) return;
     setError(null);
-    const link = new URL("/", window.location.origin);
-    link.searchParams.set("join", `${story.id}.${story.inviteCode}`);
     try {
       const result = await shareLink({
         title: story.title,
         text: `Help me solve this case on Questory: ${story.logline}`,
-        url: link.toString(),
+        url: inviteLink(story.id, story.inviteCode),
       });
       if (result === "cancelled") return;
       setPanel(null);
@@ -422,15 +417,6 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
         onInvite={story.invitable ? () => void invite() : null}
         onDelete={story.role === "owner" ? () => setPanel("delete") : null}
       />
-      <Sheet open={panel === "invite"} onClose={() => setPanel(null)} title="Invite your friend">
-        <p className="text-lg text-pretty">
-          You play chapter 1 here. Then your friend plays chapter 2 on their own streets, and you solve it together.
-        </p>
-        <button type="button" onClick={() => void invite()} className={`${BUTTON.primary} mt-6 w-full`}>
-          Send the link
-        </button>
-        <p className="mt-3 text-sm text-concrete">Not now? It&apos;s in the Evidence sheet whenever you&apos;re ready.</p>
-      </Sheet>
       <Sheet open={panel === "end"} onClose={() => setPanel(null)} title="End this walk?" done={false}>
         <p className="text-lg text-pretty">
           {GAME_MASTER} will end chapter {story.chapter} now, on a cliffhanger, even if you&apos;re partway through it.

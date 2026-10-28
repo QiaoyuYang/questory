@@ -184,6 +184,25 @@ export type StorySummary = Pick<
   | "updatedAt"
 >;
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isUuid(value: unknown): value is string {
+  return typeof value === "string" && UUID.test(value);
+}
+
+/**
+ * A two-player case's story id and invite code, made on the phone so its link can go out
+ * before the first photo starts the case (see lib/client/share.ts).
+ */
+export type NewInvite = { storyId: string; code: string };
+
+/** The id and code a phone sent with a new case, if they're well formed. */
+export function readNewInvite(value: unknown): NewInvite | null {
+  if (!value || typeof value !== "object") return null;
+  const { storyId, code } = value as Partial<Record<keyof NewInvite, unknown>>;
+  return isUuid(storyId) && isUuid(code) ? { storyId, code } : null;
+}
+
 /** What an invite link shows before the friend joins: enough to decide, no photos. */
 export type InviteView = {
   title: string;

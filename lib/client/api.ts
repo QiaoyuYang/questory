@@ -1,6 +1,7 @@
 import type {
   GenreId,
   InviteView,
+  NewInvite,
   PhotoUpload,
   StorySummary,
   StoryView,
@@ -37,7 +38,11 @@ export const api = {
   getStory: (id: string) => call<{ story: StoryView; turns: TurnView[] }>(`/api/stories/${id}`),
 
   /** `theme` is the player's own idea for a custom story; mode "team" makes a two-player case. */
-  startStory: (story: { genre: GenreId; theme: string; mode: "solo" | "team" }, photo: PhotoUpload) =>
+  /** A two-player case brings the `invite` its link was made with (see lib/client/share.ts). */
+  startStory: (
+    story: { genre: GenreId; theme: string; mode: "solo" | "team"; invite: NewInvite | null },
+    photo: PhotoUpload,
+  ) =>
     call<TurnResult>("/api/stories", { method: "POST", body: JSON.stringify({ ...story, ...photo }) }),
 
   takeTurn: (id: string, kind: "photo" | "resume", photo: PhotoUpload) =>
@@ -54,7 +59,7 @@ export const api = {
     }),
 
   inviteInfo: (id: string, code: string) =>
-    call<{ invite: InviteView }>(`/api/stories/${id}/invite?code=${encodeURIComponent(code)}`),
+    call<{ invite: InviteView | null }>(`/api/stories/${id}/invite?code=${encodeURIComponent(code)}`),
 
 
   endWalk: (id: string) => call<TurnResult>(`/api/stories/${id}/end`, { method: "POST" }),
