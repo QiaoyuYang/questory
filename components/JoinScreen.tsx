@@ -76,7 +76,7 @@ export function JoinScreen({ storyId, code, onJoined, onOpen, onHome }: Props) {
 
       {pending ? (
         <div className="mt-8">
-          <Working photo={pending} message={`${GAME_MASTER} is bringing you into the case…`} />
+          <Working src={pending.photo} size={pending} message={`${GAME_MASTER} is bringing you into the case…`} />
         </div>
       ) : loadError ? (
         <section className="mt-8">
