@@ -26,7 +26,6 @@ const QUESTS: QuestOut[] = [
   {
     title: "The first mark",
     objective: "Walk up to the nearest door in your photo. Is anything chalked, painted or numbered on it?",
-    hint: "Doors keep secrets in their numbers.",
     targetMode: "in_view",
     targetPhrase: "door",
     targetDescription: "the nearest door in your photo",
@@ -35,7 +34,6 @@ const QUESTS: QuestOut[] = [
   {
     title: "Something red",
     objective: "Find something red that has been here a long time.",
-    hint: "Paint fades, but brick and rust remember.",
     targetMode: "seek",
     targetPhrase: "red object",
     targetDescription: "anything red and old",
@@ -44,7 +42,6 @@ const QUESTS: QuestOut[] = [
   {
     title: "Where the light falls",
     objective: "Find a window that catches the light and photograph what it reflects.",
-    hint: "Look for glass facing the brightest part of the sky.",
     targetMode: "seek",
     targetPhrase: "window",
     targetDescription: "a window with a reflection",
@@ -53,7 +50,6 @@ const QUESTS: QuestOut[] = [
   {
     title: "The green sentinel",
     objective: "Find the tallest tree or plant you can see and stand where its shadow ends.",
-    hint: "Shadows point away from the sun.",
     targetMode: "seek",
     targetPhrase: "tree",
     targetDescription: "a tall tree or plant",
@@ -167,6 +163,7 @@ export const mockBrain: Brain = {
         planChange: "none",
         planReason: "",
         revisedBeats: null,
+        revisedSecret: null,
         recap: storyEnds
           ? "You followed chalk arrows, brass dust and a floury handprint to Teo, who hid Rosa's bell to sleep in. The bell is back on the door."
           : chapterEnds
@@ -192,6 +189,7 @@ export const mockBrain: Brain = {
         planChange: "none",
         planReason: "",
         revisedBeats: null,
+        revisedSecret: null,
         quest: questAfter(state),
       },
     };

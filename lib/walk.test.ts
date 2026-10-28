@@ -24,6 +24,18 @@ test("ending a walk counts the time but not a place", () => {
   assert.deepEqual(walkStats(turns), { minutes: 12, places: 2 });
 });
 
+test("a shared case counts each player's own time, never the handoff between them", () => {
+  const turns = [
+    turn("genesis", 0),
+    turn("photo", 10),
+    { ...turn("resume", 20), playedBy: "partner" as const },
+    { ...turn("photo", 35), playedBy: "partner" as const },
+  ];
+  assert.deepEqual(walkStats(turns), { minutes: 25, places: 4 });
+  assert.deepEqual(walkStats(turns, "you"), { minutes: 10, places: 2 });
+  assert.deepEqual(walkStats(turns, "partner"), { minutes: 15, places: 2 });
+});
+
 test("the current chapter starts at the newest opening photo", () => {
   const turns = [turn("genesis", 0), turn("photo", 5), turn("end", 9, false), turn("resume", 300), turn("photo", 310)];
   assert.deepEqual(

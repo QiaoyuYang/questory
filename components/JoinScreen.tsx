@@ -43,6 +43,17 @@ export function JoinScreen({ storyId, code, onJoined, onOpen, onHome }: Props) {
     };
   }, [storyId, code, onOpen]);
 
+  // While the friend is still walking their chapter, check back so this page opens up by itself.
+  const waiting = invite !== null && invite.status === "active" && invite.walkActive;
+  useEffect(() => {
+    if (!waiting) return;
+    const timer = window.setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      api.inviteInfo(storyId, code).then((result) => setInvite(result.invite), () => {});
+    }, 20_000);
+    return () => window.clearInterval(timer);
+  }, [waiting, storyId, code]);
+
   async function join(photo: PhotoUpload) {
     setError(null);
     setLastPhoto(photo);
@@ -91,15 +102,10 @@ export function JoinScreen({ storyId, code, onJoined, onOpen, onHome }: Props) {
               : invite.full
                 ? "This case already has both its players."
                 : invite.walkActive
-                  ? `Your friend is on chapter ${invite.chapter} right now, with ${invite.questsCompleted} of ${invite.evidenceTotal} pieces of evidence found. When their walk ends, open this link again to play chapter ${next}.`
+                  ? `Your friend is on chapter ${invite.chapter} right now, with ${invite.questsCompleted} of ${invite.evidenceTotal} pieces of evidence found. You play chapter ${next} when their walk ends. Leave this page open and it'll let you know.`
                   : `Your friend found ${invite.questsCompleted} of ${invite.evidenceTotal} pieces of evidence. Play chapter ${next} on your own streets to find more.`}
           </p>
-          {open && (
-            <p className="mt-3 text-sm text-concrete text-pretty">
-              You&apos;ll both see the story&apos;s photos and evidence cards. The app never shares your location, but a
-              photo can show where you are.
-            </p>
-          )}
+
           {!open && (
             <button type="button" onClick={onHome} className={`${BUTTON.secondary} mt-6 w-full`}>
               Start your own story

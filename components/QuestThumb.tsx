@@ -3,16 +3,18 @@
 
 import { useId } from "react";
 import type { TargetOverlay, TurnView } from "@/lib/types";
-import { HeroFrame } from "./HeroFrame";
 import type { Zoomed } from "./PhotoViewer";
 
-/** SAM's outline around the quest target, with the rest of the photo dimmed. */
-export function TargetOutline({ overlay }: { overlay: TargetOverlay }) {
+/**
+ * SAM's outline around the quest target, with the rest of the photo dimmed. `weight`
+ * thickens the line for small copies of the photo.
+ */
+export function TargetOutline({ overlay, weight = 1 }: { overlay: TargetOverlay; weight?: number }) {
   const maskId = `spot${useId().replace(/[^A-Za-z0-9_-]/g, "")}`;
   if (!overlay.outline) return null;
   const { width, height } = overlay;
   const { path, transform } = overlay.outline;
-  const stroke = Math.max(width, height) * 0.006;
+  const stroke = Math.max(width, height) * 0.006 * weight;
   const shape = { d: path, transform: transform || undefined };
 
   return (
@@ -58,20 +60,28 @@ export function TargetOutline({ overlay }: { overlay: TargetOverlay }) {
 
 type Props = {
   turn: TurnView;
-  questTitle: string;
   onZoom: (image: Zoomed) => void;
 };
 
-/** The photo a closer-look quest came from, with the target outlined. */
-export function QuestPhoto({ turn, questTitle, onZoom }: Props) {
+/**
+ * Where to look, for a closer-look step: a small copy of the photo the step came from,
+ * with its target outlined. A tap opens it full screen.
+ */
+export function QuestThumb({ turn, onZoom }: Props) {
   if (!turn.photoUrl) return null;
-  const alt = `Your photo, with the target of ${questTitle} outlined`;
-  const zoomed = { src: turn.photoUrl, alt, size: turn.photoSize, overlay: turn.overlay };
+  const size = turn.photoSize ?? { width: 3, height: 4 };
+  const alt = "Your photo, with where to look outlined";
 
   return (
-    <HeroFrame size={turn.photoSize} label="Open the photo full screen" onClick={() => onZoom(zoomed)}>
-      <img src={turn.photoUrl} alt={alt} className="fade-in block h-full w-full object-cover" />
-      {turn.overlay && <TargetOutline key={turn.id} overlay={turn.overlay} />}
-    </HeroFrame>
+    <button
+      type="button"
+      aria-label="See where to look"
+      onClick={() => onZoom({ src: turn.photoUrl!, alt, size: turn.photoSize, overlay: turn.overlay })}
+      className="relative h-16 shrink-0 cursor-zoom-in overflow-hidden rounded-[10px] bg-asphalt"
+      style={{ aspectRatio: `${size.width} / ${size.height}` }}
+    >
+      <img src={turn.photoUrl} alt={alt} className="block h-full w-full object-cover" />
+      {turn.overlay && <TargetOutline key={turn.id} overlay={turn.overlay} weight={4} />}
+    </button>
   );
 }

@@ -3,7 +3,7 @@
 
 import { useEffect, useRef } from "react";
 import type { TargetOverlay } from "@/lib/types";
-import { TargetOutline } from "./QuestPhoto";
+import { TargetOutline } from "./QuestThumb";
 
 export type Zoomed = {
   src: string;

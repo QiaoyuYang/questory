@@ -67,7 +67,7 @@ export const QuestOutSchema = z.object({
   objective: text(SENTENCE).describe(
     'One plain sentence of at most 16 words telling the player what to do, e.g. "Find a date carved or painted nearby and photograph it." For in_view, ask about a detail they can only make out up close.',
   ),
-  hint: text(SENTENCE).describe("One short sentence of at most 12 words for when they get stuck. Never empty."),
+
   targetPhrase: text(LABEL).describe(
     'A 1 to 4 word concrete noun phrase naming the target, e.g. "red door", "stone bench", "street sign". No verbs, no articles.',
   ),
@@ -103,7 +103,7 @@ export const GenesisSchema = z.object({
     'The case: the one plain question the whole story answers, at most 12 words, e.g. "Who forged the eviction notice under your door?". The player sees it all story long.',
   ),
   secret: text(SENTENCE).describe(
-    'Private until the last step: the answer to the case in one plain sentence, e.g. "Mara, the landlord\'s niece, forged it to buy the flat cheap." It never changes.',
+    'Private until the last step: the answer to the case in one plain sentence, e.g. "Mara, the landlord\'s niece, forged it to buy the flat cheap."',
   ),
   premise: text(PLAN).describe("Private: the hidden truth behind the story."),
   antagonist: text(PLAN).describe("Private: who or what opposes the player, and why."),
@@ -135,6 +135,11 @@ const planFields = {
   revisedBeats: list(text(SENTENCE))
     .nullable()
     .describe("Only when planChange is replan: the new unfinished beats, as many as before. Otherwise null."),
+  revisedSecret: text(SENTENCE)
+    .nullable()
+    .describe(
+      "Only when the evidence found so far no longer fits the secret: a new answer that explains every piece, using only people the player has met. Otherwise null.",
+    ),
 };
 
 /** Any photo the player sends during a walk. */

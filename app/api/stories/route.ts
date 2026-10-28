@@ -4,7 +4,7 @@ import { storySummary, storyView, turnView, type StoryState } from "@/lib/gm/sta
 import { BadRequestError, readPhoto } from "@/lib/photo";
 import { getPlayerId, readJsonBody, respond } from "@/lib/server";
 import { getStore } from "@/lib/store";
-import { isGenre, type PhotoUpload } from "@/lib/types";
+import { GAME_MASTER, cleanTheme, isGenre, type PhotoUpload } from "@/lib/types";
 
 export const maxDuration = 120;
 
@@ -34,14 +34,20 @@ export async function GET(request: Request) {
   });
 }
 
-/** Start a new story from the player's first photo. */
+/**
+ * Start a new story from the player's first photo. A custom story brings the player's
+ * own `theme`; mode "team" makes it a two-player case.
+ */
 export async function POST(request: Request) {
   return respond(async () => {
-    const body = await readJsonBody<PhotoUpload & { genre: string }>(request);
-    if (!isGenre(body.genre)) throw new BadRequestError("Pick a genre.");
+    const body = await readJsonBody<PhotoUpload & { genre: string; theme: string; mode: string }>(request);
+    if (!isGenre(body.genre)) throw new BadRequestError("Pick a kind of story.");
+    const theme = body.genre === "custom" ? cleanTheme(body.theme) : "";
+    if (body.genre === "custom" && !theme) throw new BadRequestError(`Tell ${GAME_MASTER} what kind of story you'd like.`);
     const photo = readPhoto(body);
     const playerId = await getPlayerId();
-    const { state, turn } = await startStory(playerId, body.genre, photo);
+    const mode = body.mode === "team" ? "team" : "solo";
+    const { state, turn } = await startStory(playerId, { genre: body.genre, theme: theme || null, mode }, photo);
     return { story: storyView(state, playerId), turn: turnView(turn, playerId, playerId) };
   });
 }
