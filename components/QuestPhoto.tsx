@@ -18,7 +18,7 @@ export function TargetOutline({ overlay }: { overlay: TargetOverlay }) {
   return (
     <svg
       viewBox={`0 0 ${width} ${height}`}
-      // Matches the photo's object-cover crop, so the outline stays on the object.
+      // The frame has the photo's shape, so this lines up with it exactly.
       preserveAspectRatio="xMidYMid slice"
       className="pointer-events-none absolute inset-0 h-full w-full"
       aria-hidden="true"

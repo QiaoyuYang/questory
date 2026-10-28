@@ -84,7 +84,7 @@ const CardSchema = z.object({
     'The evidence, 2 to 4 words, sentence case: the thing in this photo as the story sees it, e.g. "The forced lock". Lettered large across the top of the card.',
   ),
   proves: text(LABEL).describe(
-    'What the evidence proves, 3 to 6 words, e.g. "Someone forced it, then fixed it" or "Left in a hurry", never where it is. Lettered along the bottom.',
+    'What the evidence proves, 3 to 6 words, e.g. "Someone forced it, then fixed it" or "Left in a hurry", never where it is and never more than the photo shows. Lettered along the bottom.',
   ),
   flourish: text(SENTENCE).describe(
     "One small visual detail to paint onto the card that fits the story. A picture, never words, numbers or labels.",

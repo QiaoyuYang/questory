@@ -26,7 +26,7 @@ type Props = {
   onHome: () => void;
 };
 
-type Panel = "story" | "quest" | "end" | null;
+type Panel = "story" | "quest" | "end" | "delete" | null;
 
 function scrollToTop() {
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -42,6 +42,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
   // The picture the player picked for a turn; a new turn starts from its default.
   const [picked, setPicked] = useState<{ turnId: string; view: SceneView } | null>(null);
   const [zoomed, setZoomed] = useState<Zoomed | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const requested = useRef(new Set<string>());
 
   useEffect(() => {
@@ -127,6 +128,18 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
   const resume = (photo: PhotoUpload) =>
     run(`${GAME_MASTER} is starting the next chapter…`, photo, () => api.takeTurn(storyId, "resume", photo));
   const end = () => run(`${GAME_MASTER} is closing the chapter…`, null, () => api.endWalk(storyId));
+
+  async function remove() {
+    setDeleting(true);
+    try {
+      await api.deleteStory(storyId);
+      onHome();
+    } catch (err) {
+      setDeleting(false);
+      setPanel(null);
+      setError({ message: err instanceof Error ? err.message : "The story couldn't be deleted. Try again.", retry: null });
+    }
+  }
 
   if (loadError) {
     return (
@@ -314,6 +327,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
         story={story}
         turns={turns}
         onZoom={setZoomed}
+        onDelete={() => setPanel("delete")}
       />
       <QuestSheet
         key={quest?.id ?? "open"}
@@ -341,6 +355,17 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
           </button>
           <button type="button" onClick={() => setPanel(null)} className={BUTTON.secondary}>
             Keep walking
+          </button>
+        </div>
+      </Sheet>
+      <Sheet open={panel === "delete"} onClose={() => setPanel(null)} title="Delete this story?" done={false}>
+        <p className="text-lg text-pretty">Its photos and evidence cards are deleted too. You can&apos;t undo this.</p>
+        <div className="mt-6 flex flex-col gap-2.5">
+          <button type="button" onClick={() => void remove()} disabled={deleting} className={BUTTON.danger}>
+            {deleting ? "Deleting…" : "Delete story"}
+          </button>
+          <button type="button" onClick={() => setPanel(null)} className={BUTTON.secondary}>
+            Keep it
           </button>
         </div>
       </Sheet>

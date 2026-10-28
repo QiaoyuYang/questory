@@ -139,7 +139,6 @@ export function questView(quest: QuestState | null): QuestView | null {
     objective: quest.objective,
     hint: quest.hint,
     targetMode: quest.targetMode,
-    targetDescription: quest.targetDescription,
   };
 }
 

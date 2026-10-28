@@ -24,10 +24,6 @@ export function QuestSheet({ open, onClose, quest, onPhoto, onError }: Props) {
         <>
           <h3 className="font-sign text-[1.75rem] leading-tight font-bold text-lane">{quest.title}</h3>
           <p className="mt-2 text-lg text-pretty">{quest.objective}</p>
-          <p className="mt-3 text-concrete">
-            {quest.targetMode === "in_view" ? "In your photo: " : "Somewhere nearby: "}
-            {quest.targetDescription}
-          </p>
           {quest.hint &&
             (hint ? (
               <p className="mt-4 font-story text-lg text-pretty italic">{quest.hint}</p>

@@ -6,6 +6,7 @@ import type { Usage } from "@/lib/meta/structured";
 import type { Photo } from "@/lib/photo";
 import { getStore } from "@/lib/store";
 import { GAME_MASTER, type TargetOverlay } from "@/lib/types";
+import { visitorKey } from "@/lib/visitor";
 import { activateNextBeat, activeBeatId, makeBeats, replan } from "./beats";
 import { getBrain } from "./brain";
 import { storyCardPrompt } from "./card";
@@ -26,13 +27,21 @@ function logUsage(label: string, usage: Usage) {
 }
 
 /**
- * Count a paid model call against the daily limit before making it. Mock turns count
- * too, so the limit can be tried without spending credit.
+ * Count a paid model call against today's limits before making it: the player's own and
+ * everyone's together. Mock turns count too, so the limits can be tried without
+ * spending credit.
  */
-async function spendCall(config: Config) {
-  if (config.dailyCallLimit === 0) return;
+async function spendCall(config: Config, playerId: string) {
   const day = new Date().toISOString().slice(0, 10);
-  if (!(await getStore().countCall(day, config.dailyCallLimit))) {
+  const store = getStore();
+  // The player's own limit comes first, so the calls it turns away don't use up everyone's.
+  if (config.playerDailyCallLimit > 0) {
+    const key = `${day}-${await visitorKey(day, playerId, config.meta.apiKey)}`;
+    if (!(await store.countCall(key, config.playerDailyCallLimit))) {
+      throw new DailyLimitError("That's all for today. Come back after midnight UTC.");
+    }
+  }
+  if (config.dailyCallLimit > 0 && !(await store.countCall(day, config.dailyCallLimit))) {
     throw new DailyLimitError(`${GAME_MASTER} is done for today. Come back after midnight UTC.`);
   }
 }
@@ -109,7 +118,7 @@ async function commit(state: StoryState, turn: TurnRecord) {
 export async function startStory(playerId: string, genre: string, photo: Photo) {
   const config = getConfig();
   const store = getStore();
-  await spendCall(config);
+  await spendCall(config, playerId);
   const [photoId, genesis] = await Promise.all([
     store.putImage({ bytes: photo.bytes, mime: photo.mime }),
     getBrain(config).genesis(genre, photo.dataUrl),
@@ -169,7 +178,7 @@ export async function takePhoto(state: StoryState, photo: Photo) {
   if (!state.walk.active) throw new GameRuleError("Start a walk first.");
   const config = getConfig();
   const store = getStore();
-  await spendCall(config);
+  await spendCall(config, state.playerId);
   const mustProgress = mustMoveStory(state);
   const [photoId, played] = await Promise.all([
     store.putImage({ bytes: photo.bytes, mime: photo.mime }),
@@ -198,7 +207,7 @@ export async function resumeStory(state: StoryState, photo: Photo) {
   if (state.walk.active) throw new GameRuleError("A walk is already in progress.");
   const config = getConfig();
   const store = getStore();
-  await spendCall(config);
+  await spendCall(config, state.playerId);
   state.chapter += 1;
   state.walk = { active: true, startedAt: now(), questsDone: 0, photosSinceProgress: 0 };
 
@@ -227,7 +236,7 @@ export async function resumeStory(state: StoryState, photo: Photo) {
 export async function endWalk(state: StoryState) {
   if (!state.walk.active) throw new GameRuleError("There's no walk in progress.");
   const config = getConfig();
-  await spendCall(config);
+  await spendCall(config, state.playerId);
   const { data, usage } = await getBrain(config).epilogue(state);
   logUsage("epilogue", usage);
 
@@ -263,7 +272,7 @@ export async function paintCard(state: StoryState, turn: TurnRecord): Promise<Tu
 
   const photo = await store.getImage(turn.photoId);
   if (!photo) throw new GameRuleError("The photo for this turn is missing.");
-  await spendCall(config);
+  await spendCall(config, state.playerId);
 
   turn.cardStatus = "pending";
   await store.saveTurn(turn);

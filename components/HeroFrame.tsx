@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 type Props = {
   size: { width: number; height: number } | null;
@@ -8,16 +8,22 @@ type Props = {
   children: ReactNode;
 };
 
+// --hero-max caps the height so the narration under the picture stays on screen, lower
+// on short phones.
 const FRAME =
-  "relative block w-full max-h-[min(46svh,34rem)] [@media(max-height:700px)]:max-h-[38svh] overflow-hidden rounded-[18px] bg-kerb";
+  "relative mx-auto block w-full overflow-hidden rounded-[18px] bg-kerb [--hero-max:min(46svh,34rem)] [@media(max-height:700px)]:[--hero-max:38svh]";
 
 /**
- * The big picture at the top of the story, in the photo's own shape. A tall photo is
- * cropped so the narration under it stays on screen, more so on short phones; tapping
- * it shows all of it.
+ * The big picture at the top of the story, in the picture's own shape. A tall one gets
+ * a narrower frame rather than a crop, so a card's title and caption and a quest's
+ * outline always show.
  */
 export function HeroFrame({ size, onClick, label, children }: Props) {
-  const style = { aspectRatio: size ? `${size.width} / ${size.height}` : "3 / 4" };
+  const { width, height } = size ?? { width: 3, height: 4 };
+  const style: CSSProperties = {
+    aspectRatio: `${width} / ${height}`,
+    maxWidth: `calc(var(--hero-max) * ${width} / ${height})`,
+  };
   if (!onClick) {
     return (
       <div className={FRAME} style={style}>

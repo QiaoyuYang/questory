@@ -49,14 +49,14 @@ export function StoryCard({ turn, onRepaint, onZoom }: Props) {
             ) : (
               <>
                 <span className="lane-line lane-line-moving h-[3px] w-8" aria-hidden="true" />
-                Drawing your card…
+                Analyzing the evidence…
               </>
             )}
           </span>
         </div>
       )}
       <p className="sr-only" aria-live="polite">
-        {ready ? `Evidence card: ${turn.card.title}` : failed ? "Your card didn't come out." : "Drawing your card."}
+        {ready ? `Evidence card: ${turn.card.title}` : failed ? "Your card didn't come out." : "Analyzing the evidence."}
       </p>
     </div>
   );

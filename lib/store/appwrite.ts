@@ -3,7 +3,7 @@ import { AppwriteException, Client, Query, Storage, TablesDB } from "node-appwri
 import { InputFile } from "node-appwrite/file";
 import type { Config } from "@/lib/config";
 import { StoryStateSchema, TurnRecordSchema } from "@/lib/gm/state";
-import type { Store } from "./types";
+import { imagesOf, type Store } from "./types";
 
 /** Table and column names. scripts/setup-appwrite.ts creates them. */
 export const APPWRITE_SCHEMA = {
@@ -18,6 +18,15 @@ function isNotFound(error: unknown) {
 
 function hasType(error: unknown, type: string) {
   return error instanceof AppwriteException && error.type === type;
+}
+
+/** Deleting something already gone counts as done, so a half-finished delete can run again. */
+async function ignoreMissing(request: Promise<unknown>) {
+  try {
+    await request;
+  } catch (error) {
+    if (!isNotFound(error)) throw error;
+  }
 }
 
 const EXT: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
@@ -36,7 +45,7 @@ export function appwriteStore(config: Config["appwrite"]): Store {
   const storage = new Storage(client);
   const databaseId = config.databaseId;
 
-  return {
+  const store: Store = {
     async getStory(id) {
       try {
         const row = await db.getRow({ databaseId, tableId: APPWRITE_SCHEMA.stories, rowId: id });
@@ -131,10 +140,20 @@ export function appwriteStore(config: Config["appwrite"]): Store {
       }
     },
 
-    async countCall(day, limit) {
-      // One row per UTC day. Appwrite increments atomically and won't go past `max`, so
+    async deleteStory(id) {
+      const turns = await store.listTurns(id);
+      const { bucketId } = config;
+      await Promise.all(imagesOf(turns).map((fileId) => ignoreMissing(storage.deleteFile({ bucketId, fileId }))));
+      await Promise.all(
+        turns.map((turn) => ignoreMissing(db.deleteRow({ databaseId, tableId: APPWRITE_SCHEMA.turns, rowId: turn.id }))),
+      );
+      await ignoreMissing(db.deleteRow({ databaseId, tableId: APPWRITE_SCHEMA.stories, rowId: id }));
+    },
+
+    async countCall(key, limit) {
+      // One row per key. Appwrite increments atomically and won't go past `max`, so
       // requests on different servers can't overshoot the limit.
-      const row = { databaseId, tableId: APPWRITE_SCHEMA.usage, rowId: day };
+      const row = { databaseId, tableId: APPWRITE_SCHEMA.usage, rowId: key };
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
           await db.incrementRowColumn({ ...row, column: "calls", value: 1, max: limit });
@@ -143,7 +162,7 @@ export function appwriteStore(config: Config["appwrite"]): Store {
           if (hasType(error, "column_limit_exceeded")) return false;
           if (!hasType(error, "row_not_found")) throw error;
         }
-        // The day's first call creates its row. If another request got there first, increment instead.
+        // The key's first call creates its row. If another request got there first, increment instead.
         try {
           await db.createRow({ ...row, data: { calls: 1 } });
           return true;
@@ -154,4 +173,5 @@ export function appwriteStore(config: Config["appwrite"]): Store {
       throw new Error("Couldn't count today's calls.");
     },
   };
+  return store;
 }
