@@ -5,7 +5,7 @@ import { locateTarget } from "@/lib/meta/sam";
 import type { Usage } from "@/lib/meta/structured";
 import type { Photo } from "@/lib/photo";
 import { getStore } from "@/lib/store";
-import { GAME_MASTER, type TargetOverlay } from "@/lib/types";
+import { GAME_MASTER, type NewInvite, type TargetOverlay } from "@/lib/types";
 import { visitorKey } from "@/lib/visitor";
 import { activateNextBeat, activeBeatId, makeBeats, replan } from "./beats";
 import { getBrain } from "./brain";
@@ -127,6 +127,8 @@ type NewStory = {
   /** The player's own idea, cleaned, for a custom story. */
   theme: string | null;
   mode: "solo" | "team";
+  /** A two-player case's id and invite code, when its link went out before the case began. */
+  invite: NewInvite | null;
 };
 
 /** First photo of a new story: the game master invents the plan and the first quest. */
@@ -134,6 +136,17 @@ export async function startStory(playerId: string, story: NewStory, photo: Photo
   const { genre, theme, mode } = story;
   const config = getConfig();
   const store = getStore();
+  let invite = story.invite;
+  const existing = invite ? await store.getStory(invite.storyId) : null;
+  if (existing) {
+    // Sent again after a reply that never arrived: the case already began, so open it.
+    if (existing.playerId === playerId && existing.turnCount === 1) {
+      const [opening] = await store.listTurns(existing.id);
+      if (opening) return { state: existing, turn: opening };
+    }
+    // Otherwise the link already has a case of its own, and this one gets a new link.
+    invite = null;
+  }
   await spendCall(config, playerId);
   const [photoId, genesis] = await Promise.all([
     store.putImage({ bytes: photo.bytes, mime: photo.mime }),
@@ -145,7 +158,7 @@ export async function startStory(playerId: string, story: NewStory, photo: Photo
   const createdAt = now();
   const state: StoryState = {
     version: 1,
-    id: crypto.randomUUID(),
+    id: invite?.storyId ?? crypto.randomUUID(),
     playerId,
     genre,
     theme,
@@ -164,9 +177,9 @@ export async function startStory(playerId: string, story: NewStory, photo: Photo
     },
     characters: data.characters,
     partners: [],
-    // Made now so the share sheet can open the moment the owner taps Invite: phones only
-    // allow it straight after a tap, with no network wait in between.
-    invite: mode === "team" ? { code: crypto.randomUUID(), size: TEAM_SIZE } : null,
+    // Made by now so the share sheet can open the moment the owner taps to send the link:
+    // phones only allow it straight after a tap, with no network wait in between.
+    invite: mode === "team" ? { code: invite?.code ?? crypto.randomUUID(), size: TEAM_SIZE } : null,
     canon: [],
     bindings: [],
     inventory: [],

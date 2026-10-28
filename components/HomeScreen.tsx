@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api, type TurnResult } from "@/lib/client/api";
 import { changedSinceSeen } from "@/lib/client/seen";
+import { forgetNextInvite, inviteLink, markNextInviteSent, nextInvite, peekNextInvite, shareLink } from "@/lib/client/share";
 import {
   GAME_MASTER,
   NEW_GENRES,
@@ -54,7 +55,14 @@ function news(story: StorySummary): string | null {
 export function HomeScreen({ stories, mode, onStarted, onOpen, onRemove }: Props) {
   const [genre, setGenre] = useState<GenreId>("mystery");
   const [theme, setTheme] = useState("");
-  const [players, setPlayers] = useState<Players>("solo");
+  // A link already sent means the next case is probably with that friend.
+  const [players, setPlayers] = useState<Players>(() => (peekNextInvite()?.sent ? "team" : "solo"));
+  // The story id of the link sent from here, until its case begins.
+  const [sentFor, setSentFor] = useState(() => {
+    const next = peekNextInvite();
+    return next?.sent ? next.storyId : null;
+  });
+  const [notice, setNotice] = useState<string | null>(null);
   const [pending, setPending] = useState<PhotoUpload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [lastPhoto, setLastPhoto] = useState<PhotoUpload | null>(null);
@@ -63,17 +71,50 @@ export function HomeScreen({ stories, mode, onStarted, onOpen, onRemove }: Props
   const [removeBusy, setRemoveBusy] = useState(false);
   const returning = stories !== null && stories.length > 0;
   const needsTheme = genre === "custom" && !cleanTheme(theme);
+  const linkSent = sentFor !== null && !stories?.some((story) => story.id === sentFor);
+
+  // A case that began with the waiting link took it, even if its reply never got here.
+  useEffect(() => {
+    const id = peekNextInvite()?.storyId;
+    if (id && stories?.some((story) => story.id === id)) forgetNextInvite();
+  }, [stories]);
 
   async function start(photo: PhotoUpload) {
     setError(null);
     setLastPhoto(photo);
     setPending(photo);
     try {
-      onStarted(await api.startStory({ genre, theme, mode: players }, photo));
+      const invite = players === "team" ? nextInvite() : null;
+      const result = await api.startStory(
+        { genre, theme, mode: players, invite: invite && { storyId: invite.storyId, code: invite.code } },
+        photo,
+      );
+      if (invite) forgetNextInvite();
+      onStarted(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : "The story couldn't start. Try again.");
     } finally {
       setPending(null);
+    }
+  }
+
+  // The case begins with the first photo, but its link can go out now (see nextInvite).
+  async function sendLink() {
+    setError(null);
+    setNotice(null);
+    const invite = nextInvite();
+    try {
+      const result = await shareLink({
+        title: "Questory",
+        text: "Help me solve a case on Questory. I'm starting it on my walk, and you play chapter 2 on yours.",
+        url: inviteLink(invite.storyId, invite.code),
+      });
+      if (result === "cancelled") return;
+      markNextInviteSent();
+      setSentFor(invite.storyId);
+      if (result === "copied") setNotice("Link copied. Send it to your friend.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "The link didn't work. Try again.");
     }
   }
 
@@ -221,9 +262,19 @@ export function HomeScreen({ stories, mode, onStarted, onOpen, onRemove }: Props
             </h2>
             <Segmented className="mt-3" label="Who's playing" options={PLAYERS} value={players} onChange={setPlayers} />
             {players === "team" && (
-              <p className="mt-2 text-sm text-concrete text-pretty">
-                You play chapter 1, then send your friend a link to play chapter 2 on their own streets.
-              </p>
+              <>
+                <p className="mt-2 text-sm text-concrete text-pretty">
+                  You play chapter 1, and your friend plays chapter 2 on their own streets.
+                </p>
+                <button type="button" onClick={() => void sendLink()} className={`${BUTTON.secondary} mt-3 w-full`}>
+                  {linkSent ? "Send the link again" : "Send your friend the link"}
+                </button>
+                {(notice || linkSent) && (
+                  <p role="status" className="mt-2 text-sm text-walk text-pretty">
+                    {notice ?? "Link sent. Your friend's page will update once you start."}
+                  </p>
+                )}
+              </>
             )}
           </section>
 

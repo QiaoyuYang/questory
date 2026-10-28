@@ -25,7 +25,7 @@ Every story is a case: one plain question, like "Who took Sir Buttons the garden
 
 Pick Mystery, Fantasy, Sci-fi or Comedy, or type your own idea, like "a haunted bakery", and Wren builds the case around it. Name a world people know, like Sherlock Holmes, and the case happens there, with its own characters.
 
-A case can be played by two. Pick "With a friend" when you start: you play chapter 1, then send a link, and your friend plays chapter 2 on their own streets. Wren tells them the case and what you found, the evidence list shows who found what, and each of you gets your own walking time. Only the player on the current walk can add to it, so a shared case never has two people writing at once, and the other player's screen keeps up by itself.
+A case can be played by two. Pick "With a friend" when you start, and send your friend the link right there, even before your first photo: their page waits for the case and fills in by itself once it begins. You play chapter 1, and your friend plays chapter 2 on their own streets. Wren tells them the case and what you found, the evidence list shows who found what, and each of you gets your own walking time. Only the player on the current walk can add to it, so a shared case never has two people writing at once, and the other player's screen keeps up by itself.
 
 Quests are suggestions. If two photos in a row only add side notes, the game master moves the story forward with the next one, whatever it shows.
 

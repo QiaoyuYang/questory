@@ -3,7 +3,7 @@ import { timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { DailyLimitError, GameRuleError } from "@/lib/gm/engine";
 import type { StoryState } from "@/lib/gm/state";
-import { GAME_MASTER } from "@/lib/types";
+import { GAME_MASTER, isUuid } from "@/lib/types";
 import { ModelApiError } from "@/lib/meta/http";
 import { BadRequestError } from "@/lib/photo";
 import { getStore } from "@/lib/store";
@@ -57,14 +57,26 @@ function sameCode(a: string, b: string) {
   return left.length === right.length && timingSafeEqual(left, right);
 }
 
-/** Load a story through its invite link, for a friend who may not have joined yet. */
-export async function loadInvitedStory(storyId: string, code: string): Promise<Loaded> {
+const BAD_INVITE = "This invite link doesn't work. Ask your friend for a new one.";
+
+/**
+ * Find a story through its invite link, for a friend who may not have joined yet. Null
+ * when there's no story yet: a two-player case's link can go out before its first photo.
+ */
+export async function findInvitedStory(storyId: string, code: string): Promise<Loaded | null> {
+  if (!isUuid(storyId)) throw new NotFoundError(BAD_INVITE);
   const playerId = await getPlayerId();
   const story = await getStore().getStory(storyId);
-  if (!story?.invite || !sameCode(story.invite.code, code)) {
-    throw new NotFoundError("This invite link doesn't work. Ask your friend for a new one.");
-  }
+  if (!story) return null;
+  if (!story.invite || !sameCode(story.invite.code, code)) throw new NotFoundError(BAD_INVITE);
   return { story, playerId };
+}
+
+/** Load a story through its invite link, for a friend who may not have joined yet. */
+export async function loadInvitedStory(storyId: string, code: string): Promise<Loaded> {
+  const found = await findInvitedStory(storyId, code);
+  if (!found) throw new NotFoundError(BAD_INVITE);
+  return found;
 }
 
 export async function readJsonBody<T>(request: Request): Promise<Partial<T>> {
