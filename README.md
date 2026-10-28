@@ -4,6 +4,16 @@ A game that gives you a reason to go for a walk. Take a photo of wherever you ar
 
 Built for the Meta Global AI Developer Hackathon on the Meta Model API.
 
+## Why walking
+
+Questory is a reason to go outside. In 2022, 31% of adults worldwide didn't get enough physical activity, up from 26% in 2010, according to a WHO-led study [1]. Games can get people moving. In the month after they started playing Pokémon GO, engaged players walked about 1,473 more steps a day, roughly a quarter more than before, and the game reached people who hadn't been very active [2]. But the effect wore off: a second study found the extra steps were gone by the sixth week [3].
+
+Questory is built for the part where people stop. The story carries on from one walk to the next, and every chapter ends on a hook, so there's always a reason to head out again. A photo taken indoors still starts a story, but the first quest sends you out the door, and errands are a block or two away. When a chapter ends, the app tells you how long you walked and how many places you found. It works this out from the photos' timestamps, so it needs no GPS.
+
+1. Strain T, Flaxman S, Guthold R, et al. National, regional, and global trends in insufficient physical activity among adults from 2000 to 2022: a pooled analysis of 507 population-based surveys with 5.7 million participants. *Lancet Global Health* 2024;12:e1232-e1243. [doi:10.1016/S2214-109X(24)00150-5](https://doi.org/10.1016/S2214-109X%2824%2900150-5)
+2. Althoff T, White RW, Horvitz E. Influence of Pokémon Go on physical activity: study and implications. *Journal of Medical Internet Research* 2016;18(12):e315. [jmir.org/2016/12/e315](https://www.jmir.org/2016/12/e315)
+3. Howe KB, Suharlim C, Ueda P, Howe D, Kawachi I, Rimm EB. Gotta catch'em all! Pokémon GO and physical activity among young adults: difference in differences study. *BMJ* 2016;355:i6270. [doi:10.1136/bmj.i6270](https://doi.org/10.1136/bmj.i6270)
+
 ## How a turn works
 
 1. **You take a photo of anything.** It can be what the quest asked for or whatever catches your eye. The browser shrinks it to 1280px and uploads it.
