@@ -1,8 +1,8 @@
 import "server-only";
-import { mkdir, readFile, readdir, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { StoryStateSchema, TurnRecordSchema, type StoryState, type TurnRecord } from "@/lib/gm/state";
-import type { Store, StoredImage } from "./types";
+import { imagesOf, type Store, type StoredImage } from "./types";
 
 const EXT: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 const MIME: Record<string, string> = Object.fromEntries(Object.entries(EXT).map(([m, e]) => [e, m]));
@@ -36,7 +36,7 @@ export function fileStore(root: string): Store {
     return id;
   }
 
-  return {
+  const store: Store = {
     async getStory(id) {
       const raw = await readJson(dir("stories", `${check(id)}.json`));
       return raw ? StoryStateSchema.parse(raw) : null;
@@ -108,13 +108,21 @@ export function fileStore(root: string): Store {
       }
     },
 
+    async deleteStory(id) {
+      const turns = await store.listTurns(id);
+      await Promise.all(imagesOf(turns).map((image) => rm(dir("images", check(image)), { force: true })));
+      await rm(dir("turns", check(id)), { recursive: true, force: true });
+      await rm(dir("stories", `${check(id)}.json`), { force: true });
+    },
+
     // Not atomic, which is fine for a single dev server.
-    async countCall(day, limit) {
-      const file = dir("usage", `${check(day)}.json`);
+    async countCall(key, limit) {
+      const file = dir("usage", `${check(key)}.json`);
       const calls = ((await readJson(file)) as { calls?: number } | null)?.calls ?? 0;
       if (calls >= limit) return false;
       await writeJson(file, { calls: calls + 1 });
       return true;
     },
   };
+  return store;
 }

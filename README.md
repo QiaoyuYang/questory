@@ -37,6 +37,14 @@ The story state has three layers, and the prompts treat each one differently:
 
 A chapter is three steps forward, so a case takes two chapters. The state is saved after every turn, so the next chapter can start right away or on another walk. The skeleton is never sent to the browser, and the answer reaches it only once the case is solved.
 
+## Privacy
+
+- **No account.** A random ID in a cookie ties your stories to your browser, and nobody else can open them.
+- **No location.** The app never asks for GPS. Photos are redrawn in the browser before upload, which drops the location data phones store inside photo files. Walk times come from timestamps.
+- **Photos stay out of sight.** They go to the Meta Model API to be read and drawn, then into a private bucket, and they're only served through long random links.
+- **Delete means delete.** Deleting a story removes it along with its photos and cards.
+- **The limits don't keep addresses.** The per-player daily limit counts by IP address, but stores only a keyed hash that changes every day.
+
 ## Run it
 
 ```sh
@@ -71,7 +79,7 @@ Every pull request gets its own preview link. The card route can run for up to t
 
 Two things to know before sharing the link:
 
-- **Whoever can open the site spends your Meta credit.** `DAILY_CALL_LIMIT` caps what a day can cost. Vercel leaves the production URL public by default. To keep it private while testing, set Deployment Protection to All Deployments with Vercel Authentication, which is free on every plan.
+- **Whoever can open the site spends your Meta credit.** `DAILY_CALL_LIMIT` caps what a day can cost, and `PLAYER_DAILY_CALL_LIMIT` keeps one player from using it all up. Vercel leaves the production URL public by default. To keep it private while testing, set Deployment Protection to All Deployments with Vercel Authentication, which is free on every plan.
 - **Free Appwrite projects pause after 7 days without development activity in the Console.** A paused project can't load or save stories. Use the Console every few days while people are playing, and reactivate the project there if it pauses.
 
 ## Configuration
@@ -84,6 +92,7 @@ All settings are environment variables; `.env.example` documents each one. The o
 | `QUEST_CARDS` | `on` | Turn off to skip Muse Image (the outline still shows the target) |
 | `SAM_GROUNDING` | `on` | Turn off to skip target outlines |
 | `DAILY_CALL_LIMIT` | `200` | Paid calls per UTC day across all players. Each story start, photo, walk end and painted card counts once. `0` turns it off |
+| `PLAYER_DAILY_CALL_LIMIT` | `60` | Paid calls per UTC day for one player, about three full cases. It counts by IP address, or by browser when there's none, and is checked first, so one player can't use up everyone's calls. `0` turns it off |
 
 ## Cost
 

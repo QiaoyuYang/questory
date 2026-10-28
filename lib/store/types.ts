@@ -14,6 +14,16 @@ export interface Store {
   listTurns(storyId: string): Promise<TurnRecord[]>;
   putImage(image: StoredImage): Promise<string>;
   getImage(id: string): Promise<StoredImage | null>;
-  /** Count one call against a day's total. Returns false, counting nothing, once it has reached `limit`. */
-  countCall(day: string, limit: number): Promise<boolean>;
+  /** Delete a story with its turns, photos and cards. The story goes last, so a failed delete can be retried. */
+  deleteStory(id: string): Promise<void>;
+  /**
+   * Count one call against a usage key: a UTC day, or a day and a player. Returns false,
+   * counting nothing, once it has reached `limit`.
+   */
+  countCall(key: string, limit: number): Promise<boolean>;
+}
+
+/** Every photo and card a story's turns point to. A card drawn without Muse Image is the photo itself. */
+export function imagesOf(turns: TurnRecord[]): string[] {
+  return [...new Set(turns.flatMap((turn) => [turn.photoId, turn.cardId]).filter((id): id is string => id !== null))];
 }

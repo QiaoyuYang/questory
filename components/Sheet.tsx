@@ -28,7 +28,9 @@ export function Sheet({ open, onClose, title, done = true, children }: Props) {
       ref={ref}
       aria-labelledby={titleId}
       className="sheet"
-      onClose={onClose}
+      // Only a close the player made counts: when the app closes a sheet to open another
+      // one, `open` is already false and the new sheet must stay.
+      onClose={() => open && onClose()}
       // The sheet's content covers the whole dialog, so a click on the dialog itself is a tap on the backdrop.
       onClick={(event) => event.target === event.currentTarget && onClose()}
     >

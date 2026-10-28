@@ -23,10 +23,11 @@ type Props = {
   story: StoryView;
   turns: TurnView[];
   onZoom: (image: Zoomed) => void;
+  onDelete: () => void;
 };
 
 /** Everything the story has built up, kept out of the way until the player asks for it. */
-export function StorySheet({ open, onClose, story, turns, onZoom }: Props) {
+export function StorySheet({ open, onClose, story, turns, onZoom, onDelete }: Props) {
   const [tab, setTab] = useState<Tab>("evidence");
 
   return (
@@ -97,6 +98,10 @@ export function StorySheet({ open, onClose, story, turns, onZoom }: Props) {
           </ol>
         )}
       </div>
+
+      <button type="button" onClick={onDelete} className="mt-8 min-h-11 font-semibold text-hand">
+        Delete this story
+      </button>
     </Sheet>
   );
 }

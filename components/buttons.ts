@@ -2,6 +2,9 @@
 export const BUTTON = {
   primary:
     "inline-flex min-h-14 items-center justify-center gap-2 rounded-[14px] bg-lane px-5 text-lg font-semibold whitespace-nowrap text-asphalt transition-colors hover:bg-[#ffc933] active:translate-y-px disabled:bg-seam disabled:text-concrete",
+  // For the one action that can't be undone.
+  danger:
+    "inline-flex min-h-14 items-center justify-center gap-2 rounded-[14px] bg-hand px-5 text-lg font-semibold whitespace-nowrap text-asphalt transition-colors hover:bg-[#ff9445] active:translate-y-px disabled:bg-seam disabled:text-concrete",
   secondary:
     "inline-flex min-h-14 items-center justify-center gap-2 rounded-[14px] border-2 border-seam px-5 text-lg font-semibold text-paint transition-colors hover:border-concrete active:translate-y-px",
   // An icon over a small label, like the buttons in an iPhone toolbar.

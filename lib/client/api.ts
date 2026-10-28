@@ -44,4 +44,6 @@ export const api = {
 
   paintCard: (id: string, turnId: string) =>
     call<{ turn: TurnView }>(`/api/stories/${id}/turns/${turnId}/card`, { method: "POST" }),
+
+  deleteStory: (id: string) => call<{ deleted: boolean }>(`/api/stories/${id}`, { method: "DELETE" }),
 };
