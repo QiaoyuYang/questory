@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, type TurnResult } from "@/lib/client/api";
 import { markSeen } from "@/lib/client/seen";
 import { inviteLink, shareLink } from "@/lib/client/share";
-import { currentChapter, walkStats } from "@/lib/walk";
+import { chapterTurns, walkStats } from "@/lib/walk";
 import { GAME_MASTER, type PhotoUpload, type StoryView, type TurnView } from "@/lib/types";
 import { Alert } from "./Alert";
 import { BottomBar } from "./BottomBar";
@@ -32,14 +32,17 @@ type Panel = "story" | "end" | null;
 /** What the screen shows while it waits: the photo being worked on, and what's happening. */
 type Hold = { message: string; src: string | null; size: { width: number; height: number } | null };
 
-/** How often a shared case checks on the other player while they have it. */
-const WATCH_MS = 20_000;
+/** How often a shared case checks on the other player. */
+const WATCH_MS = 15_000;
 /** How often the screen checks on evidence being drawn somewhere else. */
 const DRAWING_MS = 5_000;
 /** Evidence that still has no picture after this long gets drawn again. */
 const STALE_MS = 3 * 60_000;
+/** How long the screen leaves a chapter's ending to the player who finished it before asking for it itself. */
+const CLOSE_GRACE_MS = 30_000;
 
 const ANALYZING = "Analyzing the evidence…";
+const PUTTING_TOGETHER = `${GAME_MASTER} is putting it together…`;
 
 /** A photo that turned up evidence whose picture isn't drawn yet. */
 function awaitsPicture(turn: TurnView): boolean {
@@ -49,6 +52,11 @@ function awaitsPicture(turn: TurnView): boolean {
 function scrollToTop() {
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+}
+
+/** Add a turn the screen doesn't have yet. */
+function withTurn(turns: TurnView[], turn: TurnView): TurnView[] {
+  return turns.some((t) => t.id === turn.id) ? turns.map((t) => (t.id === turn.id ? turn : t)) : [...turns, turn];
 }
 
 export function StoryScreen({ storyId, initial, onHome }: Props) {
@@ -75,20 +83,21 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
 
   const story = data?.story ?? null;
   const turns = useMemo(() => data?.turns ?? [], [data]);
+  // The partner's new evidence shows up once its picture is drawn on their phone.
+  const shown = useMemo(() => turns.filter((turn) => turn.playedBy === "you" || !awaitsPicture(turn)), [turns]);
+  const partnerDrawing = turns.find((turn) => turn.playedBy === "partner" && awaitsPicture(turn)) ?? null;
 
   // The turn that issued the current quest: a closer look is outlined on its photo.
   const questTurn = useMemo(() => {
     const questId = story?.quest?.id;
     return questId ? (turns.find((turn) => turn.quest?.id === questId && turn.photoUrl) ?? null) : null;
   }, [story, turns]);
-  const latest = turns.at(-1) ?? null;
-  // The newest turn with a photo. Ending a walk adds a turn without one.
-  const scene = useMemo(() => turns.findLast((turn) => turn.photoUrl !== null) ?? null, [turns]);
+  const latest = shown.at(-1) ?? null;
+  // The newest turn with a photo. A chapter's ending has none.
+  const scene = useMemo(() => shown.findLast((turn) => turn.photoUrl !== null) ?? null, [shown]);
 
   const replaceTurn = useCallback((turn: TurnView) => {
-    setData((current) =>
-      current ? { ...current, turns: current.turns.map((t) => (t.id === turn.id ? turn : t)) } : current,
-    );
+    setData((current) => (current ? { ...current, turns: withTurn(current.turns, turn) } : current));
   }, []);
 
   // Ask Muse Image to draw the evidence. Settles with the turn as it came out, failed included.
@@ -103,45 +112,70 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
     [storyId],
   );
 
+  const reload = useCallback(() => api.getStory(storyId).then(setData, () => {}), [storyId]);
+
   // New evidence waits for its picture, so the story and the picture show up together.
-  // run() waits for the viewer's own photos. This covers a picture still being drawn
-  // after a reload or on the other player's phone: whoever took the photo draws it, and
-  // anyone else checks back until it's done.
-  const drawing = latest && awaitsPicture(latest) ? latest : null;
+  // run() waits for the viewer's own photos; this covers a picture still being drawn after
+  // a reload. A partner's picture is drawn on their phone, and drawn here only if it's stuck.
+  const drawing = latest && latest.playedBy === "you" && awaitsPicture(latest) ? latest : null;
+  const waitingOn = drawing ?? partnerDrawing;
   useEffect(() => {
-    if (!drawing || requested.current.has(drawing.id)) return;
-    const stale = Date.now() - Date.parse(drawing.createdAt) > STALE_MS;
-    if ((drawing.playedBy === "you" && drawing.cardStatus === "none") || stale) {
-      void paint(drawing).then(replaceTurn);
+    if (!waitingOn || requested.current.has(waitingOn.id)) return;
+    const stale = Date.now() - Date.parse(waitingOn.createdAt) > STALE_MS;
+    if ((waitingOn.playedBy === "you" && waitingOn.cardStatus === "none") || stale) {
+      void paint(waitingOn).then(replaceTurn);
       return;
     }
     const timer = window.setInterval(() => {
-      if (document.visibilityState === "visible") api.getStory(storyId).then(setData, () => {});
+      if (document.visibilityState === "visible") void reload();
     }, DRAWING_MS);
     return () => window.clearInterval(timer);
-  }, [drawing, paint, replaceTurn, storyId]);
+  }, [waitingOn, paint, replaceTurn, reload]);
 
   // Whatever this screen shows counts as seen, so the story list only flags what the
   // other player did since. Evidence still waiting for its picture isn't shown yet.
   const updatedAt = story?.updatedAt;
-  const shown = drawing === null;
+  const settled = drawing === null && partnerDrawing === null;
   useEffect(() => {
-    if (updatedAt && shown) markSeen(storyId, updatedAt);
-  }, [storyId, updatedAt, shown]);
+    if (updatedAt && settled) markSeen(storyId, updatedAt);
+  }, [storyId, updatedAt, settled]);
+
+  // Ask for the chapter's ending: straight away after the viewer's own last step (see
+  // run), or here if the player who finished it hasn't got it told yet.
+  const close = useCallback(async () => {
+    const result = await api.closeChapter(storyId);
+    setData((current) => ({ story: result.story, turns: withTurn(current?.turns ?? [], result.turn) }));
+    // With the partner's last finds too, for the chapter's summary.
+    await reload();
+  }, [storyId, reload]);
+  // run() asks for it itself after the viewer's own last step, so this waits for that.
+  const closing = story?.stage === "closing" && busy === null;
+  useEffect(() => {
+    if (!closing) return;
+    const timer = window.setTimeout(() => void close().catch(() => reload()), CLOSE_GRACE_MS);
+    const poll = window.setInterval(() => {
+      if (document.visibilityState === "visible") void reload();
+    }, DRAWING_MS);
+    return () => {
+      window.clearTimeout(timer);
+      window.clearInterval(poll);
+    };
+  }, [closing, close, reload]);
 
   const hold: Hold | null =
-    busy ?? (drawing && { message: ANALYZING, src: drawing.photoUrl, size: drawing.photoSize });
+    busy ??
+    (drawing && { message: ANALYZING, src: drawing.photoUrl, size: drawing.photoSize }) ??
+    (closing ? { message: PUTTING_TOGETHER, src: scene?.cardUrl ?? scene?.photoUrl ?? null, size: scene?.photoSize ?? null } : null);
 
-  // In a shared case, keep up with the other player while the viewer isn't walking.
-  const watching =
-    story !== null && story.mode === "team" && story.status === "active" && !hold && (!story.walkActive || story.partnerWalking);
+  // In a shared case, keep up with the other player.
+  const watching = story !== null && story.mode === "team" && story.status === "active" && !hold;
   useEffect(() => {
     if (!watching) return;
     const timer = window.setInterval(() => {
-      if (document.visibilityState === "visible") api.getStory(storyId).then(setData, () => {});
+      if (document.visibilityState === "visible") void reload();
     }, WATCH_MS);
     return () => window.clearInterval(timer);
-  }, [watching, storyId]);
+  }, [watching, reload]);
 
   const repaint = (turn: TurnView) => {
     replaceTurn({ ...turn, cardStatus: "pending" });
@@ -156,10 +190,15 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
     try {
       const result = await task();
       const turn = awaitsPicture(result.turn) ? await paint(result.turn) : result.turn;
-      setData((current) => ({
-        story: result.story,
-        turns: [...(current?.turns ?? []), turn],
-      }));
+      setData((current) => ({ story: result.story, turns: withTurn(current?.turns ?? [], turn) }));
+      // The step that finished a two-player chapter has its ending told next.
+      if (result.story.stage === "closing") {
+        setBusy({ message: PUTTING_TOGETHER, src: turn.cardUrl ?? turn.photoUrl, size: turn.photoSize });
+        await close();
+      } else if (result.story.mode === "team") {
+        // The partner may have found something meanwhile.
+        await reload();
+      }
       scrollToTop();
     } catch (err) {
       setError({
@@ -172,13 +211,22 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
   }
 
   const photoError = (message: string) => setError({ message, retry: null });
-  const takePhoto = (photo: PhotoUpload) =>
-    run(ANALYZING, photo, () => api.takeTurn(storyId, "photo", photo));
-  const resume = (photo: PhotoUpload) =>
-    run(`${GAME_MASTER} is starting the next chapter…`, photo, () => api.takeTurn(storyId, "resume", photo));
-  const end = () => run(`${GAME_MASTER} is closing the chapter…`, null, () => api.endWalk(storyId));
+  const takePhoto = (photo: PhotoUpload) => run(ANALYZING, photo, () => api.takeTurn(storyId, "photo", photo));
+  const resume = (photo: PhotoUpload, takeOver = false) =>
+    run(`${GAME_MASTER} is picking up the case…`, photo, () => api.takeTurn(storyId, "resume", photo, { takeOver }));
 
-  function reload() {
+  async function end() {
+    setPanel(null);
+    setError(null);
+    try {
+      const result = await api.endWalk(storyId);
+      setData((current) => (current ? { ...current, story: result.story } : current));
+    } catch (err) {
+      setError({ message: err instanceof Error ? err.message : "That didn't work. Try again.", retry: () => void end() });
+    }
+  }
+
+  function refresh() {
     setError(null);
     api.getStory(storyId).then(setData, (err: Error) => setError({ message: err.message, retry: null }));
   }
@@ -222,15 +270,17 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
     );
   }
 
-  const walkLive = story.walkActive && story.status === "active" && !story.partnerWalking;
-  const between = !story.walkActive && story.status === "active";
-  // In a two-player case the next chapter belongs to whoever didn't play the last one.
-  const theirTurn = between && story.upNext === "partner";
-  const quest = walkLive ? story.quest : null;
+  const { stage, partner } = story;
+  const quest = stage === "walking" ? story.quest : null;
   // A closer look shows where to look on the photo it came from.
   const lookTurn = quest?.targetMode === "in_view" ? questTurn : null;
-  const chapter = currentChapter(turns);
+  const chapter = chapterTurns(turns, story.chapter);
   const evidenceFound = turns.filter((turn) => turn.card).length;
+  const team = partner !== null;
+  // A partner's first walk on the case starts their lead rather than picking one back up.
+  const walkedYet = turns.some((turn) => turn.playedBy === "you" && turn.photoUrl !== null && turn.kind !== "close");
+  // A chapter's ending is told after the step that finished it, so show that step too.
+  const lastFind = latest?.kind === "close" ? (shown.at(-2) ?? null) : null;
 
   return (
     <main className="mx-auto w-full max-w-[30rem] px-4 pb-56">
@@ -246,11 +296,9 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
           </button>
           <div className="min-w-0 text-center">
             <h1 className="truncate font-sign text-lg leading-tight font-bold">{story.title}</h1>
-            <p className="text-xs text-concrete">
-              {story.status === "complete" ? "Solved" : `Chapter ${story.chapter}`}
-            </p>
+            <p className="text-xs text-concrete">{story.status === "complete" ? "Solved" : `Chapter ${story.chapter}`}</p>
           </div>
-          {walkLive && !hold && (
+          {stage === "walking" && !hold && (
             <button
               type="button"
               onClick={() => setPanel("end")}
@@ -268,21 +316,8 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
         ) : (
           <>
             {scene && <Scene turn={scene} onRepaint={() => repaint(scene)} onZoom={setZoomed} />}
-            {latest && (
-              <section aria-label={GAME_MASTER} className="fade-in mt-5">
-                {latest.card ? (
-                  <p className="font-sign text-lg font-bold text-walk">
-                    {latest.playedBy === "partner" ? "Your partner found new evidence" : "New evidence"}
-                  </p>
-                ) : (
-                  // The narration speaks to whoever played the turn, so say whose it was.
-                  latest.playedBy === "partner" && (
-                    <p className="font-sign text-lg font-bold text-concrete">On your partner&apos;s walk</p>
-                  )
-                )}
-                <p className="font-story text-[1.1875rem] leading-[1.6] text-pretty">{latest.narration}</p>
-              </section>
-            )}
+            {lastFind && lastFind.kind !== "close" && <Telling turn={lastFind} />}
+            {latest && <Telling turn={latest} solved={story.status === "complete"} />}
           </>
         )}
       </div>
@@ -292,7 +327,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
           {error && <Alert message={error.message} retry={error.retry} />}
 
           {/* The next step is spelled out here, with where to look for a closer look. A new one pulses. */}
-          {walkLive &&
+          {stage === "walking" &&
             (quest ? (
               <div
                 key={quest.id}
@@ -314,26 +349,53 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
                 Take a photo of whatever catches your eye. {GAME_MASTER} will work it into the story.
               </p>
             ))}
-          {story.partnerWalking && (
+          {stage === "ready" && (
             <div className="py-1">
-              <p className="font-sign text-lg font-bold text-lane">Your partner is playing chapter {story.chapter}</p>
-              <p className="text-sm text-concrete">Their evidence shows up here as they find it.</p>
-            </div>
-          )}
-          {between && (
-            <div className="py-1">
-              <p className="font-sign text-lg font-bold text-lane">Chapter {story.chapter} is done</p>
-              <WalkSummary stats={walkStats(chapter)} who={chapter[0]?.playedBy} />
+              <p className="font-sign text-lg font-bold text-lane">
+                {team && !walkedYet ? "Your lead is waiting" : `Chapter ${story.chapter} is waiting for you`}
+              </p>
               <p className="text-sm text-concrete">
-                {theirTurn
-                  ? `Chapter ${story.chapter + 1} is your friend's, on their own streets.`
-                  : story.shared
-                    ? `Chapter ${story.chapter + 1} is yours, on your own streets.`
-                    : `You can start chapter ${story.chapter + 1} now or on your next walk.`}
+                {team && !walkedYet
+                  ? "Start it with a photo of wherever you are. Your partner follows their own lead."
+                  : "Pick it back up with a photo of wherever you are now."}
               </p>
             </div>
           )}
-          {story.status === "complete" && (
+          {stage === "waiting" && partner && (
+            <div className="py-1">
+              <p className="font-sign text-lg font-bold text-lane">Your part of chapter {story.chapter} is done</p>
+              <p className="text-sm text-concrete text-pretty">
+                {!partner.joined
+                  ? "Your friend hasn't joined yet. The next chapter opens once their part is found too."
+                  : `Your partner has ${partner.left} more to find${partner.walking ? " and is out walking now" : ""}. The next chapter opens when they're done.`}
+              </p>
+            </div>
+          )}
+          {stage === "watching" && (
+            <div className="py-1">
+              <p className="font-sign text-lg font-bold text-lane">Your partner is out on this case</p>
+              <p className="text-sm text-concrete">Their evidence shows up here as they find it.</p>
+            </div>
+          )}
+          {stage === "between" && (
+            <div className="py-1">
+              <p className="font-sign text-lg font-bold text-lane">Chapter {story.chapter} is done</p>
+              {partner?.joined ? (
+                <>
+                  <WalkSummary stats={walkStats(chapter, "you")} />
+                  <WalkSummary stats={walkStats(chapter, "partner")} who="partner" />
+                </>
+              ) : (
+                <WalkSummary stats={walkStats(chapter)} />
+              )}
+              <p className="text-sm text-concrete">
+                {team
+                  ? `Start your part of chapter ${story.chapter + 1} whenever you're ready, wherever you are.`
+                  : `You can start chapter ${story.chapter + 1} now or on your next walk.`}
+              </p>
+            </div>
+          )}
+          {stage === "solved" && (
             <div className="py-1">
               <p className="font-sign text-lg font-bold text-lane">The end</p>
               {story.shared ? (
@@ -363,39 +425,41 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
                 , {evidenceFound} of {story.evidenceTotal} found
               </span>
             </button>
-            {walkLive && (
+            {stage === "walking" && (
               <CaptureButton onPhoto={takePhoto} onError={photoError} className="flex-1">
                 <CameraIcon />
                 Take a photo
               </CaptureButton>
             )}
-            {between &&
-              (theirTurn ? (
-                story.invitable && (
-                  <button type="button" onClick={() => void invite()} className={`${BUTTON.primary} flex-1`}>
-                    Send your friend the link
-                  </button>
-                )
-              ) : (
-                <CaptureButton onPhoto={resume} onError={photoError} className="flex-1">
-                  <CameraIcon />
-                  Start chapter {story.chapter + 1}
-                </CaptureButton>
-              ))}
-            {story.partnerWalking && (
-              <button type="button" onClick={reload} className={`${BUTTON.secondary} flex-1`}>
+            {(stage === "ready" || stage === "between") && (
+              <CaptureButton onPhoto={(photo) => resume(photo)} onError={photoError} className="flex-1">
+                <CameraIcon />
+                {stage === "between"
+                  ? `Start chapter ${story.chapter + 1}`
+                  : team && !walkedYet
+                    ? "Start your lead"
+                    : `Continue chapter ${story.chapter}`}
+              </CaptureButton>
+            )}
+            {stage === "waiting" && story.invitable && (
+              <button type="button" onClick={() => void invite()} className={`${BUTTON.primary} flex-1`}>
+                Send your friend the link
+              </button>
+            )}
+            {(stage === "watching" || (stage === "waiting" && !story.invitable)) && (
+              <button type="button" onClick={refresh} className={`${BUTTON.secondary} flex-1`}>
                 Refresh
               </button>
             )}
-            {story.status === "complete" && (
+            {stage === "solved" && (
               <button type="button" onClick={onHome} className={`${BUTTON.primary} flex-1`}>
                 Back to your stories
               </button>
             )}
           </div>
-          {between && theirTurn && (
-            <CaptureButton onPhoto={resume} onError={photoError} variant="link" className="mt-1">
-              Or play chapter {story.chapter + 1} yourself
+          {story.canTakeOver && (
+            <CaptureButton onPhoto={(photo) => resume(photo, true)} onError={photoError} variant="link" className="mt-1">
+              Or find their part yourself
             </CaptureButton>
           )}
           {notice && (
@@ -416,18 +480,11 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
       />
       <Sheet open={panel === "end"} onClose={() => setPanel(null)} title="End this walk?" done={false}>
         <p className="text-lg text-pretty">
-          {GAME_MASTER} will end chapter {story.chapter} now, on a cliffhanger, even if you&apos;re partway through it.
-          Start chapter {story.chapter + 1} whenever you&apos;re ready, from wherever you are.
+          Chapter {story.chapter} waits for you. Next time, take a photo wherever you are, and {GAME_MASTER} picks it
+          back up from there.
         </p>
         <div className="mt-6 flex flex-col gap-2.5">
-          <button
-            type="button"
-            onClick={() => {
-              setPanel(null);
-              void end();
-            }}
-            className={BUTTON.primary}
-          >
+          <button type="button" onClick={() => void end()} className={BUTTON.primary}>
             End walk
           </button>
           <button type="button" onClick={() => setPanel(null)} className={BUTTON.secondary}>
@@ -437,5 +494,24 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
       </Sheet>
       <PhotoViewer image={zoomed} onClose={() => setZoomed(null)} />
     </main>
+  );
+}
+
+/** What the game master said on a turn, with whose turn it was when that isn't obvious. */
+function Telling({ turn, solved = false }: { turn: TurnView; solved?: boolean }) {
+  const kicker =
+    turn.kind === "close"
+      ? { text: solved ? "Case solved" : "Putting it together", tone: "text-walk" }
+      : turn.card
+        ? { text: turn.playedBy === "partner" ? "Your partner found new evidence" : "New evidence", tone: "text-walk" }
+        : turn.playedBy === "partner"
+          ? // The narration speaks to whoever played the turn, so say whose it was.
+            { text: "On your partner's walk", tone: "text-concrete" }
+          : null;
+  return (
+    <section aria-label={GAME_MASTER} className="fade-in mt-5">
+      {kicker && <p className={`font-sign text-lg font-bold ${kicker.tone}`}>{kicker.text}</p>}
+      <p className="font-story text-[1.1875rem] leading-[1.6] text-pretty">{turn.narration}</p>
+    </section>
   );
 }

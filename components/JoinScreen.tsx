@@ -20,7 +20,8 @@ type Props = {
 
 /**
  * Where an invite link lands: the case a friend is asking for help with. Joining takes
- * the second seat, to follow the case as it's played and play the next chapter.
+ * the second seat and the case's other lead, to walk alongside the friend on their own
+ * streets and follow what they find.
  */
 export function JoinScreen({ storyId, code, onJoined, onOpen, onHome }: Props) {
   const [invite, setInvite] = useState<InviteView | null>(null);
@@ -51,9 +52,8 @@ export function JoinScreen({ storyId, code, onJoined, onOpen, onHome }: Props) {
     };
   }, [storyId, code, show]);
 
-  // Until the case begins, and while the friend is still walking their chapter, check
-  // back so this page opens up by itself.
-  const waiting = notStarted || (invite !== null && invite.status === "active" && invite.walkActive);
+  // Until the case begins, check back so this page opens up by itself.
+  const waiting = notStarted;
   useEffect(() => {
     if (!waiting) return;
     const timer = window.setInterval(() => {
@@ -75,7 +75,6 @@ export function JoinScreen({ storyId, code, onJoined, onOpen, onHome }: Props) {
     }
   }
 
-  const next = invite ? invite.chapter + 1 : 0;
   const ownLink = notStarted && peekNextInvite()?.storyId === storyId;
   const open = invite !== null && invite.status === "active" && !invite.full;
 
@@ -110,7 +109,7 @@ export function JoinScreen({ storyId, code, onJoined, onOpen, onHome }: Props) {
               <h1 className="mt-1 font-sign text-[1.75rem] leading-tight font-bold">A case is about to begin</h1>
               <p className="mt-5 text-pretty">
                 Your friend starts it with a photo on their walk. Leave this page open: the case shows up here when they
-                do, and you can follow it as they play. Chapter 2 is yours.
+                do. Then you take the other lead, on your own walk.
               </p>
             </>
           )}
@@ -129,9 +128,11 @@ export function JoinScreen({ storyId, code, onJoined, onOpen, onHome }: Props) {
               ? "This case is already solved."
               : invite.full
                 ? "This case already has both its players."
-                : invite.walkActive
-                  ? `Your friend is on chapter ${invite.chapter} right now, with ${invite.questsCompleted} of ${invite.evidenceTotal} pieces of evidence found. Join to follow along as they play. Chapter ${next} is yours, on your own streets.`
-                  : `Your friend found ${invite.questsCompleted} of ${invite.evidenceTotal} pieces of evidence. Join to play chapter ${next} on your own streets.`}
+                : `Your friend follows one lead, and the other is yours, on your own walk, now or whenever suits you. ${
+                    invite.questsCompleted > 0
+                      ? `They've found ${invite.questsCompleted} ${invite.questsCompleted === 1 ? "piece" : "pieces"} of evidence so far.`
+                      : "They've just started."
+                  }`}
           </p>
 
           {!open && (

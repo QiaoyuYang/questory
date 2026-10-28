@@ -14,6 +14,8 @@ const SAFE_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
  */
 export function fileStore(root: string): Store {
   const dir = (...parts: string[]) => path.join(root, ...parts);
+  // One dev server, so a queue per key in memory is lock enough.
+  const queues = new Map<string, Promise<unknown>>();
 
   async function writeJson(file: string, value: unknown) {
     await mkdir(path.dirname(file), { recursive: true });
@@ -122,6 +124,18 @@ export function fileStore(root: string): Store {
       if (calls >= limit) return false;
       await writeJson(file, { calls: calls + 1 });
       return true;
+    },
+
+    async withLock(key, task) {
+      const before = queues.get(key) ?? Promise.resolve();
+      const run = before.then(task, task);
+      const settled = run.catch(() => {});
+      queues.set(key, settled);
+      try {
+        return await run;
+      } finally {
+        if (queues.get(key) === settled) queues.delete(key);
+      }
     },
   };
   return store;

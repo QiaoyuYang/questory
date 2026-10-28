@@ -1,4 +1,5 @@
-import { TEAM_SIZE, storyView } from "@/lib/gm/state";
+import { TEAM_SIZE } from "@/lib/gm/rules";
+import { storyView } from "@/lib/gm/state";
 import { findInvitedStory, respond } from "@/lib/server";
 import type { InviteView } from "@/lib/types";
 
@@ -20,7 +21,7 @@ export async function GET(request: Request, ctx: RouteContext<"/api/stories/[id]
       genre: story.genre as InviteView["genre"],
       chapter: story.chapter,
       status: story.status,
-      walkActive: story.walk.active,
+      walkActive: story.seats.some((seat) => seat.walking),
       questsCompleted: story.questsCompleted,
       evidenceTotal: storyView(story, playerId).evidenceTotal,
       role,

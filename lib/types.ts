@@ -98,7 +98,8 @@ export type QuestView = {
   targetMode: TargetMode;
 };
 
-export type TurnKind = "genesis" | "photo" | "resume" | "end";
+/** "end" is from when ending a walk closed its chapter; "close" tells a two-player chapter's ending. */
+export type TurnKind = "genesis" | "photo" | "resume" | "end" | "close";
 
 /**
  * What a photo did for the story:
@@ -112,10 +113,12 @@ export type CardStatus = "none" | "pending" | "ready" | "failed";
 export type TurnView = {
   id: string;
   number: number;
-  /** In a shared story, whether the viewer or their partner played this turn. */
+  /** In a shared story, whether the viewer or their partner played this turn. A chapter's ending counts as the viewer's. */
   playedBy: "you" | "partner";
   kind: TurnKind;
   createdAt: string;
+  /** Null on turns from before chapters were kept on them. */
+  chapter: number | null;
   photoUrl: string | null;
   photoSize: { width: number; height: number } | null;
   /** Set when the photo moved the story: the evidence it turned up, painted as a card. */
@@ -139,21 +142,33 @@ export type StoryView = {
   genre: GenreId;
   /** The player's own idea, for a custom story. */
   theme: string | null;
-  /** Chosen when the story starts: one player, or two taking a chapter each. */
+  /** Chosen when the story starts: one player, or two following a lead each. */
   mode: "solo" | "team";
   chapter: number;
   status: "active" | "complete";
+  /** Someone is out on a walk on this case. */
   walkActive: boolean;
+  /**
+   * Where the viewer stands:
+   * - walking: out on a walk, with a next step
+   * - ready: their part of the chapter is waiting for them, from a break or not yet begun
+   * - waiting: their part is done, and the chapter waits for their partner's
+   * - closing: both parts are done, and the chapter's ending is being told
+   * - between: the chapter is over, and the next one starts with a photo
+   * - watching: a case from before leads, which the partner is walking
+   * - solved: the case is over
+   */
+  stage: "walking" | "ready" | "waiting" | "closing" | "between" | "watching" | "solved";
   /** The owner started the story; a partner joined it through the invite link. */
   role: "owner" | "partner";
   /** True once a partner has joined. */
   shared: boolean;
-  /** The current walk is the other player's, so the viewer can only watch. */
-  partnerWalking: boolean;
+  /** In a two-player case: whether the friend has joined, is walking, and how many steps their lead has left this chapter. */
+  partner: { joined: boolean; walking: boolean; left: number } | null;
+  /** The viewer's part is done and no friend has taken the other lead, so they can walk it too. */
+  canTakeOver: boolean;
   /** A two-player case whose friend hasn't joined yet, seen by its owner. */
   invitable: boolean;
-  /** Who plays the next chapter: in a two-player case, whoever didn't play the last one. */
-  upNext: "you" | "partner";
   /** The invite link's code, for the owner of a two-player case only. */
   inviteCode: string | null;
   quest: QuestView | null;

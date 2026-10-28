@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { currentChapter, formatMinutes, formatPlaces, walkStats } from "./walk";
+import { chapterTurns, currentChapter, formatMinutes, formatPlaces, walkStats } from "./walk";
 
 const at = (minute: number) => new Date(Date.UTC(2026, 10, 1, 9, 0) + minute * 60_000).toISOString();
 const turn = (kind: string, minute: number, photo = true) => ({
@@ -34,6 +34,30 @@ test("a shared case counts each player's own time, never the handoff between the
   assert.deepEqual(walkStats(turns), { minutes: 25, places: 4 });
   assert.deepEqual(walkStats(turns, "you"), { minutes: 10, places: 2 });
   assert.deepEqual(walkStats(turns, "partner"), { minutes: 15, places: 2 });
+});
+
+test("two players walking at the same time each get their own time", () => {
+  const partner = (kind: string, minute: number) => ({ ...turn(kind, minute), playedBy: "partner" as const });
+  const turns = [turn("genesis", 0), partner("resume", 2), turn("photo", 5), partner("photo", 6), turn("photo", 9), partner("photo", 14)];
+  assert.deepEqual(walkStats(turns, "you"), { minutes: 9, places: 3 });
+  assert.deepEqual(walkStats(turns, "partner"), { minutes: 12, places: 3 });
+  // The chapter's ending is no one's walk.
+  assert.deepEqual(walkStats([...turns, turn("close", 20, false)], "you"), { minutes: 9, places: 3 });
+});
+
+test("a chapter is its turns across every walk, or the newest one's for older turns", () => {
+  const turns = [
+    { ...turn("genesis", 0), chapter: 1 },
+    { ...turn("photo", 5), chapter: 1 },
+    { ...turn("resume", 300), chapter: 2 },
+    { ...turn("resume", 900), chapter: 2 },
+  ];
+  assert.deepEqual(
+    chapterTurns(turns, 2).map((t) => t.createdAt),
+    [at(300), at(900)],
+  );
+  const older = [turn("genesis", 0), turn("resume", 300), turn("photo", 310)];
+  assert.equal(chapterTurns(older, 2).length, 2);
 });
 
 test("the current chapter starts at the newest opening photo", () => {

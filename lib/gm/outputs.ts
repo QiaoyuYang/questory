@@ -1,7 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { clipText } from "@/lib/meta/structured";
-import { STORY_STEPS } from "./rules";
+import { CHAPTERS, LEAD_STEPS, STEPS_PER_CHAPTER } from "./rules";
 
 /** What the game master returns. These double as the structured-output schemas. */
 
@@ -14,7 +14,7 @@ const RECAP = 600;
 const PLAN = 1200;
 const SENTENCE = 300;
 const LABEL = 100;
-const LIST = 12;
+const LIST = Math.max(12, LEAD_STEPS);
 
 const text = (max: number) => z.string().max(max);
 
@@ -94,7 +94,8 @@ const BindingSchema = z.object({
   concrete: text(SENTENCE).describe("The real thing it is bound to, e.g. \"the faded red mailbox on the corner\"."),
 });
 
-export const GenesisSchema = z.object({
+// The plan comes before the opening, so the opening can be written to it.
+const genesisPlan = {
   title: text(LABEL).describe("The story's title, 2 to 5 words."),
   question: text(SENTENCE).describe(
     'The case: the one plain question the whole story answers, at most 12 words, e.g. "Who forged the eviction notice under your door?". The player sees it all story long.',
@@ -106,9 +107,34 @@ export const GenesisSchema = z.object({
   antagonist: text(PLAN).describe("Private: who or what opposes the player, and why."),
   stakes: text(PLAN).describe("Private: what happens if the player fails."),
   ending: text(PLAN).describe("Private: how the story resolves when every beat is done."),
-  beats: list(text(SENTENCE)).describe(
-    `Private: exactly ${STORY_STEPS} beats in order, one per step forward. Each is a goal that works anywhere and ends in one piece of evidence that points toward the secret, e.g. "Find proof the notice's date was changed".`,
-  ),
+};
+
+/** A chapter's beats on one lead, one field each, so the plan always has every step. */
+function chapterSteps(whose: string) {
+  const shape: Record<string, z.ZodString> = {};
+  for (let i = 1; i <= STEPS_PER_CHAPTER; i++) shape[`step${i}`] = text(SENTENCE);
+  return z
+    .object(shape)
+    .describe(
+      `Private: ${whose} ${STEPS_PER_CHAPTER} beats in this chapter, in order, one per step forward. Each is a goal that works anywhere and ends in one piece of evidence that points toward the secret, e.g. "Find proof the notice's date was changed".`,
+    );
+}
+
+/** The plan, chapter by chapter, one field each for the same reason. */
+function chapterPlan(team: boolean) {
+  const own = z.object({
+    findsOut: text(SENTENCE).describe(
+      'What this chapter finds out on the way to the answer, e.g. "How the notice got onto the door". The last chapter finds out the answer.',
+    ),
+    steps: chapterSteps(team ? "this player's lead:" : "the"),
+  });
+  const chapter = team ? own.extend({ partnerSteps: chapterSteps("the partner's lead:") }) : own;
+  const shape: Record<string, typeof chapter> = {};
+  for (let i = 1; i <= CHAPTERS; i++) shape[`chapter${i}`] = chapter;
+  return z.object(shape).describe(`Private: the case's ${CHAPTERS} chapters, in order.`);
+}
+
+const genesisOpening = {
   characters: list(z.object({ name: text(LABEL), role: text(LABEL), notes: text(SENTENCE) })).describe(
     "Private: the whole cast, at most 2, including whoever is behind the secret. Nobody else appears in the story.",
   ),
@@ -121,8 +147,29 @@ export const GenesisSchema = z.object({
   ),
   bindingsAdd: list(BindingSchema),
   quest: QuestOutSchema,
+};
+
+export const GenesisSchema = z.object({ ...genesisPlan, chapters: chapterPlan(false), ...genesisOpening });
+
+/** A case for two players, who each follow a lead of their own. */
+export const GenesisTeamSchema = z.object({
+  ...genesisPlan,
+  focus: text(LABEL).describe(
+    'Private: the side of the case this player\'s lead finds out, 3 to 8 words, e.g. "how the deed was swapped".',
+  ),
+  partnerFocus: text(LABEL).describe(
+    'Private: the side the partner\'s lead finds out, 3 to 8 words, e.g. "who could have done it". No beat on either lead needs anything found on the other.',
+  ),
+  chapters: chapterPlan(true),
+  ...genesisOpening,
 });
-export type GenesisOut = z.infer<typeof GenesisSchema>;
+
+type ChapterOut = { findsOut: string; steps: Record<string, string>; partnerSteps?: Record<string, string> };
+export type GenesisOut = Omit<z.infer<typeof GenesisSchema>, "chapters"> & {
+  focus?: string;
+  partnerFocus?: string;
+  chapters: Record<string, ChapterOut>;
+};
 
 const planFields = {
   planChange: z
@@ -131,7 +178,7 @@ const planFields = {
   planReason: text(SENTENCE).describe("Private: why, in one sentence. Empty when planChange is none."),
   revisedBeats: list(text(SENTENCE))
     .nullable()
-    .describe("Only when planChange is replan: the new unfinished beats, as many as before. Otherwise null."),
+    .describe("Only when planChange is replan: the new unfinished beats on the player's lead, as many as before. Otherwise null."),
   revisedSecret: text(SENTENCE)
     .nullable()
     .describe(
@@ -165,16 +212,16 @@ export const PhotoTurnSchema = z.object({
   ...planFields,
   recap: recapText()
     .nullable()
-    .describe(`Only when this step ends the chapter or the story; otherwise null. ${RECAP_RULES}`),
+    .describe(`Only when the task says this step ends the chapter or the story; otherwise null. ${RECAP_RULES}`),
   quest: QuestOutSchema.nullable().describe(
-    "The next quest. Null keeps the current quest, which only fits after a side_note when the player can still reach it from here. Also null when this step ends the chapter or the story.",
+    "The next quest. Null keeps the current quest, which only fits after a side_note when the player can still reach it from here. Also null when this step ends the chapter, the player's part of it, or the story.",
   ),
 });
 export type PhotoTurnOut = z.infer<typeof PhotoTurnSchema>;
 
 export const ResumeSchema = z.object({
   narration: prose(NARRATION).describe(
-    "2 to 4 short sentences, at most 50 words: start the next chapter here, remind the player what the case is, and set up the next step.",
+    "2 to 4 short sentences, at most 50 words: pick the case up here, remind the player what it is, and set up their next step.",
   ),
   observations: list(text(SENTENCE)).describe("Concrete things you see in the photo."),
   canonAdd: list(text(SENTENCE)).describe(
@@ -186,8 +233,12 @@ export const ResumeSchema = z.object({
 });
 export type ResumeOut = z.infer<typeof ResumeSchema>;
 
-export const EpilogueSchema = z.object({
-  narration: prose(NARRATION).describe("2 to 4 short sentences, at most 50 words, closing this walk on a hook."),
+/** The ending of a two-player chapter, told once both leads are done. Both players read it. */
+export const CloseSchema = z.object({
+  narration: prose(NARRATION).describe(
+    "2 to 4 short sentences, at most 50 words, read by both players together: what this chapter's finds from both leads add up to, naming two or three of them, ending on a hook, or on the answer when this solves the case.",
+  ),
   recap: recapText().describe(RECAP_RULES),
+  revisedSecret: planFields.revisedSecret,
 });
-export type EpilogueOut = z.infer<typeof EpilogueSchema>;
+export type CloseOut = z.infer<typeof CloseSchema>;
