@@ -48,14 +48,13 @@ body {
   outline-offset: 3px;
 }
 
-/* A dashed lane line: the wordmark's underline and the "working" indicator. */
+/* A dashed lane line: the wordmark's underline and the "working" indicator. Each tile
+   is one dash and its gap: a tile as wide as the line broke the pattern where two
+   copies met, which showed up as a stretched dash while it moved. */
 .lane-line {
   height: 4px;
-  background-image: repeating-linear-gradient(
-    90deg,
-    var(--color-lane) 0 22px,
-    transparent 22px 36px
-  );
+  background-image: linear-gradient(90deg, var(--color-lane) 0 22px, transparent 22px 36px);
+  background-size: 36px 100%;
 }
 
 .lane-line-moving {
