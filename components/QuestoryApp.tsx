@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api, type TurnResult } from "@/lib/client/api";
+import { watchForDeploys } from "@/lib/client/deploys";
 import { forgetShared, rememberShared, sharedStories } from "@/lib/client/share";
 import type { StorySummary } from "@/lib/types";
 import { HomeScreen } from "./HomeScreen";
@@ -100,6 +101,8 @@ export function QuestoryApp() {
     },
     [refresh],
   );
+
+  useEffect(() => watchForDeploys(api.health), []);
 
   const goHome = useCallback(() => {
     remember(null);

@@ -6,28 +6,39 @@ import type {
   StoryView,
   TurnView,
 } from "@/lib/types";
+import { BUILD_HEADER, requestSettled, requestStarted } from "./deploys";
 
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
-  let response: Response;
+  requestStarted();
+  let build: string | null = null;
   try {
-    response = await fetch(path, {
-      ...init,
-      headers: init?.body ? { "Content-Type": "application/json" } : undefined,
-      cache: "no-store",
-    });
-  } catch {
-    throw new Error("You seem to be offline. Check your connection and try again.");
+    let response: Response;
+    try {
+      response = await fetch(path, {
+        ...init,
+        headers: init?.body ? { "Content-Type": "application/json" } : undefined,
+        cache: "no-store",
+      });
+    } catch {
+      throw new Error("You seem to be offline. Check your connection and try again.");
+    }
+    build = response.headers.get(BUILD_HEADER);
+    const data = (await response.json().catch(() => null)) as (T & { error?: string }) | null;
+    if (!response.ok || !data) {
+      throw new Error(data?.error ?? `The server returned ${response.status}. Try again.`);
+    }
+    return data;
+  } finally {
+    requestSettled(build);
   }
-  const data = (await response.json().catch(() => null)) as (T & { error?: string }) | null;
-  if (!response.ok || !data) {
-    throw new Error(data?.error ?? `The server returned ${response.status}. Try again.`);
-  }
-  return data;
 }
 
 export type TurnResult = { story: StoryView; turn: TurnView };
 
 export const api = {
+  /** A cheap reply, for its deploy header (see lib/client/deploys.ts). */
+  health: () => call<{ mode: "mock" | "live" }>("/api/health"),
+
   /** `shared` lists stories this browser joined as a partner. */
   listStories: (shared: string[]) =>
     call<{ stories: StorySummary[]; mode: "mock" | "live" }>(

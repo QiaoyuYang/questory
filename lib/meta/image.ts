@@ -1,5 +1,5 @@
 import "server-only";
-import { postJson } from "./http";
+import { ModelApiError, postJson } from "./http";
 
 type ImageOptions = {
   baseURL: string;
@@ -18,6 +18,11 @@ function sniffMime(bytes: Uint8Array): string {
   if (bytes[0] === 0x89 && bytes[1] === 0x50) return "image/png";
   if (bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50) return "image/webp";
   return "application/octet-stream";
+}
+
+/** Muse Image turned the prompt down on content grounds, rather than failing to draw. */
+export function refusedOnContent(error: unknown): boolean {
+  return error instanceof ModelApiError && error.status === 400 && error.body.includes("content_policy_violation");
 }
 
 /**

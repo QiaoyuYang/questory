@@ -19,7 +19,7 @@ Questory is built for the part where people stop. The story carries on from one 
 1. **You take a photo of anything.** It can be what the quest asked for or whatever catches your eye. The browser shrinks it to 1280px and uploads it.
 2. **Muse Wonder plays Wren, the game master.** It reads the photo and the story so far, decides what the photo means, narrates, and leaves the next quest, all as structured JSON. A photo can follow the quest, move the story somewhere new, or add a clue on the side. No photo fails.
 3. **SAM 3.1 grounds the target.** When the next quest asks you to take a closer look at something in your photo ("the blue door"), SAM finds it and the app traces its outline.
-4. **Muse Image draws the evidence.** When a photo moves the story, it's redrawn as a picture of the evidence, with its name and what it proves lettered on, in the story's style. The story waits for it, so the new evidence and what Wren says about it show up together. These are keepsakes, so they never cover the photo you navigate by.
+4. **Muse Image draws the evidence.** When a photo moves the story, it's redrawn as a picture of the evidence, with its name and what it proves lettered on, in the story's style. The story waits for it, so the new evidence and what Wren says about it show up together. If Muse Image turns a picture down, it gets one plainer try, and if that's turned down too, your photo is the picture. These are keepsakes, so they never cover the photo you navigate by.
 
 Every story is a case: one plain question, like "Who took Sir Buttons the garden gnome?", and an answer Wren decides at the start. A case is six steps forward. Each one turns up a piece of evidence, the last one solves it, and the evidence list shows what you've found and how much is left. A case has two characters at most, and the person behind the answer shows up early, so a sharp player can guess it before the end. If the evidence you find stops pointing at the answer, Wren changes the answer rather than the evidence, and the reveal ties the two together.
 
@@ -81,6 +81,8 @@ Any Node host works. On Vercel:
 3. Deploy, then open `/api/health`. It should show `"mode":"live"` and `"storage":"appwrite"`.
 
 Every pull request gets its own preview link. The card route can run for up to three minutes, which fits the five that Vercel's free plan allows.
+
+Vercel's free plan has no skew protection, so a page left open across a deploy would keep running its old code. Every API reply names the commit it was built from, and the app reloads itself once it sees a newer one and nothing is in flight.
 
 Two things to know before sharing the link:
 
