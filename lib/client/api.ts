@@ -62,12 +62,9 @@ export const api = {
       body: JSON.stringify({ kind, ...photo }),
     }),
 
-  /** A friend joins a shared case by starting its next chapter. */
-  joinStory: (id: string, code: string, photo: PhotoUpload) =>
-    call<TurnResult>(`/api/stories/${id}/turns`, {
-      method: "POST",
-      body: JSON.stringify({ kind: "resume", code, ...photo }),
-    }),
+  /** A friend joins a shared case from its link, to follow it until their chapter. */
+  joinStory: (id: string, code: string) =>
+    call<{ story: StoryView }>(`/api/stories/${id}/join`, { method: "POST", body: JSON.stringify({ code }) }),
 
   inviteInfo: (id: string, code: string) =>
     call<{ invite: InviteView | null }>(`/api/stories/${id}/invite?code=${encodeURIComponent(code)}`),

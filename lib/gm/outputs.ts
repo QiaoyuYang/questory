@@ -86,9 +86,6 @@ const CardSchema = z.object({
   proves: text(LABEL).describe(
     'What the evidence proves, 3 to 6 words, e.g. "Someone forced it, then fixed it" or "Left in a hurry", never where it is and never more than the photo shows. Lettered along the bottom.',
   ),
-  flourish: text(SENTENCE).describe(
-    'One small thing to draw near the edge of the card that fits the story, named in a few words, e.g. "a trail of tiny paw prints" or "a curl of steam". Something you could see, never a sentence, words or numbers, and nothing that could look like blood or an injury.',
-  ),
 });
 export type CardOut = z.infer<typeof CardSchema>;
 
@@ -116,7 +113,7 @@ export const GenesisSchema = z.object({
     "Private: the whole cast, at most 2, including whoever is behind the secret. Nobody else appears in the story.",
   ),
   narration: prose(NARRATION).describe(
-    "The opening: 2 to 4 short sentences, at most 50 words, set in the place in the photo. It says what happened, who it matters to, and what the player is trying to find out.",
+    "The opening: 2 to 4 short sentences, at most 50 words, set in the place in the photo. It says what happened, whose problem it is, and what the player is trying to find out.",
   ),
   observations: list(text(SENTENCE)).describe("Concrete things you see in the photo."),
   canonAdd: list(text(SENTENCE)).describe(
@@ -150,7 +147,7 @@ export const PhotoTurnSchema = z.object({
       "follows_quest: the photo does what the current quest asked; be generous. moves_story: it does not, but you use what it shows to move the story forward anyway. side_note: it adds atmosphere or a small detail but nothing new about the case, and the story waits for more.",
     ),
   narration: prose(NARRATION).describe(
-    "2 to 4 short sentences, at most 50 words: what this photo turns out to be in the story, what it tells the player about the case, and where it points next.",
+    "2 to 4 short sentences, at most 50 words: what this photo turns out to be in the story, and what it means for the case.",
   ),
   // Always required: when it was optional, the game master often left it out of real steps.
   card: CardSchema.describe(

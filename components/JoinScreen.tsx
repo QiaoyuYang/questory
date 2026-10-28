@@ -1,35 +1,34 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { api, type TurnResult } from "@/lib/client/api";
+import { api } from "@/lib/client/api";
 import { peekNextInvite } from "@/lib/client/share";
-import { GAME_MASTER, type InviteView, type PhotoUpload } from "@/lib/types";
+import type { InviteView } from "@/lib/types";
 import { Alert } from "./Alert";
 import { BottomBar } from "./BottomBar";
 import { BUTTON } from "./buttons";
-import { CaptureButton } from "./CaptureButton";
-import { CameraIcon } from "./icons";
 import { Wordmark } from "./Wordmark";
-import { Working } from "./Working";
 
 type Props = {
   storyId: string;
   code: string;
-  onJoined: (result: TurnResult) => void;
+  onJoined: () => void;
   /** The link's owner, or a partner who already joined: open the story itself. */
   onOpen: (role: "owner" | "partner") => void;
   onHome: () => void;
 };
 
-/** Where an invite link lands: the case a friend is asking for help with, and a camera to join it. */
+/**
+ * Where an invite link lands: the case a friend is asking for help with. Joining takes
+ * the second seat, to follow the case as it's played and play the next chapter.
+ */
 export function JoinScreen({ storyId, code, onJoined, onOpen, onHome }: Props) {
   const [invite, setInvite] = useState<InviteView | null>(null);
   // The link went out before its case began: there's nothing to join yet.
   const [notStarted, setNotStarted] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [pending, setPending] = useState<PhotoUpload | null>(null);
+  const [joining, setJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lastPhoto, setLastPhoto] = useState<PhotoUpload | null>(null);
 
   // A story this browser already plays opens straight away.
   const show = useCallback(
@@ -64,32 +63,27 @@ export function JoinScreen({ storyId, code, onJoined, onOpen, onHome }: Props) {
     return () => window.clearInterval(timer);
   }, [waiting, storyId, code, show]);
 
-  async function join(photo: PhotoUpload) {
+  async function join() {
     setError(null);
-    setLastPhoto(photo);
-    setPending(photo);
+    setJoining(true);
     try {
-      onJoined(await api.joinStory(storyId, code, photo));
+      await api.joinStory(storyId, code);
+      onJoined();
     } catch (err) {
       setError(err instanceof Error ? err.message : "That didn't work. Try again.");
-    } finally {
-      setPending(null);
+      setJoining(false);
     }
   }
 
   const next = invite ? invite.chapter + 1 : 0;
   const ownLink = notStarted && peekNextInvite()?.storyId === storyId;
-  const open = invite !== null && invite.status === "active" && !invite.full && !invite.walkActive;
+  const open = invite !== null && invite.status === "active" && !invite.full;
 
   return (
     <main className="mx-auto w-full max-w-[30rem] px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-44">
       <Wordmark />
 
-      {pending ? (
-        <div className="mt-8">
-          <Working src={pending.photo} size={pending} message={`${GAME_MASTER} is bringing you into the case…`} />
-        </div>
-      ) : loadError ? (
+      {loadError ? (
         <section className="mt-8">
           <p className="text-lg text-pretty" role="alert">
             {loadError}
@@ -115,8 +109,8 @@ export function JoinScreen({ storyId, code, onJoined, onOpen, onHome }: Props) {
               <p className="font-sign text-lg font-bold text-lane">A friend needs your help</p>
               <h1 className="mt-1 font-sign text-[1.75rem] leading-tight font-bold">A case is about to begin</h1>
               <p className="mt-5 text-pretty">
-                Your friend starts it with a photo on their walk, and it shows up here when they do. You play chapter 2
-                when their walk ends. Leave this page open and it&apos;ll let you know.
+                Your friend starts it with a photo on their walk. Leave this page open: the case shows up here when they
+                do, and you can follow it as they play. Chapter 2 is yours.
               </p>
             </>
           )}
@@ -136,8 +130,8 @@ export function JoinScreen({ storyId, code, onJoined, onOpen, onHome }: Props) {
               : invite.full
                 ? "This case already has both its players."
                 : invite.walkActive
-                  ? `Your friend is on chapter ${invite.chapter} right now, with ${invite.questsCompleted} of ${invite.evidenceTotal} pieces of evidence found. You play chapter ${next} when their walk ends. Leave this page open and it'll let you know.`
-                  : `Your friend found ${invite.questsCompleted} of ${invite.evidenceTotal} pieces of evidence. Play chapter ${next} on your own streets to find more.`}
+                  ? `Your friend is on chapter ${invite.chapter} right now, with ${invite.questsCompleted} of ${invite.evidenceTotal} pieces of evidence found. Join to follow along as they play. Chapter ${next} is yours, on your own streets.`
+                  : `Your friend found ${invite.questsCompleted} of ${invite.evidenceTotal} pieces of evidence. Join to play chapter ${next} on your own streets.`}
           </p>
 
           {!open && (
@@ -148,13 +142,12 @@ export function JoinScreen({ storyId, code, onJoined, onOpen, onHome }: Props) {
         </section>
       )}
 
-      {!pending && open && (
+      {open && (
         <BottomBar>
-          {error && <Alert message={error} retry={lastPhoto ? () => join(lastPhoto) : null} />}
-          <CaptureButton onPhoto={join} onError={setError} className="w-full">
-            <CameraIcon />
-            Take a photo to join
-          </CaptureButton>
+          {error && <Alert message={error} retry={() => void join()} />}
+          <button type="button" onClick={() => void join()} disabled={joining} className={`${BUTTON.primary} w-full`}>
+            {joining ? "Joining…" : "Join the case"}
+          </button>
         </BottomBar>
       )}
     </main>
