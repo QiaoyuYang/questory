@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { activateNextBeat, completeActiveBeat, makeBeats, replan, updateBeats } from "./beats";
+import { activateNextBeat, completeActiveBeat, makeBeats, openBeats, replan, updateBeats } from "./beats";
 import type { Beat } from "./state";
 
 const summary = (beats: Beat[]) => beats.map((beat) => `${beat.id}:${beat.status}`).join(" ");
@@ -39,6 +39,12 @@ test("a turn that replans without finishing a beat replaces the active beat too"
 test("a turn with no plan change only advances the beat", () => {
   assert.equal(summary(updateBeats(storyWith(1), "a", { beatComplete: true, replanWith: null })), "b1:done b2:done b3:active b4:pending b5:pending");
   assert.equal(summary(updateBeats(storyWith(1), "a", { beatComplete: false, replanWith: null })), "b1:done b2:active b3:pending b4:pending b5:pending");
+});
+
+test("a lead's open beats come in order, the active one first", () => {
+  const beats = completeActiveBeat(activateNextBeat([...makeBeats(["a1", "a2", "a3"], 0, "a"), ...makeBeats(["b1"], 3, "b")]), "a");
+  assert.equal(summary(openBeats(beats, "a")), "b2:active b3:pending");
+  assert.equal(summary(openBeats(beats, "b")), "b4:active");
 });
 
 test("replanning with no new goals leaves the beats alone", () => {

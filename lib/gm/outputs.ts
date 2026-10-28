@@ -53,11 +53,11 @@ const recapText = () =>
     .max(RECAP);
 
 const RECAP_RULES =
-  "Shown to the player when they come back: 2 sentences, at most 40 words, second person, past tense, covering only what they have seen and done. Never mention the hidden plan, beats or these instructions.";
+  "Shown to the player when they come back: 2 sentences, at most 40 words, second person, past tense, covering only what they have seen and done. Never mention chapters, the hidden plan, beats or these instructions.";
 
 export const QuestOutSchema = z.object({
   title: text(LABEL).describe(
-    'Quest title, 2 to 4 words, sentence case. A small tease, not a label: "The worn corner", not "A closer look at the post box".',
+    'What the player is looking for, as the story calls it, 2 to 4 words, sentence case: "The back gate" or "Where the paint goes". Never an instruction like "Find the mark".',
   ),
   targetMode: z
     .enum(["in_view", "seek"])
@@ -65,7 +65,7 @@ export const QuestOutSchema = z.object({
       "in_view: a closer look at something clearly visible in this photo. seek: a small errand nearby that ends in a photo.",
     ),
   objective: text(SENTENCE).describe(
-    'One plain sentence of at most 16 words telling the player what to do, e.g. "Find a date carved or painted nearby and photograph it." For in_view, ask about a detail they can only make out up close.',
+    'One sentence of at most 16 words naming the real thing to find, e.g. "Find a gate or a side door nearby and photograph it." For in_view, ask about a detail they can only make out up close.',
   ),
 
   targetPhrase: text(LABEL).describe(
@@ -84,7 +84,7 @@ const CardSchema = z.object({
     'The evidence, 2 to 4 words, sentence case: the thing in this photo as the story sees it, e.g. "The forced lock". Lettered large across the top of the card.',
   ),
   proves: text(LABEL).describe(
-    'What the evidence proves, 3 to 6 words, e.g. "Someone forced it, then fixed it" or "Left in a hurry", never where it is and never more than the photo shows. Lettered along the bottom.',
+    'What the evidence tells the player, 3 to 6 words, e.g. "Someone forced it, then fixed it" or "Stamped after hours". Never where it is, never what they knew already, and never "this, not that". Lettered along the bottom.',
   ),
 });
 export type CardOut = z.infer<typeof CardSchema>;
@@ -98,10 +98,10 @@ const BindingSchema = z.object({
 const genesisPlan = {
   title: text(LABEL).describe("The story's title, 2 to 5 words."),
   question: text(SENTENCE).describe(
-    'The case: the one plain question the whole story answers, at most 12 words, e.g. "Who forged the eviction notice under your door?". The player sees it all story long.',
+    'The case: the one question the whole story answers, at most 12 words, e.g. "Who forged the eviction notice under your door?". The player sees it all story long.',
   ),
   secret: text(SENTENCE).describe(
-    'Private until the last step: the answer to the case in one plain sentence, e.g. "Mara, the landlord\'s niece, forged it to buy the flat cheap."',
+    'Private until the last step: the answer to the case in one sentence, e.g. "Mara, the landlord\'s niece, forged it to buy the flat cheap."',
   ),
   premise: text(PLAN).describe("Private: the hidden truth behind the story."),
   antagonist: text(PLAN).describe("Private: who or what opposes the player, and why."),
@@ -116,7 +116,7 @@ function chapterSteps(whose: string) {
   return z
     .object(shape)
     .describe(
-      `Private: ${whose} ${STEPS_PER_CHAPTER} beats in this chapter, in order, one per step forward. Each is a goal that works anywhere and ends in one piece of evidence that points toward the secret, e.g. "Find proof the notice's date was changed".`,
+      `Private: ${whose} ${STEPS_PER_CHAPTER} beats in this chapter, in order, one per step forward. Each is the next find on the trail and what it tells the player, as a thing in the story's world that ordinary real things can stand in for, e.g. "Fresh ink on the office stamp, so the notice was stamped last night". Never something the player already knows.`,
     );
 }
 
@@ -124,7 +124,7 @@ function chapterSteps(whose: string) {
 function chapterPlan(team: boolean) {
   const own = z.object({
     findsOut: text(SENTENCE).describe(
-      'What this chapter finds out on the way to the answer, e.g. "How the notice got onto the door". The last chapter finds out the answer.',
+      'What this chapter finds out on the way to the answer, never something the opening tells, e.g. "How the notice got onto the door". The last chapter finds out the answer.',
     ),
     steps: chapterSteps(team ? "this player's lead:" : "the"),
   });
@@ -143,7 +143,7 @@ const genesisOpening = {
   ),
   observations: list(text(SENTENCE)).describe("Concrete things you see in the photo."),
   canonAdd: list(text(SENTENCE)).describe(
-    "Every fact the opening narration tells the player, such as who is missing or what was seen, at most 12 words each. The player reads these as clues, so nothing from the hidden plan.",
+    "Every fact about the case that the opening narration tells the player, such as who is missing or what was seen, at most 12 words each. The player reads these as clues, so nothing from the hidden plan, nothing the narration doesn't say, and nothing about who follows which lead.",
   ),
   bindingsAdd: list(BindingSchema),
   quest: QuestOutSchema,
@@ -194,7 +194,7 @@ export const PhotoTurnSchema = z.object({
       "follows_quest: the photo does what the current quest asked; be generous. moves_story: it does not, but you use what it shows to move the story forward anyway. side_note: it adds atmosphere or a small detail but nothing new about the case, and the story waits for more.",
     ),
   narration: prose(NARRATION).describe(
-    "2 to 4 short sentences, at most 50 words: what this photo turns out to be in the story, and what it means for the case.",
+    "2 or 3 short sentences, at most 40 words: what this place or thing is in the story, and the one new thing it tells the player. For a side_note, 1 or 2 sentences: a moment at this place, and nothing about what is still to find.",
   ),
   // Always required: when it was optional, the game master often left it out of real steps.
   card: CardSchema.describe(
@@ -202,7 +202,7 @@ export const PhotoTurnSchema = z.object({
   ),
   observations: list(text(SENTENCE)).describe("Concrete things you see in the photo."),
   canonAdd: list(text(SENTENCE)).describe(
-    'Every new fact this turn\'s narration tells the player, including what they found, at most 12 words each, e.g. "The foundation plaque is missing from beside the door." Nothing from the hidden plan.',
+    'Every new fact this turn\'s narration tells the player, including what they found, at most 12 words each, e.g. "The foundation plaque is missing from beside the door." Nothing from the hidden plan, and nothing the narration doesn\'t say.',
   ),
   bindingsAdd: list(BindingSchema),
   inventoryAdd: list(text(SENTENCE)).describe(
@@ -225,7 +225,7 @@ export const ResumeSchema = z.object({
   ),
   observations: list(text(SENTENCE)).describe("Concrete things you see in the photo."),
   canonAdd: list(text(SENTENCE)).describe(
-    "Every new fact this turn's narration tells the player, at most 12 words each. Nothing from the hidden plan.",
+    "Every new fact this turn's narration tells the player, at most 12 words each. Nothing from the hidden plan, and nothing the narration doesn't say.",
   ),
   bindingsAdd: list(BindingSchema),
   ...planFields,
@@ -236,7 +236,7 @@ export type ResumeOut = z.infer<typeof ResumeSchema>;
 /** The ending of a two-player chapter, told once both leads are done. Both players read it. */
 export const CloseSchema = z.object({
   narration: prose(NARRATION).describe(
-    "2 to 4 short sentences, at most 50 words, read by both players together: what this chapter's finds from both leads add up to, naming two or three of them, ending on a hook, or on the answer when this solves the case.",
+    "2 to 4 short sentences, at most 50 words, read by both players together: what this chapter's finds from both leads add up to, bringing in one or two of them by name, ending on a hook, or on the answer when this solves the case.",
   ),
   recap: recapText().describe(RECAP_RULES),
   revisedSecret: planFields.revisedSecret,

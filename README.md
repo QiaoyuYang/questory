@@ -21,7 +21,7 @@ Questory is built for the part where people stop. The story carries on from one 
 3. **SAM 3.1 grounds the target.** When the next quest asks you to take a closer look at something in your photo ("the blue door"), SAM finds it and the app traces its outline.
 4. **Muse Image draws the evidence.** When a photo moves the story, it's redrawn as a picture of the evidence, with its name and what it proves lettered on, in the story's style. The story waits for it, so the new evidence and what Wren says about it show up together. If Muse Image turns a picture down, it gets one plainer try, and if that's turned down too, your photo is the picture. These are keepsakes, so they never cover the photo you navigate by.
 
-Every story is a case: one plain question, like "Who took Sir Buttons the garden gnome?", and an answer Wren decides at the start. A case is three chapters of four steps forward. Each step turns up a piece of evidence, the last one solves it, and the evidence list shows what you've found and how much is left. A case has two characters at most, and the person behind the answer shows up early, so a sharp player can guess it before the end. If the evidence you find stops pointing at the answer, Wren changes the answer rather than the evidence, and the reveal ties the two together.
+Every story is a case: one plain question, like "Who took Sir Buttons the garden gnome?", and an answer Wren decides at the start. A case is three chapters of four steps forward. Each step turns up a piece of evidence, the last one solves it, and the evidence list shows what you've found and how much is left. What you photograph stands in for something in the story's world: a numbered door becomes the store cupboard, dark spots on the pavement become drops of a spilled potion. Each quest goes where the last find pointed, so the finds make a trail. A case has two characters at most, and the person behind the answer shows up early. The evidence narrows it down without naming them until the last chapter, so a sharp player can guess it before the end. If the evidence you find stops pointing at the answer, Wren changes the answer rather than the evidence, and the reveal ties the two together.
 
 Pick Mystery, Fantasy, Sci-fi or Comedy, or type your own idea, like "a haunted bakery", and Wren builds the case around it. Name a world people know, like Sherlock Holmes, and the case happens there, with its own characters.
 
@@ -44,7 +44,7 @@ The story state has three layers, and the prompts treat each one differently:
 
 | Layer | What it holds | How it changes |
 | --- | --- | --- |
-| Skeleton | The hidden answer to the case, the premise, antagonist, stakes, ending, what each chapter finds out, and the beats of each lead, written as goals that work anywhere | Re-planned only when the world forces it, and always narrated as a twist. The answer changes only to keep fitting the evidence |
+| Skeleton | The hidden answer to the case, the premise, antagonist, stakes, ending, what each chapter finds out, and the beats of each lead: finds on a trail that ordinary things can stand in for | Re-planned only when the world forces it, and always narrated as a twist. The answer changes only to keep fitting the evidence |
 | Bindings | Which real thing stands in for which story element ("the dead drop" is "the red mailbox") | Freely, every turn |
 | Canon | Facts already established in play | Never contradicted |
 

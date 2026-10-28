@@ -206,10 +206,16 @@ export type PhotoTurnResult = {
 
 const named = (text: string) => /\p{L}/u.test(text);
 
+/** "Wheeled out, not carried" reads machine-made, and the part before the contrast says it all. */
+export function withoutContrast(text: string): string {
+  return text.replace(/,\s*(?:not|rather than|instead of)\b.*$/i, "").trim();
+}
+
 /** The evidence a step forward turns up. A reply that left it blank still gets a card. */
 function evidenceCard(card: PhotoTurnOut["card"]): NonNullable<TurnRecord["card"]> {
   if (!named(card.title)) return { title: "New evidence", caption: "" };
-  return { title: card.title.trim(), caption: named(card.proves) ? card.proves.trim() : "" };
+  const caption = withoutContrast(card.proves);
+  return { title: card.title.trim(), caption: named(caption) ? caption : "" };
 }
 
 /**

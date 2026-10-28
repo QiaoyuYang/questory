@@ -40,6 +40,11 @@ export function activeBeatId(beats: Beat[], lead: Lead): string | null {
   return beats.find((beat) => beat.lead === lead && beat.status === "active")?.id ?? null;
 }
 
+/** A lead's unfinished beats in order, the active one first. */
+export function openBeats(beats: Beat[], lead: Lead): Beat[] {
+  return beats.filter((beat) => beat.lead === lead && (beat.status === "active" || beat.status === "pending"));
+}
+
 /** Mark a lead's active beat done and move that lead on to its next one. */
 export function completeActiveBeat(beats: Beat[], lead: Lead): Beat[] {
   return activateNextBeat(
