@@ -143,7 +143,7 @@ export function QuestoryApp() {
       <JoinScreen
         storyId={screen.storyId}
         code={screen.code}
-        onJoined={(result) => openFromInvite(result.story.id, true)}
+        onJoined={() => openFromInvite(screen.storyId, true)}
         onOpen={openInvited}
         onHome={goHome}
       />

@@ -152,6 +152,8 @@ export type StoryView = {
   partnerWalking: boolean;
   /** A two-player case whose friend hasn't joined yet, seen by its owner. */
   invitable: boolean;
+  /** Who plays the next chapter: in a two-player case, whoever didn't play the last one. */
+  upNext: "you" | "partner";
   /** The invite link's code, for the owner of a two-player case only. */
   inviteCode: string | null;
   quest: QuestView | null;

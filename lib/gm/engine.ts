@@ -117,6 +117,9 @@ async function commit(state: StoryState, turn: TurnRecord) {
   state.lastNarration = turn.narration;
   state.updatedAt = now();
   const store = getStore();
+  // A friend can join while the turn was being worked on. Keep their seat.
+  const stored = await store.getStory(state.id);
+  for (const id of stored?.partners ?? []) if (!state.partners.includes(id)) state.partners.push(id);
   await store.saveTurn(turn);
   await store.saveStory(state);
   return { state, turn };
@@ -264,6 +267,9 @@ export async function resumeStory(state: StoryState, photo: Photo, playerId: str
   }
   const config = getConfig();
   const store = getStore();
+  // A partner's first walk on the case gets a handoff, even if they've followed it so far.
+  const firstWalk =
+    playerId !== state.playerId && !(await store.listTurns(state.id)).some((turn) => turn.playerId === playerId);
   await spendCall(config, playerId);
   if (joining) state.partners.push(playerId);
   state.chapter += 1;
@@ -271,7 +277,7 @@ export async function resumeStory(state: StoryState, photo: Photo, playerId: str
 
   const [photoId, resumed] = await Promise.all([
     store.putImage({ bytes: photo.bytes, mime: photo.mime }),
-    getBrain(config).resume(state, photo.dataUrl, { newPlayer: joining }),
+    getBrain(config).resume(state, photo.dataUrl, { newPlayer: firstWalk }),
   ]);
   const { data, usage } = resumed;
   logUsage("resume", usage);
@@ -289,6 +295,21 @@ export async function resumeStory(state: StoryState, photo: Photo, playerId: str
   turn.quest = state.quest;
   turn.overlay = await groundQuest(config, state.quest, photo);
   return commit(state, turn);
+}
+
+/**
+ * A friend takes a shared case's second seat through its link. From then on they follow
+ * the story on their own screen as it's played, and play the next chapter themselves.
+ */
+export async function joinStory(state: StoryState, playerId: string): Promise<StoryState> {
+  if (state.playerId === playerId || state.partners.includes(playerId)) return state;
+  if (state.status === "complete") throw new GameRuleError("This case is already solved.");
+  if (state.partners.length >= (state.invite?.size ?? TEAM_SIZE) - 1) {
+    throw new GameRuleError("This case already has both its players.");
+  }
+  state.partners.push(playerId);
+  await getStore().saveStory(state);
+  return state;
 }
 
 /** The player stops walking; the game master closes the chapter. */
@@ -349,10 +370,9 @@ export async function paintCard(state: StoryState, turn: TurnRecord, playerId: s
 }
 
 /**
- * Muse Image turns a few cards down on content grounds, usually over a phrase in the game
- * master's extra detail ("That red drip gives us a trail" read as blood). Asking again
- * would only be refused again, so a refused card gets one plainer try, without the detail
- * or the player's theme. Null when that is refused too.
+ * Muse Image turns a few cards down on content grounds. Asking again would only be refused
+ * again, so a refused card gets one plainer try, in the genre's own style rather than the
+ * player's theme. Null when that is refused too.
  */
 async function drawCard(
   config: Config,
@@ -376,7 +396,7 @@ async function drawCard(
   }
   await spendCall(config, playerId);
   try {
-    return await editPhoto(photo, storyCardPrompt(state.genre, { ...card, flourish: "" }, null), size, options);
+    return await editPhoto(photo, storyCardPrompt(state.genre, card, null), size, options);
   } catch (error) {
     if (!refusedOnContent(error)) throw error;
     console.warn("[questory] Muse Image turned the plainer card down too; the photo stands in.");

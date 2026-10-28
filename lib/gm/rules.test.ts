@@ -68,7 +68,7 @@ function reply(overrides: Partial<PhotoTurnOut> = {}): PhotoTurnOut {
   return {
     outcome: "side_note",
     narration: "You file it away.",
-    card: { title: "A scuffed step", proves: "Someone was here", flourish: "" },
+    card: { title: "A scuffed step", proves: "Someone was here" },
     observations: [],
     canonAdd: [],
     bindingsAdd: [],
@@ -190,17 +190,16 @@ test("canon and inventory skip duplicates, ignoring case", () => {
 });
 
 test("every step forward turns up a piece of evidence, painted as a card", () => {
-  const card = { title: " The marked door ", proves: "Number 14, freshly painted", flourish: "a chalk arrow" };
+  const card = { title: " The marked door ", proves: "Number 14, freshly painted" };
   assert.equal(applyPhotoTurn(story(), reply({ card }), 2).card, null);
 
   const state = story();
   assert.deepEqual(applyPhotoTurn(state, reply({ outcome: "follows_quest", card }), 2).card, {
     title: "The marked door",
     caption: "Number 14, freshly painted",
-    flourish: "a chalk arrow",
   });
   // A reply that left the evidence blank still gets a card, so the count stays true.
-  const blank = { title: ".", proves: ".", flourish: "" };
+  const blank = { title: ".", proves: "." };
   assert.equal(applyPhotoTurn(state, reply({ outcome: "moves_story", card: blank }), 3).card?.title, "New evidence");
   assert.deepEqual(state.evidence, [
     { title: "The marked door", caption: "Number 14, freshly painted", turn: 2, by: null },

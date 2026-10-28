@@ -112,7 +112,7 @@ export const TurnRecordSchema = z.object({
   photoId: z.string().nullable(),
   photoSize: z.object({ width: z.number(), height: z.number() }).nullable(),
   /** Set when the photo moved the story: what Muse Image paints onto it. */
-  card: z.object({ title: z.string(), caption: z.string(), flourish: z.string() }).nullable().default(null),
+  card: z.object({ title: z.string(), caption: z.string() }).nullable().default(null),
   cardId: z.string().nullable(),
   cardStatus: z.enum(["none", "pending", "ready", "failed"]),
   outcome: z.enum(["follows_quest", "moves_story", "side_note"]).nullable().default(null),
@@ -194,6 +194,7 @@ export function storyView(state: StoryState, viewerId: string): StoryView {
     shared: state.partners.length > 0,
     partnerWalking: state.walk.active && walkPlayer(state) !== viewerId,
     invitable: state.mode === "team" && viewerId === state.playerId && !complete && state.partners.length < size - 1,
+    upNext: state.mode === "team" && walkPlayer(state) === viewerId ? "partner" : "you",
     inviteCode: state.mode === "team" && viewerId === state.playerId ? (state.invite?.code ?? null) : null,
     quest: questView(state.quest),
     questsCompleted: state.questsCompleted,

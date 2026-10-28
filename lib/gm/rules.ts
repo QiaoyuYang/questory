@@ -86,12 +86,8 @@ const named = (text: string) => /\p{L}/u.test(text);
 
 /** The evidence a step forward turns up. A reply that left it blank still gets a card. */
 function evidenceCard(card: PhotoTurnOut["card"]): NonNullable<TurnRecord["card"]> {
-  if (!named(card.title)) return { title: "New evidence", caption: "", flourish: "" };
-  return {
-    title: card.title.trim(),
-    caption: named(card.proves) ? card.proves.trim() : "",
-    flourish: card.flourish.trim(),
-  };
+  if (!named(card.title)) return { title: "New evidence", caption: "" };
+  return { title: card.title.trim(), caption: named(card.proves) ? card.proves.trim() : "" };
 }
 
 /**

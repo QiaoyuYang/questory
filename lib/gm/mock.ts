@@ -62,37 +62,37 @@ type Step = { card: CardOut; narration: string; fact: string };
 
 const STEPS: Step[] = [
   {
-    card: { title: "A chalk arrow", proves: "The thief marked the way", flourish: "a smear of chalk dust" },
+    card: { title: "A chalk arrow", proves: "The thief marked the way" },
     narration:
       "Up close it's a chalk arrow, small and fresh, pointing away from the bakery. Whoever took the bell marked the way so they could find it again. Follow where it points.",
     fact: "The thief marks the way with small chalk arrows.",
   },
   {
-    card: { title: "Brass dust", proves: "The bell was dragged here", flourish: "a few gold flecks" },
+    card: { title: "Brass dust", proves: "The bell was dragged here" },
     narration:
       "Gold flecks sit in the cracks here: brass dust, rubbed off as the bell was dragged along. The thief came this way with it, and not long ago.",
     fact: "Brass dust shows the bell was dragged this way.",
   },
   {
-    card: { title: "A floury handprint", proves: "The thief came from inside", flourish: "a puff of flour" },
+    card: { title: "A floury handprint", proves: "The thief came from inside" },
     narration:
       "There's a floury handprint on the corner, the same white as Rosa's bread flour. The thief came out of the bakery itself. When you tell Rosa, she goes quiet. \"Only family has a key,\" she says.",
     fact: "A floury handprint shows the thief came from inside the bakery.",
   },
   {
-    card: { title: "An empty hiding spot", proves: "Moved again this morning", flourish: "a bell-shaped ring in the dust" },
+    card: { title: "An empty hiding spot", proves: "Moved again this morning" },
     narration:
       "Below another chalk arrow is a bell-shaped ring in the dust, and nothing else. The bell was hidden here, and someone moved it again this morning. They know you're looking.",
     fact: "The bell was hidden here and moved again this morning.",
   },
   {
-    card: { title: "A borrowed ladder", proves: "The thief hides things up high", flourish: "a small wooden ladder" },
+    card: { title: "A borrowed ladder", proves: "The thief hides things up high" },
     narration:
       "Every hiding spot so far has been up high. Rosa's ladder went missing the same night, and only her nephew Teo, who sleeps above the shop, asked to borrow it.",
     fact: "Rosa's nephew Teo borrowed her ladder the night the bell vanished.",
   },
   {
-    card: { title: "The brass bell", proves: "Hidden under Teo's window box", flourish: "a sock wrapped round the clapper" },
+    card: { title: "The brass bell", proves: "Hidden under Teo's window box" },
     narration:
       "Under the window box above the bakery sits the bell, a sock wrapped round its clapper. Teo hid it because it woke him at dawn. Rosa laughs, and from now on it rings only after eight.",
     fact: "Teo hid the bell because it woke him at dawn.",

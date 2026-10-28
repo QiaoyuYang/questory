@@ -35,7 +35,6 @@ export function storyCardPrompt(genre: string, card: NonNullable<TurnRecord["car
     // People read the card on a phone, so the words are few and big.
     `Across the top, a banner with the title in large, bold, high-contrast letters, about a sixth of the card's height: "${card.title}".`,
     caption ? `Along the bottom, the caption in clear letters at least half the title's size: "${caption}".` : "",
-    card.flourish ? `One extra detail: ${card.flourish.replace(/[\s.!?]+$/, "")}.` : "",
     // "No other text" alone made Muse Image blank out real signs, which can be the evidence.
     `Add no words of your own besides ${caption ? "the title and caption" : "the title"}: no labels, notes, tags, stamps, numbers or dates. Leave any writing that is really in the photo, like the words on a sign, where it is and readable.`,
     `Do not add people. Keep the graphics to the edges so most of the photo stays visible. Spell ${caption ? "the title and caption" : "the title"} exactly as given.`,

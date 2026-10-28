@@ -237,6 +237,8 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
 
   const walkLive = story.walkActive && story.status === "active" && !story.partnerWalking;
   const between = !story.walkActive && story.status === "active";
+  // In a two-player case the next chapter belongs to whoever didn't play the last one.
+  const theirTurn = between && story.upNext === "partner";
   const quest = walkLive ? story.quest : null;
   // A closer look shows where to look on the photo it came from.
   const lookTurn = quest?.targetMode === "in_view" ? questTurn : null;
@@ -281,10 +283,15 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
             {scene && <Scene turn={scene} onRepaint={() => repaint(scene)} onZoom={setZoomed} />}
             {latest && (
               <section aria-label={GAME_MASTER} className="fade-in mt-5">
-                {latest.card && (
+                {latest.card ? (
                   <p className="font-sign text-lg font-bold text-walk">
                     {latest.playedBy === "partner" ? "Your partner found new evidence" : "New evidence"}
                   </p>
+                ) : (
+                  // The narration speaks to whoever played the turn, so say whose it was.
+                  latest.playedBy === "partner" && (
+                    <p className="font-sign text-lg font-bold text-concrete">On your partner&apos;s walk</p>
+                  )
                 )}
                 <p className="font-story text-[1.1875rem] leading-[1.6] text-pretty">{latest.narration}</p>
               </section>
@@ -331,9 +338,11 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
               <p className="font-sign text-lg font-bold text-lane">Chapter {story.chapter} is done</p>
               <WalkSummary stats={walkStats(chapter)} who={chapter[0]?.playedBy} />
               <p className="text-sm text-concrete">
-                {story.invitable
+                {theirTurn
                   ? `Chapter ${story.chapter + 1} is your friend's, on their own streets.`
-                  : `You can start chapter ${story.chapter + 1} now or on your next walk.`}
+                  : story.shared
+                    ? `Chapter ${story.chapter + 1} is yours, on your own streets.`
+                    : `You can start chapter ${story.chapter + 1} now or on your next walk.`}
               </p>
             </div>
           )}
@@ -374,10 +383,12 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
               </CaptureButton>
             )}
             {between &&
-              (story.invitable ? (
-                <button type="button" onClick={() => void invite()} className={`${BUTTON.primary} flex-1`}>
-                  Send your friend the link
-                </button>
+              (theirTurn ? (
+                story.invitable && (
+                  <button type="button" onClick={() => void invite()} className={`${BUTTON.primary} flex-1`}>
+                    Send your friend the link
+                  </button>
+                )
               ) : (
                 <CaptureButton onPhoto={resume} onError={photoError} className="flex-1">
                   <CameraIcon />
@@ -395,7 +406,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
               </button>
             )}
           </div>
-          {between && story.invitable && (
+          {between && theirTurn && (
             <CaptureButton onPhoto={resume} onError={photoError} variant="link" className="mt-1">
               Or play chapter {story.chapter + 1} yourself
             </CaptureButton>

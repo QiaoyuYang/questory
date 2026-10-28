@@ -25,7 +25,7 @@ Every story is a case: one plain question, like "Who took Sir Buttons the garden
 
 Pick Mystery, Fantasy, Sci-fi or Comedy, or type your own idea, like "a haunted bakery", and Wren builds the case around it. Name a world people know, like Sherlock Holmes, and the case happens there, with its own characters.
 
-A case can be played by two. Pick "With a friend" when you start, and send your friend the link right there, even before your first photo: their page waits for the case and fills in by itself once it begins. You play chapter 1, and your friend plays chapter 2 on their own streets. Wren tells them the case and what you found, the evidence list shows who found what, and each of you gets your own walking time. Only the player on the current walk can add to it, so a shared case never has two people writing at once, and the other player's screen keeps up by itself.
+A case can be played by two. Pick "With a friend" when you start, and send your friend the link right there, even before your first photo: their page waits for the case and fills in by itself once it begins. You play chapter 1, and your friend can join any time to follow it as it happens, then plays chapter 2 on their own streets. Wren tells them the case and what you found, the evidence list shows who found what, and each of you gets your own walking time. Only the player on the current walk can add to it, so a shared case never has two people writing at once, and the other player's screen keeps up by itself.
 
 Quests are suggestions. If two photos in a row only add side notes, the game master moves the story forward with the next one, whatever it shows.
 
@@ -46,7 +46,7 @@ A chapter is three steps forward, so a case takes two chapters. The state is sav
 - **No account.** A random ID in a cookie ties your stories to your browser, and nobody else can open them.
 - **No location.** The app never asks for GPS. Photos are redrawn in the browser before upload, which drops the location data phones store inside photo files. Walk times come from timestamps.
 - **Photos stay out of sight.** They go to the Meta Model API to be read and drawn, then into a private bucket, and they're only served through long random links.
-- **Sharing is opt-in.** An invite link shows only the case and how much evidence is found. A friend sees the story's photos and evidence once they join it.
+- **Sharing is opt-in.** An invite link shows only the case and how much evidence is found. A friend sees the story's photos and evidence once they join it, and a case has room for one friend, so a forwarded link doesn't let a third person in.
 - **Delete means delete.** Deleting a story removes it along with its photos and cards.
 - **The limits don't keep addresses.** The per-player daily limit counts by IP address, but stores only a keyed hash that changes every day.
 
@@ -95,7 +95,7 @@ All settings are environment variables; `.env.example` documents each one. The o
 
 | Variable | Default | What it does |
 | --- | --- | --- |
-| `GM_REASONING_EFFORT` | `minimal` | Muse Wonder's effort. Higher is slower and costs more |
+| `GM_REASONING_EFFORT` | `minimal` | Muse Wonder's effort. `medium` took twice as long in testing and didn't write any better |
 | `QUEST_CARDS` | `on` | Turn off to skip Muse Image (the outline still shows the target) |
 | `SAM_GROUNDING` | `on` | Turn off to skip target outlines |
 | `DAILY_CALL_LIMIT` | `200` | Paid calls per UTC day across all players. Each story start, photo, walk end and painted card counts once. `0` turns it off |
