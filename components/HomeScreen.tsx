@@ -204,15 +204,8 @@ export function HomeScreen({ stories, mode, onStarted, onOpen, onRemove }: Props
               </ul>
             </section>
           ) : (
-            <section className="mt-8">
-              <h1 className="font-story text-[2rem] leading-[1.15] font-medium text-balance">
-                Your street is page one.
-              </h1>
-              <p className="mt-3 max-w-[34ch] text-concrete">
-                Take a photo of where you&apos;re standing, and {GAME_MASTER}, your storyteller, opens a case right
-                there. Walk, follow the next step, and collect evidence to solve it.
-              </p>
-            </section>
+            // The landing page already said what this is, so a first story starts with the choice.
+            <h1 className="sr-only">Start a story</h1>
           )}
 
           <fieldset className="mt-8">

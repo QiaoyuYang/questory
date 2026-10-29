@@ -4,24 +4,24 @@ A story game that gets you walking. Take a photo of wherever you are, and Wren, 
 
 **Play it at [questory.run](https://questory.run) on your phone.** On a computer, the site shows a code to scan with your phone.
 
+<p>
+  <img src="public/landing/opening.webp" width="240" alt="A photo of a bakery on a street corner, with the opening of a case below it">
+  <img src="public/landing/evidence.webp" width="240" alt="The photo redrawn as an evidence card called The waiting bench">
+  <img src="public/landing/case.webp" width="240" alt="The case so far: two pieces of evidence found, and ten more to find">
+</p>
+
 Built on the Meta Model API for the Meta Global AI Developer Hackathon.
 
 ## Why walking
 
-In 2022, 31% of adults worldwide didn't get enough physical activity, up from 26% in 2010 [1]. Games can help: engaged Pokémon GO players walked about 1,473 more steps a day in their first month [2], but the extra steps were gone by the sixth week [3].
-
-Questory is built for the part where people stop. Every chapter ends on a hook, so there's a reason to go out again. A photo taken indoors still starts a story, but the first quest sends you outside. When a chapter ends, you see how long you walked, worked out from photo timestamps, so no GPS is needed.
-
-1. Strain T, Flaxman S, Guthold R, et al. National, regional, and global trends in insufficient physical activity among adults from 2000 to 2022: a pooled analysis of 507 population-based surveys with 5.7 million participants. *Lancet Global Health* 2024;12:e1232-e1243. [doi:10.1016/S2214-109X(24)00150-5](https://doi.org/10.1016/S2214-109X%2824%2900150-5)
-2. Althoff T, White RW, Horvitz E. Influence of Pokémon Go on physical activity: study and implications. *Journal of Medical Internet Research* 2016;18(12):e315. [jmir.org/2016/12/e315](https://www.jmir.org/2016/12/e315)
-3. Howe KB, Suharlim C, Ueda P, Howe D, Kawachi I, Rimm EB. Gotta catch'em all! Pokémon GO and physical activity among young adults: difference in differences study. *BMJ* 2016;355:i6270. [doi:10.1136/bmj.i6270](https://doi.org/10.1136/bmj.i6270)
+In 2022, 31% of adults worldwide didn't get enough physical activity [1]. Pokémon GO showed that a game can get people walking [2], but the extra steps were gone within six weeks [3]. Questory is built for the part where people stop: every chapter ends on a hook, so there's a reason to go out again.
 
 ## How to play
 
 1. **Start a case.** Pick Mystery, Fantasy, Sci-fi or Comedy, or type your own idea, like "a haunted bakery". Then take a photo of where you are, and Wren turns it into the opening of a case.
 2. **Follow the quests.** A quest asks for a closer look at something in your photo, or sends you a block or two away to photograph something real. Any photo counts: it can follow the quest, take the story somewhere new, or add a side note.
 3. **Collect the evidence.** Each step forward turns up a piece of evidence with its own picture. A case is three chapters of four steps, and the last step solves it.
-4. **Come back for the next chapter.** Every chapter ends on a hook. Ending a walk only pauses the story, and your next photo picks it up wherever you are.
+4. **Come back for the next chapter.** Every chapter ends on a hook and shows how long you walked, worked out from photo times rather than GPS. Ending a walk only pauses the story, and your next photo picks it up wherever you are.
 
 To play with a friend, pick "With a friend" and send them the link. You each follow your own lead on your own walk, at the same time or not, and a chapter ends once you've both finished your part.
 
@@ -141,3 +141,9 @@ scripts/      Appwrite setup
 ## Credits
 
 Fonts: Barlow and Literata, both under the SIL Open Font License (see `app/fonts/`).
+
+## References
+
+1. Strain T, Flaxman S, Guthold R, et al. National, regional, and global trends in insufficient physical activity among adults from 2000 to 2022: a pooled analysis of 507 population-based surveys with 5.7 million participants. *Lancet Global Health* 2024;12:e1232-e1243. [doi:10.1016/S2214-109X(24)00150-5](https://doi.org/10.1016/S2214-109X%2824%2900150-5)
+2. Althoff T, White RW, Horvitz E. Influence of Pokémon Go on physical activity: study and implications. *Journal of Medical Internet Research* 2016;18(12):e315. [jmir.org/2016/12/e315](https://www.jmir.org/2016/12/e315)
+3. Howe KB, Suharlim C, Ueda P, Howe D, Kawachi I, Rimm EB. Gotta catch'em all! Pokémon GO and physical activity among young adults: difference in differences study. *BMJ* 2016;355:i6270. [doi:10.1136/bmj.i6270](https://doi.org/10.1136/bmj.i6270)

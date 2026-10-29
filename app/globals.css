@@ -172,3 +172,25 @@ html:has(dialog[open]) {
     stroke-dashoffset: 0;
   }
 }
+
+/* The landing page's phones rise into place once, one after another. */
+.rise {
+  animation: rise 0.7s ease-out both;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise {
+    animation: none;
+  }
+}

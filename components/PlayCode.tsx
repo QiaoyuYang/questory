@@ -16,7 +16,7 @@ export function PlayCode() {
   const origin = useSyncExternalStore(never, () => window.location.origin, () => null);
   const url = origin && `${origin}/play`;
   return (
-    <div className="w-72 rounded-[20px] bg-kerb p-6">
+    <div className="w-64 rounded-[20px] bg-kerb p-5">
       <p className="font-sign text-2xl font-bold">Play on your phone</p>
       <p className="mt-1 text-concrete">Scan this with your phone&apos;s camera.</p>
       <div
