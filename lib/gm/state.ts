@@ -43,6 +43,8 @@ export const QuestStateSchema = z.object({
   objective: z.string(),
   targetMode: z.enum(["in_view", "seek"]),
   targetPhrase: z.string(),
+  /** What stands out around the target, outlined when the target itself can't be found. Older quests have none. */
+  targetLandmark: z.string().default(""),
   targetDescription: z.string(),
   successCriteria: z.string(),
   beatId: z.string().nullable(),

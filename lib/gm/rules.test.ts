@@ -14,6 +14,7 @@ import {
   planWalk,
   seatOf,
   startWalk,
+  targetPhrases,
   updateInventory,
   withoutContrast,
 } from "./rules";
@@ -24,6 +25,7 @@ const QUEST: QuestOut = {
   targetMode: "in_view",
   objective: "Walk up to the green door. What number is painted above it?",
   targetPhrase: "green door",
+  targetLandmark: "green door",
   targetDescription: "the green door on the left",
   successCriteria: "A close look at the door.",
 };
@@ -346,10 +348,24 @@ test("the answer changes only when the game master sends a new one that fits the
   assert.equal(state.skeleton.secret, "The neighbour hid it.");
 });
 
-test("target phrases lose leading articles and trailing punctuation", () => {
+test("target phrases lose leading articles, counts and trailing punctuation", () => {
   assert.equal(nounPhrase("The tall arched doorway."), "tall arched doorway");
   assert.equal(nounPhrase(" A red door "), "red door");
+  assert.equal(nounPhrase("Two dark spots"), "dark spots");
+  assert.equal(nounPhrase("a couple of white signs"), "white signs");
+  assert.equal(nounPhrase("the 3 red doors"), "red doors");
+  assert.equal(nounPhrase("one-way sign"), "one-way sign");
+  assert.equal(nounPhrase("tennis court"), "tennis court");
   assert.equal(nounPhrase("theater sign"), "theater sign");
   assert.equal(nounPhrase("the"), "the");
   assert.equal(makeQuest({ ...QUEST, targetPhrase: "The Green Door" }, null, 3).targetPhrase, "green door");
+  assert.equal(makeQuest({ ...QUEST, targetLandmark: "The Red Post Box" }, null, 3).targetLandmark, "red post box");
+});
+
+test("SAM looks for the target, then the thing around it, then the description, each once", () => {
+  const plate = { targetPhrase: "framed plate", targetLandmark: "red post box", targetDescription: "The plate on the post box." };
+  assert.deepEqual(targetPhrases(plate), ["framed plate", "red post box", "plate on the post box"]);
+  const door = { targetPhrase: "arched doorway", targetLandmark: "arched doorway", targetDescription: "the arched doorway" };
+  assert.deepEqual(targetPhrases(door), ["arched doorway"]);
+  assert.deepEqual(targetPhrases({ targetPhrase: "red door", targetLandmark: "", targetDescription: "" }), ["red door"]);
 });

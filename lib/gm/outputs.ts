@@ -69,7 +69,10 @@ export const QuestOutSchema = z.object({
   ),
 
   targetPhrase: text(LABEL).describe(
-    'A 1 to 4 word concrete noun phrase naming the target, e.g. "red door", "stone bench", "street sign". No verbs, no articles.',
+    'A 1 to 4 word concrete noun phrase naming the target by how it looks, e.g. "red door", "stone bench", "street sign". No verbs, no articles, no numbers.',
+  ),
+  targetLandmark: text(LABEL).describe(
+    'For in_view, the thing in this photo that stands out with the target on it or next to it, named by how it looks, e.g. "red post box", "arched doorway". It gets outlined when the target is too small or faint to find. The target phrase again if the target is that thing; empty for seek.',
   ),
   targetDescription: text(SENTENCE).describe(
     "At most 8 words describing what counts, e.g. \"the green door with brass numbers\".",

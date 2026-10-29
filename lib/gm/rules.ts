@@ -93,14 +93,31 @@ export function planOf(data: Pick<GenesisOut, "chapters">): { findsOut: string[]
   };
 }
 
-/** SAM wants a bare noun phrase: "tall arched doorway", not "the tall arched doorway." */
+/**
+ * SAM wants a bare noun phrase: "tall arched doorway", not "the tall arched doorway.", and no
+ * count, since it finds "dark spots" but not "two dark spots".
+ */
 export function nounPhrase(phrase: string): string {
   const lower = phrase.trim().toLowerCase();
   const bare = lower
-    .replace(/^(?:(?:the|a|an|this|that|these|those)\s+)+/, "")
+    .replace(
+      /^(?:(?:the|a|an|this|that|these|those|\d+|one|two|three|four|five|six|seven|eight|nine|ten|few|several|some|couple of|pair of)\s+)+/,
+      "",
+    )
     .replace(/[.,;:!?]+$/, "")
     .trim();
   return bare || lower;
+}
+
+/**
+ * What SAM looks for, in order: the target, then the thing around it that stands out, for a
+ * target too small or faint to find, then the description, which it sometimes finds after
+ * missing a short phrase ("white and green parking sign" but not "parking sign").
+ */
+export function targetPhrases(
+  quest: Pick<QuestState, "targetPhrase" | "targetLandmark" | "targetDescription">,
+): string[] {
+  return [...new Set([quest.targetPhrase, quest.targetLandmark, nounPhrase(quest.targetDescription)])].filter(Boolean);
 }
 
 export function makeQuest(out: QuestOut, beatId: string | null, turn: number): QuestState {
@@ -110,6 +127,7 @@ export function makeQuest(out: QuestOut, beatId: string | null, turn: number): Q
     objective: out.objective.trim(),
     targetMode: out.targetMode,
     targetPhrase: nounPhrase(out.targetPhrase),
+    targetLandmark: nounPhrase(out.targetLandmark),
     targetDescription: out.targetDescription.trim(),
     successCriteria: out.successCriteria.trim(),
     beatId,

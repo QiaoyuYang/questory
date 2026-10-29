@@ -24,6 +24,7 @@ import {
   seatOf,
   singleLead,
   startWalk,
+  targetPhrases,
   unclaimedLead,
   type WalkPlan,
 } from "./rules";
@@ -88,15 +89,18 @@ async function groundQuest(config: Config, quest: QuestState | null, photo: Phot
   if (!quest || quest.targetMode !== "in_view" || !config.features.sam) return null;
   if (config.mock) return mockOverlay(photo, quest.targetPhrase);
   try {
-    return await locateTarget(photo.dataUrl, photo, quest.targetPhrase, {
-      baseURL: config.meta.baseURL,
-      apiKey: config.meta.apiKey,
-      model: config.meta.samModel,
-    });
+    for (const phrase of targetPhrases(quest)) {
+      const overlay = await locateTarget(photo.dataUrl, photo, phrase, {
+        baseURL: config.meta.baseURL,
+        apiKey: config.meta.apiKey,
+        model: config.meta.samModel,
+      });
+      if (overlay) return overlay;
+    }
   } catch (error) {
     console.warn(`[questory] SAM could not locate "${quest.targetPhrase}":`, error);
-    return null;
   }
+  return null;
 }
 
 function newTurn(
