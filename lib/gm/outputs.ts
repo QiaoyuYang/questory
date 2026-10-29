@@ -57,7 +57,7 @@ const RECAP_RULES =
 
 export const QuestOutSchema = z.object({
   title: text(LABEL).describe(
-    'What the player is looking for, as the story calls it, 2 to 4 words, sentence case: "The back gate" or "Where the paint goes". Never an instruction like "Find the mark".',
+    'What the player is looking for, as the story calls it, 2 to 4 words, sentence case: "The bus stop bench" or "Where the bag went". Never an instruction like "Find the mark".',
   ),
   targetMode: z
     .enum(["in_view", "seek"])
@@ -65,7 +65,7 @@ export const QuestOutSchema = z.object({
       "in_view: a closer look at something clearly visible in this photo. seek: a small errand nearby that ends in a photo.",
     ),
   objective: text(SENTENCE).describe(
-    'One sentence of at most 16 words naming the real thing to find, e.g. "Find a gate or a side door nearby and photograph it." For in_view, ask about a detail they can only make out up close.',
+    'One sentence of at most 16 words naming the real thing to find, e.g. "Find a bench or a bus stop nearby and photograph it." For in_view, ask about a detail they can only make out up close.',
   ),
 
   targetPhrase: text(LABEL).describe(
@@ -119,7 +119,7 @@ function chapterSteps(whose: string) {
   return z
     .object(shape)
     .describe(
-      `Private: ${whose} ${STEPS_PER_CHAPTER} beats in this chapter, in order, one per step forward. Each is the next find on the trail and what it tells the player, as a thing in the story's world that ordinary real things can stand in for, e.g. "Fresh ink on the office stamp, so the notice was stamped last night". Never something the player already knows.`,
+      `Private: ${whose} ${STEPS_PER_CHAPTER} beats in this chapter, in order, one per step forward. Each is the next find on the trail and what it tells the player: a place or object in the story's world that ordinary real things can stand in for, e.g. "The office stamp, so the notice came from inside". How it looks comes from the player's photo. Never something the player already knows.`,
     );
 }
 
