@@ -236,4 +236,7 @@ export const mockBrain: Brain = {
       },
     };
   },
+  async check(_photo, text) {
+    return { data: { madeUp: [], ...text }, usage };
+  },
 };

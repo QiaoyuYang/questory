@@ -14,6 +14,7 @@ import {
   TEAM_SIZE,
   addCanon,
   applyClose,
+  checked,
   applyPhotoTurn,
   closeDue,
   makeQuest,
@@ -28,6 +29,7 @@ import {
   unclaimedLead,
   type WalkPlan,
 } from "./rules";
+import type { CheckIn } from "./outputs";
 import type { QuestState, StoryState, TurnRecord } from "./state";
 
 export class GameRuleError extends Error {}
@@ -101,6 +103,24 @@ async function groundQuest(config: Config, quest: QuestState | null, photo: Phot
     console.warn(`[questory] SAM could not locate "${quest.targetPhrase}":`, error);
   }
   return null;
+}
+
+/**
+ * A second look at what the game master wrote, against the photo: anything it describes as
+ * there to see that the photo doesn't show comes out. Best effort, like the outline: if the
+ * check fails, the text stands as written.
+ */
+async function checkWriting(config: Config, photo: Photo, text: CheckIn): Promise<{ text: CheckIn; usage: Usage | null }> {
+  if (config.mock || !config.features.photoCheck) return { text, usage: null };
+  try {
+    const { data, usage } = await getBrain(config).check(photo.dataUrl, text);
+    logUsage("check", usage);
+    if (data.madeUp.length > 0) console.info(`[questory] the photo check took out: ${data.madeUp.join(" | ")}`);
+    return { text: checked(text, data), usage };
+  } catch (error) {
+    console.warn("[questory] the photo check failed, so the text stands as written:", error);
+    return { text, usage: null };
+  }
 }
 
 function newTurn(
@@ -205,6 +225,11 @@ export async function startStory(playerId: string, story: NewStory, photo: Photo
   ]);
   const { data, usage } = genesis;
   logUsage("genesis", usage);
+  // The opening is checked against the photo while the first quest's target is found.
+  const [check, overlay] = await Promise.all([
+    checkWriting(config, photo, { narration: data.narration, card: null, facts: data.canonAdd }),
+    groundQuest(config, makeQuest(data.quest, null, 0), photo),
+  ]);
 
   const createdAt = now();
   const plan = planOf(data);
@@ -253,15 +278,15 @@ export async function startStory(playerId: string, story: NewStory, photo: Photo
   const seat = startWalk(state, playerId, { lead: "a", joining: false, newChapter: false }, createdAt);
 
   const turn = newTurn(state, "genesis", playerId, photoId, photo);
-  turn.narration = data.narration.trim();
+  turn.narration = check.text.narration.trim();
   turn.observations = data.observations;
-  turn.canonAdded = addCanon(state, data.canonAdd, turn.number);
-  turn.usage = [usage];
+  turn.canonAdded = addCanon(state, check.text.facts, turn.number);
+  turn.usage = check.usage ? [usage, check.usage] : [usage];
   state.bindings.push(...data.bindingsAdd.map((b) => ({ ...b, turn: turn.number })));
   seat.quest = makeQuest(data.quest, activeBeatId(state.skeleton.beats, "a"), turn.number);
   seat.lastNarration = turn.narration;
   turn.quest = seat.quest;
-  turn.overlay = await groundQuest(config, seat.quest, photo);
+  turn.overlay = overlay;
   state.turnCount = turn.number;
   await store.saveTurn(turn);
   await store.saveStory(state);
@@ -286,18 +311,27 @@ export async function takePhoto(state: StoryState, photo: Photo, playerId: strin
   logUsage("photo", usage);
   if (data.revisedSecret?.trim()) console.info(`[questory] the answer changed to fit the evidence: ${data.revisedSecret}`);
 
+  // Found before saving, so the lock is held only for the save itself. A step forward turns up
+  // evidence, so meanwhile its text is checked against the photo; a side note's isn't.
+  const [check, overlay] = await Promise.all([
+    data.outcome === "side_note"
+      ? null
+      : checkWriting(config, photo, { narration: data.narration, card: data.card, facts: data.canonAdd }),
+    data.quest ? groundQuest(config, makeQuest(data.quest, null, 0), photo) : null,
+  ]);
+  const reply = check
+    ? { ...data, narration: check.text.narration, card: check.text.card ?? data.card, canonAdd: check.text.facts }
+    : data;
   const turn = newTurn(state, "photo", playerId, photoId, photo);
-  turn.narration = data.narration.trim();
+  turn.narration = reply.narration.trim();
   turn.observations = data.observations;
-  turn.usage = [usage];
-  // Found before saving, so the lock is held only for the save itself.
-  const overlay = data.quest ? await groundQuest(config, makeQuest(data.quest, null, 0), photo) : null;
+  turn.usage = check?.usage ? [usage, check.usage] : [usage];
   const secretSeen = state.skeleton.secret;
   return commitTurn(state.id, turn, (fresh, number) => {
     if (!seatOf(fresh, playerId)?.walking) throw new GameRuleError("This walk has ended.");
     // If the other player's turn changed the answer meanwhile, this reply never saw it.
     const revisedSecret = fresh.skeleton.secret === secretSeen ? data.revisedSecret : null;
-    const applied = applyPhotoTurn(fresh, { ...data, revisedSecret }, number, playerId);
+    const applied = applyPhotoTurn(fresh, { ...reply, revisedSecret }, number, playerId);
     turn.chapter = fresh.chapter;
     turn.outcome = applied.outcome;
     turn.card = applied.card;
@@ -338,17 +372,20 @@ export async function resumeStory(state: StoryState, photo: Photo, playerId: str
   const { data, usage } = resumed;
   logUsage("resume", usage);
 
+  const [check, overlay] = await Promise.all([
+    checkWriting(config, photo, { narration: data.narration, card: null, facts: data.canonAdd }),
+    groundQuest(config, makeQuest(data.quest, null, 0), photo),
+  ]);
   const turn = newTurn(starting, "resume", playerId, photoId, photo);
-  turn.narration = data.narration.trim();
+  turn.narration = check.text.narration.trim();
   turn.observations = data.observations;
-  turn.usage = [usage];
-  const overlay = await groundQuest(config, makeQuest(data.quest, null, 0), photo);
+  turn.usage = check.usage ? [usage, check.usage] : [usage];
   const secretSeen = state.skeleton.secret;
   return commitTurn(state.id, turn, (fresh, number) => {
     // The other player may have opened the chapter meanwhile, or taken the free lead.
     const seat = startWalk(fresh, playerId, allowed(planWalk(fresh, playerId, options.takeOver)), turn.createdAt);
     turn.chapter = fresh.chapter;
-    turn.canonAdded = addCanon(fresh, data.canonAdd, number);
+    turn.canonAdded = addCanon(fresh, check.text.facts, number);
     fresh.bindings.push(...data.bindingsAdd.map((b) => ({ ...b, turn: number })));
     if (data.planChange === "replan") fresh.skeleton.beats = replan(fresh.skeleton.beats, data.revisedBeats, seat.lead);
     if (fresh.skeleton.secret === secretSeen) reviseSecret(fresh, data.revisedSecret);

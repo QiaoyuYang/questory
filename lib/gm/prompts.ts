@@ -1,6 +1,7 @@
 import "server-only";
 import { GAME_MASTER, GENRES } from "@/lib/types";
 import { openBeats, unfinishedBeats, type Lead } from "./beats";
+import type { CheckIn } from "./outputs";
 import { CHAPTERS, LEAD_STEPS, STEPS_PER_CHAPTER, otherLead, seatOf, singleLead, stepsLeft } from "./rules";
 import type { StoryState } from "./state";
 
@@ -57,8 +58,8 @@ ${SAFETY}
 
 Clear first
 - The player reads you a few lines at a time while walking. After every reply they should know what the case is, what they just found, and what it tells them. If a line could confuse them, say it more simply. Keep the mystery in what is still unknown, never in what just happened.
-- The opening sets up the case: what happened, whose problem it is, and what the player is trying to find out.
-- The player knows only what you have told them. Introduce each character the first time they appear, with who they are ("Ilya, the market's night guard"), even when they are only named in dialogue. Someone everyone knows from a famous story needs no introduction. After that, just their name. Never mention a name, place, object or event you haven't introduced.
+- The opening sets up the case: what happened, whose problem it is, and what to find out.
+- The player knows only what you have told them. Introduce each character the first time they appear, with who they are ("Ilya, the market's night guard", "the night guard, Ilya", "Ilya, who guards the market at night"), even when they are only named in dialogue. Someone everyone knows from a famous story needs no introduction. After that, just their name. Never mention a name, place, object or event you haven't introduced.
 - When a find only suggests something, keep it a guess with one "maybe". Don't hang "likely" or "could" on every sentence.
 - Everyday words and short sentences. No riddles, no lines that sound deep but say nothing ("a threshold that should not count, and yet it does"), and no "it" or "they" without a clear owner.
 
@@ -230,7 +231,23 @@ export function describeState(state: StoryState, options: { includePlan: boolean
   return lines.join("\n");
 }
 
-export function genesisTask(genre: string, theme: string | null, mode: "solo" | "team"): string {
+/**
+ * Ways to open a case. Left to itself, every opening comes out the same: "This hall is…",
+ * "Name, the role, found…", "You're trying to find out…". Each case gets one at random.
+ */
+export const OPENING_STYLES = [
+  "Start with someone here, in the middle of an ordinary moment, then say what went wrong. Let who they are show in what they're doing. End on the question itself.",
+  "Start with one short line someone says, then what happened. Give their job before their name. End on what they ask the player to do.",
+  "Start with what went missing and when, then whose problem it is. Introduce them by what they do here. End on the deadline.",
+  "Start with what goes wrong if nobody solves this, then what happened. End on what someone wants the player to find out.",
+];
+
+export function genesisTask(
+  genre: string,
+  theme: string | null,
+  mode: "solo" | "team",
+  style = OPENING_STYLES[Math.floor(Math.random() * OPENING_STYLES.length)],
+): string {
   return [
     `Genre: ${genreLine(genre, theme)}`,
     "",
@@ -240,7 +257,7 @@ export function genesisTask(genre: string, theme: string | null, mode: "solo" | 
     mode === "team"
       ? `This case is for two players: this one and a friend they're bringing in, who plays on their own streets, at the same time or not. Give each a lead of their own that finds out one side of the case, such as how it was done and who could have done it: \`focus\` and each chapter's \`steps\` for this player, \`partnerFocus\` and each chapter's \`partnerSteps\` for the friend. No beat on either lead needs anything found on the other. In the opening, tell this player in a few words which side is theirs and that their partner has the other, the way a friend would put it ("You'll work out how the notice got under the door, and your partner will find out who wanted it there.").`
       : "",
-    "The opening, at most 50 words, tells the player what happened, whose problem it is, and what they are trying to find out. Everything else can wait for later steps. Introduce anyone you name, unless everyone knows them from a famous story.",
+    `The opening, at most 50 words, tells the player what happened, whose problem it is, and what to find out. ${style} Everything else can wait for later steps. Introduce anyone you name, unless everyone knows them from a famous story.`,
     "The first quest is for the first beat on this player's lead: ask for a real thing that can be that find. If the photo is outdoors and something in it could be that find, make it a closer look (in_view), so they see right away that you can see their world; otherwise make it an errand (seek). If the photo is indoors, make it an errand that takes them outside.",
     "Put every fact the opening establishes in canonAdd.",
   ]
@@ -335,4 +352,22 @@ export function closeTask(state: StoryState): string {
       : `Both players have finished their part of chapter ${state.chapter}. Write the chapter's ending. ${together} Say what this chapter's finds from both leads add up to, whichever came first, without giving away the answer, then end on a hook into chapter ${state.chapter + 1}. If the evidence no longer fits the secret, set revisedSecret to an answer that explains every piece. Write the recap.`,
     'Never say "chapter" in the narration or the recap.',
   ].join("\n");
+}
+
+/** The photo check's own instructions: it reads the text and the photo, nothing of the case. */
+export const CHECK_INSTRUCTIONS = `You check a storyteller's text against a photo, for Questory, a story game played on foot. The player photographed a real place, and the story treats that place as part of its own world.
+
+These are fine, leave them alone:
+- what the place or thing is in the story ("this postbox is the hall's noticeboard", "the blue door is the bell cupboard")
+- what a sign or notice in the photo says in the story
+- what is behind a door, inside a box or somewhere out of sight
+- what someone says, remembers, thinks or feels
+- what happened before, and what a find means
+
+Take out anything the text describes as there to see, right here, that this photo doesn't show: an object that isn't in it, a mark, scratch, pin, track, stain or tear that isn't there, or a state you can't see (open, locked, freshly painted).
+
+List each of those in madeUp, quoting the text. Then give back the narration, card and facts with only those taken out, so nothing claims to be in view that isn't. Change as few words as you can and keep the voice. Every sentence you touch must still read naturally, and if another sentence leans on what you took out, rework it too, so the whole text still makes sense. Keep what the find means where you can, said plainly or by a character who already speaks in the text, and never start two sentences with the same name. Always give the card back when the text has one: fix its words, and keep its proves a short statement of what the find shows, 3 to 6 words. Keep every fact that states nothing made up. When nothing is made up, give everything back word for word.`;
+
+export function checkTask(text: CheckIn): string {
+  return `The text:\n${JSON.stringify(text, null, 1)}`;
 }
