@@ -35,7 +35,7 @@ const literata = localFont({
 
 export const metadata: Metadata = {
   title: "Questory",
-  description: "Take a photo of where you are. A game master turns your walk into a story.",
+  description: "Turn photos of your street into a story. An AI game master builds a case from what you photograph.",
   applicationName: "Questory",
   appleWebApp: { capable: true, title: "Questory", statusBarStyle: "black-translucent" },
   // Stop iOS from turning numbers in the story into phone links.
