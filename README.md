@@ -2,7 +2,7 @@
 
 A story game that gets you walking. Take a photo of wherever you are, and Wren, an AI game master, turns it into the start of a case. Each quest sends you somewhere nearby to photograph something real, and the story carries on across your walks.
 
-**Play it at [questory.run](https://questory.run) on your phone.**
+**Play it at [questory.run](https://questory.run) on your phone.** On a computer, the site shows a code to scan with your phone.
 
 Built on the Meta Model API for the Meta Global AI Developer Hackathon.
 
@@ -90,7 +90,7 @@ npm run dev
 
 Open http://localhost:3000. Without `MODEL_API_KEY`, a scripted game master runs instead, so you can work on the UI for free. `GET /api/health` shows the mode and models.
 
-To try it on a phone, open the Network address that `npm run dev` prints, on the same Wi-Fi. Anyone on that network can reach it, so stop the server when you're done if a real key is set.
+To try it on a phone, open the Network address that `npm run dev` prints on your computer, and scan the code with a phone on the same Wi-Fi. Anyone on that network can reach it, so stop the server when you're done if a real key is set.
 
 ## Deploy
 
@@ -128,6 +128,8 @@ A photo turn costs roughly 3 to 5 cents on Muse Wonder, and an evidence card 1 c
 ## Project layout
 
 ```
+app/page.tsx  The landing page, with a code to scan on a computer
+app/play/     The game
 app/api/      Route handlers: stories, turns, evidence cards, media, health
 components/   The mobile UI
 lib/gm/       The game master: state, prompts, output schemas, engine, scripted mock
