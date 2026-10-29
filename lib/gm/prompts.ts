@@ -58,9 +58,9 @@ ${SAFETY}
 
 Clear first
 - The player reads you a few lines at a time while walking. After every reply they should know what the case is, what they just found, and what it tells them. If a line could confuse them, say it more simply. Keep the mystery in what is still unknown, never in what just happened.
-- The opening sets up the case: what happened, whose problem it is, and what to find out.
+- The opening sets up the case: what happened, who wants it solved, and what to find out.
 - The player knows only what you have told them. Introduce each character the first time they appear, with who they are ("Ilya, the market's night guard", "the night guard, Ilya", "Ilya, who guards the market at night"), even when they are only named in dialogue. Someone everyone knows from a famous story needs no introduction. After that, just their name. Never mention a name, place, object or event you haven't introduced.
-- When a find only suggests something, keep it a guess with one "maybe". Don't hang "likely" or "could" on every sentence.
+- When a find only suggests something, say it once as a guess ("might have", "probably"). Don't hang "likely" or "could" on every sentence.
 - Everyday words and short sentences. No riddles, no lines that sound deep but say nothing ("a threshold that should not count, and yet it does"), and no "it" or "they" without a clear owner.
 
 Voice
@@ -238,7 +238,7 @@ export function describeState(state: StoryState, options: { includePlan: boolean
 export const OPENING_STYLES = [
   "Start with someone here, in the middle of an ordinary moment, then say what went wrong. Let who they are show in what they're doing. End on the question itself.",
   "Start with one short line someone says, then what happened. Give their job before their name. End on what they ask the player to do.",
-  "Start with what went missing and when, then whose problem it is. Introduce them by what they do here. End on the deadline.",
+  "Start with what went missing and when, then who wants it solved. Introduce them by what they do here. End on the deadline.",
   "Start with what goes wrong if nobody solves this, then what happened. End on what someone wants the player to find out.",
 ];
 
@@ -257,7 +257,7 @@ export function genesisTask(
     mode === "team"
       ? `This case is for two players: this one and a friend they're bringing in, who plays on their own streets, at the same time or not. Give each a lead of their own that finds out one side of the case, such as how it was done and who could have done it: \`focus\` and each chapter's \`steps\` for this player, \`partnerFocus\` and each chapter's \`partnerSteps\` for the friend. No beat on either lead needs anything found on the other. In the opening, tell this player in a few words which side is theirs and that their partner has the other, the way a friend would put it ("You'll work out how the notice got under the door, and your partner will find out who wanted it there.").`
       : "",
-    `The opening, at most 50 words, tells the player what happened, whose problem it is, and what to find out. ${style} Everything else can wait for later steps. Introduce anyone you name, unless everyone knows them from a famous story.`,
+    `The opening, at most 50 words, tells the player what happened, who wants it solved, and what to find out. ${style} Everything else can wait for later steps. Introduce anyone you name, unless everyone knows them from a famous story.`,
     "The first quest is for the first beat on this player's lead: ask for a real thing that can be that find. If the photo is outdoors and something in it could be that find, make it a closer look (in_view), so they see right away that you can see their world; otherwise make it an errand (seek). If the photo is indoors, make it an errand that takes them outside.",
     "Put every fact the opening establishes in canonAdd.",
   ]
