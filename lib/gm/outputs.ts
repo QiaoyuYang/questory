@@ -142,7 +142,7 @@ const genesisOpening = {
     "Private: the whole cast, at most 2, including whoever is behind the secret. Nobody else appears in the story.",
   ),
   narration: prose(NARRATION).describe(
-    "The opening: 2 to 4 short sentences, at most 50 words, set in the place in the photo. It says what happened, whose problem it is, and what the player is trying to find out.",
+    'The opening: 2 to 4 short sentences, at most 50 words, set in the place in the photo. It says what happened, whose problem it is, and what the player is trying to find out, said plainly, e.g. "Find out who took the bell before tonight\'s meeting."',
   ),
   observations: list(text(SENTENCE)).describe("Concrete things you see in the photo."),
   canonAdd: list(text(SENTENCE)).describe(
@@ -197,7 +197,7 @@ export const PhotoTurnSchema = z.object({
       "follows_quest: the photo does what the current quest asked; be generous. moves_story: it does not, but you use what it shows to move the story forward anyway. side_note: it adds atmosphere or a small detail but nothing new about the case, and the story waits for more.",
     ),
   narration: prose(NARRATION).describe(
-    "2 or 3 short sentences, at most 40 words: what this place or thing is in the story, and the one new thing it tells the player. For a side_note, 1 or 2 sentences: a moment at this place, and nothing about what is still to find.",
+    "2 or 3 short sentences, at most 40 words: what the player found here and the one new thing it tells them. For a side_note, 1 or 2 sentences: a moment at this place, and nothing about what is still to find.",
   ),
   // Always required: when it was optional, the game master often left it out of real steps.
   card: CardSchema.describe(
