@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Questory",
     short_name: "Questory",
     description: "Take a photo of where you are. A game master turns your walk into a story.",
-    start_url: "/",
+    start_url: "/play",
     display: "standalone",
     orientation: "portrait",
     background_color: "#1e2227",

@@ -2,6 +2,8 @@
 
 A story game that gets you walking. Take a photo of wherever you are, and Wren, an AI game master, turns it into the start of a case. Each quest sends you somewhere nearby to photograph something real, and the story carries on across your walks.
 
+**Play it at [questory.run](https://questory.run) on your phone.** On a computer, the site shows a code to scan with your phone.
+
 Built on the Meta Model API for the Meta Global AI Developer Hackathon.
 
 ## Why walking
@@ -14,37 +16,52 @@ Questory is built for the part where people stop. Every chapter ends on a hook, 
 2. Althoff T, White RW, Horvitz E. Influence of Pokémon Go on physical activity: study and implications. *Journal of Medical Internet Research* 2016;18(12):e315. [jmir.org/2016/12/e315](https://www.jmir.org/2016/12/e315)
 3. Howe KB, Suharlim C, Ueda P, Howe D, Kawachi I, Rimm EB. Gotta catch'em all! Pokémon GO and physical activity among young adults: difference in differences study. *BMJ* 2016;355:i6270. [doi:10.1136/bmj.i6270](https://doi.org/10.1136/bmj.i6270)
 
-## How a turn works
+## How to play
 
-1. **You take a photo.** It can be what the quest asked for or anything that catches your eye.
-2. **Muse Wonder plays Wren.** It reads the photo and the story so far, decides what the photo means, writes a few lines and leaves the next quest, all as structured JSON. No photo fails: it follows the quest, moves the story somewhere new, or adds a side note.
-3. **Muse Spark checks Wren's words against the photo.** When a photo turns up evidence, or starts a case or a walk, a second look takes out anything Wren describes that the photo doesn't show, like scratches on a lock that has none.
-4. **SAM 3.1 outlines the target.** When the next quest asks for a closer look at something in your photo, SAM finds it and the app traces it.
-5. **Muse Image draws the evidence.** A photo that moves the story becomes an evidence card in the story's style, with its name and what it shows lettered on. If the picture is refused, it gets one plainer try, and after that your photo stands in.
+1. **Start a case.** Pick Mystery, Fantasy, Sci-fi or Comedy, or type your own idea, like "a haunted bakery". Then take a photo of where you are, and Wren turns it into the opening of a case.
+2. **Follow the quests.** A quest asks for a closer look at something in your photo, or sends you a block or two away to photograph something real. Any photo counts: it can follow the quest, take the story somewhere new, or add a side note.
+3. **Collect the evidence.** Each step forward turns up a piece of evidence with its own picture. A case is three chapters of four steps, and the last step solves it.
+4. **Come back for the next chapter.** Every chapter ends on a hook. Ending a walk only pauses the story, and your next photo picks it up wherever you are.
 
-## The case
+To play with a friend, pick "With a friend" and send them the link. You each follow your own lead on your own walk, at the same time or not, and a chapter ends once you've both finished your part.
 
-- Every story is a case with one question, like "Who took Sir Buttons the garden gnome?", and an answer Wren decides at the start.
-- A case is three chapters of four steps. Each step turns up a piece of evidence, and the last one solves the case.
+## Built with
+
+- **Meta Model API.** Muse Wonder plays Wren, Muse Spark checks Wren's words against the photo, SAM 3.1 outlines what a quest asks you to look at, and Muse Image draws the evidence.
+- **Next.js 16 and React 19**, hosted on **Vercel**.
+- **Appwrite** for stories, photos and evidence pictures.
+
+## How it works
+
+### A turn
+
+1. The browser shrinks the photo to 1280px and uploads it.
+2. Muse Wonder reads the photo and the story so far, decides what the photo means, writes a few lines and leaves the next quest, all as structured JSON.
+3. When a photo turns up evidence, or starts a case or a walk, Muse Spark compares Wren's words with the photo and takes out anything described as there to see that isn't, like scratches on a lock that has none.
+4. When the next quest is a closer look, SAM 3.1 finds its target in the photo, and the app traces the outline.
+5. Muse Image redraws a photo that turns up evidence as an evidence card in the story's style, with its name and what it shows lettered on. If the picture is refused, it gets one plainer try, and after that the photo stands in.
+
+### The case
+
+- Every case has one question, like "Who took Sir Buttons the garden gnome?", and an answer Wren decides at the start.
 - What you photograph stands in for something in the story: a numbered door becomes the store cupboard. Wren plans places and objects to find, and your photo decides how they look.
 - Each quest goes where the last find pointed, so the finds make a trail.
 - There are two characters at most, and whoever is behind it shows up early. The evidence narrows it down without naming them until the last chapter.
 - If the evidence stops fitting the answer, Wren changes the answer to fit the evidence.
 - Quests are suggestions. After two side notes in a row, the next photo moves the story, whatever it shows.
+- Name a world people know, like Sherlock Holmes, and the case happens there.
 
-Pick Mystery, Fantasy, Sci-fi or Comedy, or type your own idea, like "a haunted bakery". Name a world people know, like Sherlock Holmes, and the case happens there.
+### Two players
 
-## Playing with a friend
-
-Pick "With a friend" and send the link, even before your first photo. A shared case has two leads that come at the answer from different sides, such as how it was done and who could have done it. You each follow one on your own walk, at the same time or not, and find four pieces of evidence per chapter.
+A shared case has two leads that come at the answer from different sides, such as how it was done and who could have done it.
 
 - Nothing on your lead waits for your partner.
 - Wren knows what you've both found and can bring your partner's latest find into your story.
-- A chapter ends once you've both finished your part, and its ending is written from everything you both found, so it reads the same in any order.
+- A chapter's ending is written from everything you both found, so it reads the same in any order.
 - Two photos sent at once both count, because each turn is saved under a short per-story lock.
 - If your friend hasn't joined by the time your part is done, you can walk theirs too.
 
-## How Wren remembers
+### What Wren remembers
 
 | Layer | What it holds | How it changes |
 | --- | --- | --- |
@@ -52,7 +69,7 @@ Pick "With a friend" and send the link, even before your first photo. A shared c
 | Bindings | Which real thing stands in for which story element ("the dead drop" is "the red mailbox") | Freely, every turn |
 | Canon | Facts already established in play | Never contradicted |
 
-The state is saved after every turn, so ending a walk only pauses the chapter. The skeleton never reaches the browser, and the answer only does once the case is solved.
+The state is saved after every turn. The skeleton never reaches the browser, and the answer only does once the case is solved.
 
 ## Privacy
 
@@ -73,7 +90,7 @@ npm run dev
 
 Open http://localhost:3000. Without `MODEL_API_KEY`, a scripted game master runs instead, so you can work on the UI for free. `GET /api/health` shows the mode and models.
 
-To try it on a phone, open the Network address that `npm run dev` prints, on the same Wi-Fi. Anyone on that network can reach it, so stop the server when you're done if a real key is set.
+To try it on a phone, open the Network address that `npm run dev` prints on your computer, and scan the code with a phone on the same Wi-Fi. Anyone on that network can reach it, so stop the server when you're done if a real key is set.
 
 ## Deploy
 
@@ -111,6 +128,8 @@ A photo turn costs roughly 3 to 5 cents on Muse Wonder, and an evidence card 1 c
 ## Project layout
 
 ```
+app/page.tsx  The landing page, with a code to scan on a computer
+app/play/     The game
 app/api/      Route handlers: stories, turns, evidence cards, media, health
 components/   The mobile UI
 lib/gm/       The game master: state, prompts, output schemas, engine, scripted mock

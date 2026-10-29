@@ -13,6 +13,7 @@ export async function GET() {
           gameMaster: `${config.meta.gmModel} (reasoning: ${config.meta.gmEffort})`,
           questCards: config.features.questCards ? config.meta.imageModel : "off",
           grounding: config.features.sam ? config.meta.samModel : "off",
+          photoCheck: config.features.photoCheck ? config.meta.checkModel : "off",
         },
     dailyCallLimit: config.dailyCallLimit || "off",
     storage: config.storage,

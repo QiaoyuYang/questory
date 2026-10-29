@@ -49,7 +49,7 @@ export function rememberShared(storyId: string) {
 
 /** Where an invite link lands: the app, told which story and code. */
 export function inviteLink(storyId: string, code: string): string {
-  const link = new URL("/", window.location.origin);
+  const link = new URL("/play", window.location.origin);
   link.searchParams.set("join", `${storyId}.${code}`);
   return link.toString();
 }

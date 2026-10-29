@@ -20,6 +20,10 @@ const nextConfig: NextConfig = {
   devIndicators: false,
   cacheComponents: true,
   partialPrefetching: true,
+  // Invite links from before the game moved to /play. The query goes along.
+  async redirects() {
+    return [{ source: "/", has: [{ type: "query", key: "join" }], destination: "/play", permanent: false }];
+  },
   async headers() {
     return BUILD ? [{ source: "/api/:path*", headers: [{ key: "x-questory-build", value: BUILD }] }] : [];
   },
