@@ -57,9 +57,9 @@ Wren keeps each story in three layers, saved after every turn:
 
 | Layer | What it holds | How it changes |
 | :--- | :--- | :--- |
-| Skeleton | The hidden plan: the answer, what each chapter finds out, and the steps on each lead | Only when your photos call for it |
-| Bindings | Which real thing is which story element | Freely, on any turn |
-| Canon | Facts already established in play | Never contradicted |
+| Skeleton | The hidden plan: the answer, what each chapter finds out, and the steps on each lead | Only when your photos no longer fit the plan |
+| Bindings | Which real thing is which story element | Added or swapped on any turn |
+| Canon | Facts already established in play | New facts are added, and old ones never change |
 
 ### Two players
 
@@ -91,9 +91,7 @@ Run the unit tests with `npm test`.
 
 ## Deployment
 
-The live game at questory.run runs on Vercel, and every merge to `main` deploys it. Stories, photos and evidence cards are stored in Appwrite, in a database and a private bucket that `npm run setup:appwrite` creates.
-
-A photo turn costs about 3 to 5 cents, plus 1 cent when Muse Image paints an evidence card. Daily call limits cap what a day can cost.
+The live game at [questory.run](https://questory.run) runs on [Vercel](https://vercel.com), and every merge to `main` deploys it. Stories, photos and evidence cards are stored in [Appwrite](https://appwrite.io).
 
 ## Project structure
 
