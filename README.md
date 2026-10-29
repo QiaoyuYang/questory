@@ -1,14 +1,14 @@
 # Questory
 
-A game that gives you a reason to go for a walk. Take a photo of wherever you are, and an AI game master writes a short quest based on what's actually around you, as part of a story that continues across your walks.
+A story game that gets you walking. Take a photo of wherever you are, and Wren, an AI game master, turns it into the start of a case. Each quest sends you somewhere nearby to photograph something real, and the story carries on across your walks.
 
-Built for the Meta Global AI Developer Hackathon on the Meta Model API.
+Built on the Meta Model API for the Meta Global AI Developer Hackathon.
 
 ## Why walking
 
-Questory is a reason to go outside. In 2022, 31% of adults worldwide didn't get enough physical activity, up from 26% in 2010, according to a WHO-led study [1]. Games can get people moving. In the month after they started playing Pokémon GO, engaged players walked about 1,473 more steps a day, roughly a quarter more than before, and the game reached people who hadn't been very active [2]. But the effect wore off: a second study found the extra steps were gone by the sixth week [3].
+In 2022, 31% of adults worldwide didn't get enough physical activity, up from 26% in 2010 [1]. Games can help: engaged Pokémon GO players walked about 1,473 more steps a day in their first month [2], but the extra steps were gone by the sixth week [3].
 
-Questory is built for the part where people stop. The story carries on from one walk to the next, and every chapter ends on a hook, so there's always a reason to head out again. A photo taken indoors still starts a story, but the first quest sends you out the door, and errands are a block or two away. When a chapter ends, the app tells you how long you walked and how many places you found. It works this out from the photos' timestamps, so it needs no GPS.
+Questory is built for the part where people stop. Every chapter ends on a hook, so there's a reason to go out again. A photo taken indoors still starts a story, but the first quest sends you outside. When a chapter ends, you see how long you walked, worked out from photo timestamps, so no GPS is needed.
 
 1. Strain T, Flaxman S, Guthold R, et al. National, regional, and global trends in insufficient physical activity among adults from 2000 to 2022: a pooled analysis of 507 population-based surveys with 5.7 million participants. *Lancet Global Health* 2024;12:e1232-e1243. [doi:10.1016/S2214-109X(24)00150-5](https://doi.org/10.1016/S2214-109X%2824%2900150-5)
 2. Althoff T, White RW, Horvitz E. Influence of Pokémon Go on physical activity: study and implications. *Journal of Medical Internet Research* 2016;18(12):e315. [jmir.org/2016/12/e315](https://www.jmir.org/2016/12/e315)
@@ -16,48 +16,52 @@ Questory is built for the part where people stop. The story carries on from one 
 
 ## How a turn works
 
-1. **You take a photo of anything.** It can be what the quest asked for or whatever catches your eye. The browser shrinks it to 1280px and uploads it.
-2. **Muse Wonder plays Wren, the game master.** It reads the photo and the story so far, decides what the photo means, narrates, and leaves the next quest, all as structured JSON. A photo can follow the quest, move the story somewhere new, or add a clue on the side. No photo fails.
-3. **SAM 3.1 grounds the target.** When the next quest asks you to take a closer look at something in your photo ("the blue door"), SAM finds it and the app traces its outline.
-4. **Muse Image draws the evidence.** When a photo moves the story, it's redrawn as a picture of the evidence, with its name and what it proves lettered on, in the story's style. The story waits for it, so the new evidence and what Wren says about it show up together. If Muse Image turns a picture down, it gets one plainer try, and if that's turned down too, your photo is the picture. These are keepsakes, so they never cover the photo you navigate by.
+1. **You take a photo.** It can be what the quest asked for or anything that catches your eye.
+2. **Muse Wonder plays Wren.** It reads the photo and the story so far, decides what the photo means, writes a few lines and leaves the next quest, all as structured JSON. No photo fails: it follows the quest, moves the story somewhere new, or adds a side note.
+3. **Muse Spark checks Wren's words against the photo.** When a photo turns up evidence, or starts a case or a walk, a second look takes out anything Wren describes that the photo doesn't show, like scratches on a lock that has none.
+4. **SAM 3.1 outlines the target.** When the next quest asks for a closer look at something in your photo, SAM finds it and the app traces it.
+5. **Muse Image draws the evidence.** A photo that moves the story becomes an evidence card in the story's style, with its name and what it shows lettered on. If the picture is refused, it gets one plainer try, and after that your photo stands in.
 
-Every story is a case: one plain question, like "Who took Sir Buttons the garden gnome?", and an answer Wren decides at the start. A case is three chapters of four steps forward. Each step turns up a piece of evidence, the last one solves it, and the evidence list shows what you've found and how much is left. What you photograph stands in for something in the story's world: a numbered door becomes the store cupboard, dark spots on the pavement become drops of a spilled potion. Wren plans places and objects to find, and leaves how they look to your photo. Each quest goes where the last find pointed, so the finds make a trail. A case has two characters at most, and the person behind the answer shows up early. The evidence narrows it down without naming them until the last chapter, so a sharp player can guess it before the end. If the evidence you find stops pointing at the answer, Wren changes the answer rather than the evidence, and the reveal ties the two together.
+## The case
 
-Pick Mystery, Fantasy, Sci-fi or Comedy, or type your own idea, like "a haunted bakery", and Wren builds the case around it. Name a world people know, like Sherlock Holmes, and the case happens there, with its own characters.
+- Every story is a case with one question, like "Who took Sir Buttons the garden gnome?", and an answer Wren decides at the start.
+- A case is three chapters of four steps. Each step turns up a piece of evidence, and the last one solves the case.
+- What you photograph stands in for something in the story: a numbered door becomes the store cupboard. Wren plans places and objects to find, and your photo decides how they look.
+- Each quest goes where the last find pointed, so the finds make a trail.
+- There are two characters at most, and whoever is behind it shows up early. The evidence narrows it down without naming them until the last chapter.
+- If the evidence stops fitting the answer, Wren changes the answer to fit the evidence.
+- Quests are suggestions. After two side notes in a row, the next photo moves the story, whatever it shows.
 
-A case can be played by two. Pick "With a friend" when you start, and send your friend the link right there, even before your first photo: their page waits for the case and fills in by itself once it begins. A shared case has two leads that come at the answer from different sides, say how it was done and who could have done it, and you each follow one on your own walk, at the same time or not. Each of you finds four pieces of evidence per chapter.
+Pick Mystery, Fantasy, Sci-fi or Comedy, or type your own idea, like "a haunted bakery". Name a world people know, like Sherlock Holmes, and the case happens there.
 
-The story has to hold up whichever of you finds what first, so:
+## Playing with a friend
 
-- **No step needs the other lead.** Each lead is a line of steps in order, so Wren still builds each one on the last, but nothing on your lead waits for your partner's.
-- **Your partner's finds are news.** Wren knows everything both of you have found, so it can bring their latest find into what it tells you, but it never finishes their lead for them.
-- **A chapter ends together.** It closes once you've both found your part, and its ending is written on its own, from everything the two of you found, so it reads the same in any order. So does the final answer.
-- **Nothing is lost when you both send a photo at once.** Each turn is saved onto the story as it stands by then, under a short per-story lock, so both count. If your friend hasn't joined by the time your part is done, you can walk theirs too.
+Pick "With a friend" and send the link, even before your first photo. A shared case has two leads that come at the answer from different sides, such as how it was done and who could have done it. You each follow one on your own walk, at the same time or not, and find four pieces of evidence per chapter.
 
-The evidence list shows who found what, each of you gets your own walking time, and each screen keeps up with the other player by itself.
+- Nothing on your lead waits for your partner.
+- Wren knows what you've both found and can bring your partner's latest find into your story.
+- A chapter ends once you've both finished your part, and its ending is written from everything you both found, so it reads the same in any order.
+- Two photos sent at once both count, because each turn is saved under a short per-story lock.
+- If your friend hasn't joined by the time your part is done, you can walk theirs too.
 
-Quests are suggestions. If two photos in a row only add side notes, the game master moves the story forward with the next one, whatever it shows.
-
-### How the game master remembers
-
-The story state has three layers, and the prompts treat each one differently:
+## How Wren remembers
 
 | Layer | What it holds | How it changes |
 | --- | --- | --- |
-| Skeleton | The hidden answer to the case, the premise, antagonist, stakes, ending, what each chapter finds out, and the beats of each lead: places and objects on a trail that ordinary things can stand in for | Re-planned only when the world forces it, and always narrated as a twist. The answer changes only to keep fitting the evidence |
+| Skeleton | The hidden answer, what each chapter finds out, and each lead's steps | Re-planned only when the world forces it, and told as a twist |
 | Bindings | Which real thing stands in for which story element ("the dead drop" is "the red mailbox") | Freely, every turn |
 | Canon | Facts already established in play | Never contradicted |
 
-Ending a walk partway is a pause: the chapter waits, and the next photo picks it back up from wherever you are. The state is saved after every turn, so the next chapter can start right away or on another walk. The skeleton is never sent to the browser, and the answer reaches it only once the case is solved.
+The state is saved after every turn, so ending a walk only pauses the chapter. The skeleton never reaches the browser, and the answer only does once the case is solved.
 
 ## Privacy
 
-- **No account.** A random ID in a cookie ties your stories to your browser, and nobody else can open them.
-- **No location.** The app never asks for GPS. Photos are redrawn in the browser before upload, which drops the location data phones store inside photo files. Walk times come from timestamps.
-- **Photos stay out of sight.** They go to the Meta Model API to be read and drawn, then into a private bucket, and they're only served through long random links.
-- **Sharing is opt-in.** An invite link shows only the case and how much evidence is found. A friend sees the story's photos and evidence once they join it, and a case has room for one friend, so a forwarded link doesn't let a third person in.
-- **Delete means delete.** Deleting a story removes it along with its photos and cards.
-- **The limits don't keep addresses.** The per-player daily limit counts by IP address, but stores only a keyed hash that changes every day.
+- **No account.** A random ID in a cookie ties stories to your browser.
+- **No location.** The app never asks for GPS, and photos are redrawn in the browser, which drops the location data phones store in them.
+- **Private photos.** They go to the Meta Model API and then to a private bucket, and they're served only through long random links.
+- **Opt-in sharing.** An invite link shows only the case. A case has room for one friend, so a forwarded link doesn't let a third person in.
+- **Real deletes.** Deleting a story removes its photos and cards too.
+- **No stored addresses.** The per-player limit counts by IP address but keeps only a keyed hash that changes every day.
 
 ## Run it
 
@@ -67,62 +71,52 @@ cp .env.example .env.local   # add MODEL_API_KEY to use the real models
 npm run dev
 ```
 
-Open http://localhost:3000. Without `MODEL_API_KEY` the app runs a scripted game master (it can't see photos), so you can work on the UI without spending credits. `GET /api/health` shows which mode and models are active.
+Open http://localhost:3000. Without `MODEL_API_KEY`, a scripted game master runs instead, so you can work on the UI for free. `GET /api/health` shows the mode and models.
 
-To play on your phone during development, run `npm run dev` and open the Network address it prints, such as `http://192.168.1.65:3000`, on a phone on the same Wi-Fi. Anyone on that network can reach it while it runs, so stop it when you're done if a real API key is set. On an iPhone, Share and then Add to Home Screen gives it an icon, and it opens full screen like an app.
-
-## Storage
-
-Without Appwrite settings, stories and photos are saved as files in `.data/`. That's fine locally but won't survive on serverless hosts. For deployment:
-
-1. Create an Appwrite project and an API key with every Database and Storage scope.
-2. Fill in `APPWRITE_ENDPOINT`, `APPWRITE_PROJECT_ID` and `APPWRITE_API_KEY` in `.env.local`.
-3. Run `npm run setup:appwrite`. It creates the `questory` database, the `stories`, `turns` and `usage` tables, and a private `media` bucket. Run it again after updating; it only adds what's missing.
-
-Players are anonymous: a random id in an httpOnly cookie.
+To try it on a phone, open the Network address that `npm run dev` prints, on the same Wi-Fi. Anyone on that network can reach it, so stop the server when you're done if a real key is set.
 
 ## Deploy
 
-Any Node host works. On Vercel:
+Locally, stories are saved as files in `.data/`. Serverless hosts need Appwrite:
 
-1. Import the repo. Vercel detects Next.js, so the build settings can stay as they are.
-2. Add `MODEL_API_KEY` and the three `APPWRITE_` values for Production and Preview. Vercel can't keep files between requests, so stories need Appwrite there.
-3. Deploy, then open `/api/health`. It should show `"mode":"live"` and `"storage":"appwrite"`.
+1. Create an Appwrite project and an API key with every Database and Storage scope.
+2. Set `APPWRITE_ENDPOINT`, `APPWRITE_PROJECT_ID` and `APPWRITE_API_KEY`.
+3. Run `npm run setup:appwrite`. It creates the database, tables and a private bucket, and when run again it only adds what's missing.
 
-Every pull request gets its own preview link. The card route can run for up to three minutes, which fits the five that Vercel's free plan allows.
+On Vercel, import the repo, add `MODEL_API_KEY` and the three Appwrite values, and deploy. `/api/health` should then show `"mode":"live"` and `"storage":"appwrite"`. A page left open across a deploy reloads itself once nothing is in flight.
 
-Vercel's free plan has no skew protection, so a page left open across a deploy would keep running its old code. Every API reply names the commit it was built from, and the app reloads itself once it sees a newer one and nothing is in flight.
+Before you share the link:
 
-Two things to know before sharing the link:
-
-- **Whoever can open the site spends your Meta credit.** `DAILY_CALL_LIMIT` caps what a day can cost, and `PLAYER_DAILY_CALL_LIMIT` keeps one player from using it all up. Vercel leaves the production URL public by default. To keep it private while testing, set Deployment Protection to All Deployments with Vercel Authentication, which is free on every plan.
-- **Free Appwrite projects pause after 7 days without development activity in the Console.** A paused project can't load or save stories. Use the Console every few days while people are playing, and reactivate the project there if it pauses.
+- **Anyone who can open the site spends your Meta credit.** `DAILY_CALL_LIMIT` caps what a day can cost, and `PLAYER_DAILY_CALL_LIMIT` caps one player.
+- **Free Appwrite projects pause after 7 days without Console activity**, and a paused project can't load or save stories. Open the Console every few days, and reactivate the project there if it pauses.
 
 ## Configuration
 
-All settings are environment variables; `.env.example` documents each one. The ones you're most likely to change:
+Every setting is an environment variable, documented in `.env.example`. The main ones:
 
 | Variable | Default | What it does |
 | --- | --- | --- |
-| `GM_REASONING_EFFORT` | `minimal` | Muse Wonder's effort. `medium` took twice as long in testing and didn't write any better |
-| `QUEST_CARDS` | `on` | Turn off to skip Muse Image (the outline still shows the target) |
+| `GM_REASONING_EFFORT` | `minimal` | Muse Wonder's effort. `medium` took twice as long in testing and wrote no better |
+| `QUEST_CARDS` | `on` | Turn off to skip Muse Image |
 | `SAM_GROUNDING` | `on` | Turn off to skip target outlines |
-| `DAILY_CALL_LIMIT` | `200` | Paid calls per UTC day across all players. Each story start, photo, two-player chapter ending and painted card counts once. `0` turns it off |
-| `PLAYER_DAILY_CALL_LIMIT` | `100` | Paid calls per UTC day for one player, about three full cases, or one case for two friends on the same Wi-Fi. It counts by IP address, or by browser when there's none, and is checked first, so one player can't use up everyone's calls. `0` turns it off |
+| `PHOTO_CHECK` | `on` | Turn off to skip the photo check, which adds a few seconds to steps that turn up evidence |
+| `CHECK_MODEL` | `muse-spark-1.3` | The model for the photo check |
+| `DAILY_CALL_LIMIT` | `200` | Paid calls per UTC day across all players. `0` turns it off |
+| `PLAYER_DAILY_CALL_LIMIT` | `100` | Paid calls per UTC day for one player, about three cases. `0` turns it off |
 
 ## Cost
 
-A photo turn sends about 3,000 to 4,000 input tokens (the photo is about 1,400 of them) and gets 1,000 to 2,000 back, which comes to roughly 3 to 5 cents on Muse Wonder. A story card adds 1 cent. Every model call logs its token use to the server console. The default `DAILY_CALL_LIMIT` of 200 keeps a bad day to roughly $10.
+A photo turn costs roughly 3 to 5 cents on Muse Wonder, and an evidence card 1 cent more. Steps that turn up evidence also make one Muse Spark call for the photo check. Every call logs its token use to the server console, and the default daily limit keeps a bad day to about $10.
 
 ## Project layout
 
 ```
-app/api/            Route handlers: stories, turns, story cards, media, health
-components/         The mobile UI
-lib/gm/             The game master: state schema, prompts, output schemas, engine, scripted mock
-lib/meta/           Meta Model API clients: structured JSON, SAM 3.1 grounding, Muse Image edits
-lib/store/          Storage: local files or Appwrite
-scripts/            Appwrite setup
+app/api/      Route handlers: stories, turns, evidence cards, media, health
+components/   The mobile UI
+lib/gm/       The game master: state, prompts, output schemas, engine, scripted mock
+lib/meta/     Meta Model API clients: structured JSON, SAM 3.1, Muse Image
+lib/store/    Storage: local files or Appwrite
+scripts/      Appwrite setup
 ```
 
 ## Credits
