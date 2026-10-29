@@ -59,6 +59,26 @@ function withTurn(turns: TurnView[], turn: TurnView): TurnView[] {
   return turns.some((t) => t.id === turn.id) ? turns.map((t) => (t.id === turn.id ? turn : t)) : [...turns, turn];
 }
 
+/**
+ * A phone can lose the reply to a long request, say while its screen is locked, and the
+ * server draws the picture anyway. So when asking for one fails, ask the server how it came
+ * out, and keep waiting while it's still being drawn.
+ */
+async function howItCameOut(storyId: string, turn: TurnView): Promise<TurnView> {
+  const check = () =>
+    api.getStory(storyId).then(
+      (loaded) => loaded.turns.find((t) => t.id === turn.id),
+      () => undefined,
+    );
+  const giveUpAt = Date.parse(turn.createdAt) + STALE_MS;
+  let saved = await check();
+  while (saved?.cardStatus === "pending" && Date.now() < giveUpAt) {
+    await new Promise((resolve) => window.setTimeout(resolve, DRAWING_MS));
+    saved = await check();
+  }
+  return saved?.cardStatus === "ready" ? saved : { ...turn, cardStatus: "failed" };
+}
+
 export function StoryScreen({ storyId, initial, onHome }: Props) {
   const [data, setData] = useState<Loaded | null>(initial);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -106,7 +126,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
       requested.current.add(turn.id);
       return api.paintCard(storyId, turn.id).then(
         (result) => result.turn,
-        (): TurnView => ({ ...turn, cardStatus: "failed" }),
+        () => howItCameOut(storyId, turn),
       );
     },
     [storyId],
