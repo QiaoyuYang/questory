@@ -142,7 +142,7 @@ const genesisOpening = {
     "Private: the whole cast, at most 2, including whoever is behind the secret. Nobody else appears in the story.",
   ),
   narration: prose(NARRATION).describe(
-    "The opening: 2 to 4 short sentences, at most 50 words, set in the place in the photo and shaped the way the task asks. It says what happened, whose problem it is, and what to find out.",
+    "The opening: 2 to 4 short sentences, at most 50 words, set in the place in the photo and shaped the way the task asks. It says what happened, who wants it solved, and what to find out.",
   ),
   observations: list(text(SENTENCE)).describe("Concrete things you see in the photo."),
   canonAdd: list(text(SENTENCE)).describe(
