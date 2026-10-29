@@ -15,6 +15,7 @@ import {
   seatOf,
   startWalk,
   updateInventory,
+  withoutContrast,
 } from "./rules";
 import type { Seat, StoryState } from "./state";
 
@@ -327,6 +328,13 @@ test("every step forward turns up a piece of evidence, painted as a card", () =>
     { title: "The marked door", caption: "Number 14, freshly painted", turn: 2, by: "player" },
     { title: "New evidence", caption: "", turn: 3, by: "player" },
   ]);
+});
+
+test("an evidence caption drops a contrast tacked on the end", () => {
+  assert.equal(withoutContrast("Bell was wheeled out, not carried"), "Bell was wheeled out");
+  assert.equal(withoutContrast("Lifted, rather than cut down"), "Lifted");
+  assert.equal(withoutContrast("Number 14, freshly painted"), "Number 14, freshly painted");
+  assert.equal(withoutContrast("Not a break-in"), "Not a break-in");
 });
 
 test("the answer changes only when the game master sends a new one that fits the evidence", () => {
