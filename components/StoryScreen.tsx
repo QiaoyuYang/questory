@@ -9,7 +9,7 @@ import { GAME_MASTER, type PhotoUpload, type StoryView, type TurnView } from "@/
 import { Alert } from "./Alert";
 import { BottomBar } from "./BottomBar";
 import { BUTTON } from "./buttons";
-import { CaptureButton } from "./CaptureButton";
+import { CaptureButton, usePhotoVerb } from "./CaptureButton";
 import { CameraIcon, ChevronLeftIcon, MagnifierIcon } from "./icons";
 import { PhotoViewer, type Zoomed } from "./PhotoViewer";
 import { QuestThumb } from "./QuestThumb";
@@ -88,6 +88,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
   const [zoomed, setZoomed] = useState<Zoomed | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const requested = useRef(new Set<string>());
+  const verb = usePhotoVerb();
 
   useEffect(() => {
     if (initial) return;
@@ -295,7 +296,6 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
   // A closer look shows where to look on the photo it came from.
   const lookTurn = quest?.targetMode === "in_view" ? questTurn : null;
   const chapter = chapterTurns(turns, story.chapter);
-  const evidenceFound = turns.filter((turn) => turn.card).length;
   const team = partner !== null;
   // A partner's first walk on the case starts their lead rather than picking one back up.
   const walkedYet = turns.some((turn) => turn.playedBy === "you" && turn.photoUrl !== null && turn.kind !== "close");
@@ -431,24 +431,13 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
 
           <div className="mt-2 flex items-center gap-2">
             <button type="button" onClick={() => setPanel("story")} className={BUTTON.tool}>
-              <span className="relative">
-                <MagnifierIcon />
-                <span
-                  aria-hidden="true"
-                  className="absolute -top-1.5 left-4 rounded-full bg-lane px-1.5 text-[0.6875rem] leading-4 font-bold whitespace-nowrap text-asphalt"
-                >
-                  {evidenceFound}/{story.evidenceTotal}
-                </span>
-              </span>
+              <MagnifierIcon />
               Evidence
-              <span className="sr-only">
-                , {evidenceFound} of {story.evidenceTotal} found
-              </span>
             </button>
             {stage === "walking" && (
               <CaptureButton onPhoto={takePhoto} onError={photoError} className="flex-1">
                 <CameraIcon />
-                Take a photo
+                {verb} a photo
               </CaptureButton>
             )}
             {(stage === "ready" || stage === "between") && (

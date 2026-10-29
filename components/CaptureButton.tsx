@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, type ReactNode } from "react";
+import { useRef, useSyncExternalStore, type ReactNode } from "react";
 import { preparePhoto } from "@/lib/client/photo";
 import type { PhotoUpload } from "@/lib/types";
 import { BUTTON } from "./buttons";
@@ -13,6 +13,20 @@ type Props = {
   className?: string;
   children: ReactNode;
 };
+
+const TOUCH = "(pointer: coarse)";
+
+function watchPointer(onChange: () => void) {
+  const query = window.matchMedia(TOUCH);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
+/** "Take" on a phone or tablet, where the button opens the camera, and "Choose" on a computer, where it opens files. */
+export function usePhotoVerb(): "Take" | "Choose" {
+  const touch = useSyncExternalStore(watchPointer, () => window.matchMedia(TOUCH).matches, () => true);
+  return touch ? "Take" : "Choose";
+}
 
 /**
  * A button that opens the rear camera and hands back a downscaled photo. Desktop
