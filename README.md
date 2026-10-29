@@ -1,6 +1,6 @@
 # Questory
 
-Turn photos of your street into a story. Wren, an AI game master, builds a case from what you photograph, and its quests lead you outside to solve it.
+Turn photos of your street into a story. Wren, an AI game master, builds a case from what you photograph.
 
 **Play it at [questory.run](https://questory.run) on your phone.** On a computer, the site shows a code to scan with your phone.
 
@@ -18,7 +18,7 @@ In 2022, 31% of adults worldwide didn't get enough physical activity [1]. Pokém
 
 ## How to play
 
-1. **Start a case.** Pick Mystery, Fantasy, Sci-fi or Comedy, or type your own idea, like "a haunted bakery". Then take a photo of where you are, and Wren turns it into the opening of a case. A photo taken indoors works too, and the first quest sends you outside.
+1. **Start a case.** Pick Mystery, Fantasy, Sci-fi or Comedy, or type your own idea, like "a haunted bakery". Then take a photo of where you are, and Wren turns it into the opening of a case. A photo taken indoors works too, and then Wren leads you outside.
 2. **Follow the quests.** A quest asks for a closer look at something in your photo, or sends you a block or two away to photograph something real. Any photo counts: it can follow the quest, take the story somewhere new, or add a side note.
 3. **Collect the evidence.** Each step forward turns up a piece of evidence with its own picture. A case is three chapters of four steps, and the last step solves it.
 4. **Come back for the next chapter.** Every chapter ends on a hook and shows how long you walked, worked out from photo times rather than GPS. Ending a walk only pauses the story, and your next photo picks it up wherever you are.
