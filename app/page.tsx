@@ -17,7 +17,7 @@ const MOMENTS = [
     src: "/landing/evidence.webp",
     alt: "The photo redrawn as an evidence card called The waiting bench, with Wren's note that someone sat there before the bakery opened.",
     title: "Follow the quests",
-    text: "Each quest sends you a short walk away. When your photo turns up something new, it becomes a piece of evidence.",
+    text: "A quest asks for a closer look, or sends you a short walk away. When your photo turns up something new, it becomes a piece of evidence.",
   },
   {
     src: "/landing/case.webp",
