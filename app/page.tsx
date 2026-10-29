@@ -11,19 +11,19 @@ const MOMENTS = [
     src: "/landing/opening.webp",
     alt: "A photo of a bakery on a street corner, with the opening of a case below it: the bakery's sourdough starter has gone, and the next step is a closer look at the bench outside.",
     title: "Your street starts the case",
-    text: "Take a photo of where you are, even indoors. Wren writes the opening around it, and the first quest sends you outside.",
+    text: "Take a photo of where you are, even indoors. Wren writes the opening around it, and then leads you outside.",
   },
   {
     src: "/landing/evidence.webp",
     alt: "The photo redrawn as an evidence card called The waiting bench, with Wren's note that someone sat there before the bakery opened.",
-    title: "What you find becomes evidence",
-    text: "Each quest sends you a short walk away, and the photo you take there is redrawn as evidence.",
+    title: "Follow the quests",
+    text: "Each quest sends you a short walk away. When your photo turns up something new, it becomes a piece of evidence.",
   },
   {
     src: "/landing/case.webp",
     alt: "The case so far: two pieces of evidence found, and ten more to find before the answer.",
-    title: "Gather the evidence",
-    text: "Each chapter adds four pieces of evidence, and the twelfth solves the case.",
+    title: "Solve the case",
+    text: "Collect the evidence as you go, until it points to the answer.",
   },
 ];
 
@@ -72,8 +72,7 @@ export default function Home() {
             Turn photos of your street into a story
           </h1>
           <p className="mt-5 max-w-xl font-story text-lg leading-relaxed md:text-xl">
-            Wren, an AI game master, builds a case from what you photograph, and its quests lead you outside to solve
-            it.
+            Wren, an AI game master, builds a case from what you photograph.
           </p>
           <Link href="/play" className={`${BUTTON.primary} mt-7 w-full md:hidden`}>
             <CameraIcon className="h-6 w-6" />

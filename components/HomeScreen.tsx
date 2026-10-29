@@ -17,7 +17,7 @@ import {
 import { Alert } from "./Alert";
 import { BottomBar } from "./BottomBar";
 import { BUTTON } from "./buttons";
-import { CaptureButton } from "./CaptureButton";
+import { CaptureButton, usePhotoVerb } from "./CaptureButton";
 import { CameraIcon, ChevronRightIcon } from "./icons";
 import { Segmented } from "./Segmented";
 import { Sheet } from "./Sheet";
@@ -54,6 +54,7 @@ function news(story: StorySummary): string | null {
 
 export function HomeScreen({ stories, mode, onStarted, onOpen, onRemove }: Props) {
   const [genre, setGenre] = useState<GenreId>("mystery");
+  const verb = usePhotoVerb();
   const [theme, setTheme] = useState("");
   // A link already sent means the next case is probably with that friend.
   const [players, setPlayers] = useState<Players>(() => (peekNextInvite()?.sent ? "team" : "solo"));
@@ -292,7 +293,7 @@ export function HomeScreen({ stories, mode, onStarted, onOpen, onRemove }: Props
           )}
           <CaptureButton onPhoto={start} onError={setError} disabled={needsTheme} className="w-full">
             <CameraIcon />
-            {needsTheme ? `Tell ${GAME_MASTER} your idea first` : returning ? "Take a photo to begin" : "Take your first photo"}
+            {needsTheme ? `Tell ${GAME_MASTER} your idea first` : returning ? `${verb} a photo to begin` : `${verb} your first photo`}
           </CaptureButton>
         </BottomBar>
       )}
