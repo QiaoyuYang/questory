@@ -142,7 +142,7 @@ const genesisOpening = {
     "Private: the whole cast, at most 2, including whoever is behind the secret. Nobody else appears in the story.",
   ),
   narration: prose(NARRATION).describe(
-    'The opening: 2 to 4 short sentences, at most 50 words, set in the place in the photo. It says what happened, whose problem it is, and what the player is trying to find out, said plainly, e.g. "Find out who took the bell before tonight\'s meeting."',
+    "The opening: 2 to 4 short sentences, at most 50 words, set in the place in the photo and shaped the way the task asks. It says what happened, whose problem it is, and what to find out.",
   ),
   observations: list(text(SENTENCE)).describe("Concrete things you see in the photo."),
   canonAdd: list(text(SENTENCE)).describe(
@@ -221,6 +221,19 @@ export const PhotoTurnSchema = z.object({
   ),
 });
 export type PhotoTurnOut = z.infer<typeof PhotoTurnSchema>;
+
+/** A second look at text written about a photo, with anything it claims to see that isn't there taken out. */
+export const CheckSchema = z.object({
+  madeUp: list(text(SENTENCE)).describe(
+    "Each thing the text describes as there to see that this photo doesn't show, quoted from the text. Empty when there is none.",
+  ),
+  narration: prose(NARRATION).describe("The narration with only those taken out. Word for word when nothing is made up."),
+  card: CardSchema.nullable().describe("The evidence card, fixed the same way. Null only when the text has none."),
+  facts: list(text(SENTENCE)).describe("The facts, fixed the same way. Leave out only a fact that states something made up."),
+});
+export type CheckOut = z.infer<typeof CheckSchema>;
+/** What a check reads: the text the game master wrote about one photo. */
+export type CheckIn = Omit<CheckOut, "madeUp">;
 
 export const ResumeSchema = z.object({
   narration: prose(NARRATION).describe(

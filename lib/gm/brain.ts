@@ -3,17 +3,20 @@ import type { Config } from "@/lib/config";
 import { respondJson, type ContentPart, type Usage } from "@/lib/meta/structured";
 import { mockBrain } from "./mock";
 import {
+  CheckSchema,
   CloseSchema,
   GenesisSchema,
   GenesisTeamSchema,
   PhotoTurnSchema,
   ResumeSchema,
+  type CheckIn,
+  type CheckOut,
   type CloseOut,
   type GenesisOut,
   type PhotoTurnOut,
   type ResumeOut,
 } from "./outputs";
-import { GM_INSTRUCTIONS, closeTask, genesisTask, photoTask, resumeTask } from "./prompts";
+import { CHECK_INSTRUCTIONS, GM_INSTRUCTIONS, checkTask, closeTask, genesisTask, photoTask, resumeTask } from "./prompts";
 import type { StoryState } from "./state";
 
 export type Result<T> = { data: T; usage: Usage };
@@ -40,6 +43,8 @@ export type Brain = {
   ): Promise<Result<ResumeOut>>;
   /** A two-player chapter's ending, once both leads are done. */
   close(state: StoryState): Promise<Result<CloseOut>>;
+  /** A second look at text written about a photo: anything it claims to see that the photo doesn't show comes out. */
+  check(photo: string, text: CheckIn): Promise<Result<CheckOut>>;
 };
 
 function withPhoto(text: string, photo: string): ContentPart[] {
@@ -89,6 +94,18 @@ export function liveBrain(config: Config): Brain {
         content: [{ type: "input_text", text: closeTask(state) }],
         schema: CloseSchema,
         schemaName: "questory_close",
+      }),
+
+    check: (photo, text) =>
+      respondJson({
+        baseURL: config.meta.baseURL,
+        apiKey: config.meta.apiKey,
+        model: config.meta.checkModel,
+        effort: "minimal",
+        instructions: CHECK_INSTRUCTIONS,
+        content: withPhoto(checkTask(text), photo),
+        schema: CheckSchema,
+        schemaName: "questory_check",
       }),
   };
 }

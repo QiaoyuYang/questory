@@ -1,6 +1,6 @@
 import { GAME_MASTER, type Outcome } from "@/lib/types";
 import { LEADS, activateNextBeat, activeBeatId, unfinishedBeats, updateBeats, type Lead } from "./beats";
-import type { GenesisOut, PhotoTurnOut, QuestOut } from "./outputs";
+import type { CheckIn, CheckOut, GenesisOut, PhotoTurnOut, QuestOut } from "./outputs";
 import type { QuestState, Seat, StoryState, TurnRecord } from "./state";
 
 /**
@@ -118,6 +118,19 @@ export function targetPhrases(
   quest: Pick<QuestState, "targetPhrase" | "targetLandmark" | "targetDescription">,
 ): string[] {
   return [...new Set([quest.targetPhrase, quest.targetLandmark, nounPhrase(quest.targetDescription)])].filter(Boolean);
+}
+
+/**
+ * The text after a photo check. The check only takes things out, so it never drops or adds an
+ * evidence card, and when it found nothing made up, the text stands word for word.
+ */
+export function checked(written: CheckIn, check: CheckOut): CheckIn {
+  if (check.madeUp.length === 0) return written;
+  return {
+    narration: check.narration.trim() || written.narration,
+    card: written.card && check.card?.title.trim() ? check.card : written.card,
+    facts: check.facts.map((fact) => fact.trim()).filter(Boolean),
+  };
 }
 
 export function makeQuest(out: QuestOut, beatId: string | null, turn: number): QuestState {

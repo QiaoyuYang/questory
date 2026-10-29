@@ -41,10 +41,14 @@ export function getConfig() {
       imageModel: env("IMAGE_MODEL", "muse-image-1.0"),
       imageReasoning: env("IMAGE_REASONING_STRENGTH"), // "low" | "high" | "" (API default)
       samModel: env("SAM_MODEL", "sam-3.1"),
+      // Checks what the game master wrote against the photo. Spark was about twice as fast as
+      // Wonder at it and caught the same made-up details in testing.
+      checkModel: env("CHECK_MODEL", "muse-spark-1.3"),
     },
     features: {
       questCards: flag("QUEST_CARDS", true),
       sam: flag("SAM_GROUNDING", true),
+      photoCheck: flag("PHOTO_CHECK", true),
     },
     /** Paid model calls per UTC day, all players together. 0 turns the limit off. */
     dailyCallLimit: integer("DAILY_CALL_LIMIT", 200),

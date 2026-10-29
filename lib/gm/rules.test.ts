@@ -7,6 +7,7 @@ import {
   STEPS_PER_CHAPTER,
   applyClose,
   applyPhotoTurn,
+  checked,
   closeDue,
   makeQuest,
   mustMoveStory,
@@ -368,4 +369,27 @@ test("SAM looks for the target, then the thing around it, then the description, 
   const door = { targetPhrase: "arched doorway", targetLandmark: "arched doorway", targetDescription: "the arched doorway" };
   assert.deepEqual(targetPhrases(door), ["arched doorway"]);
   assert.deepEqual(targetPhrases({ targetPhrase: "red door", targetLandmark: "", targetDescription: "" }), ["red door"]);
+});
+
+test("a photo check takes out what it found, and never the evidence card", () => {
+  const written = {
+    narration: "Fresh scratches ring the cupboard lock. Tomas locked it last night.",
+    card: { title: "Scratched lock", proves: "Someone forced it" },
+    facts: ["The cupboard lock is scratched", "Tomas locked the cupboard last night"],
+  };
+  const check = {
+    madeUp: ["Fresh scratches ring the cupboard lock"],
+    narration: " Tomas locked the cupboard last night, and someone opened it anyway. ",
+    card: null,
+    facts: ["Tomas locked the cupboard last night", " "],
+  };
+  assert.deepEqual(checked(written, check), {
+    narration: "Tomas locked the cupboard last night, and someone opened it anyway.",
+    card: written.card,
+    facts: ["Tomas locked the cupboard last night"],
+  });
+  const fixed = { ...check, card: { title: "The cupboard lock", proves: "Opened with a key" } };
+  assert.deepEqual(checked(written, fixed).card, fixed.card);
+  assert.equal(checked({ ...written, card: null }, fixed).card, null);
+  assert.deepEqual(checked(written, { ...check, madeUp: [] }), written);
 });
