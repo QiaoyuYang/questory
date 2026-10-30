@@ -101,6 +101,11 @@ body {
   animation: fade-in 0.6s ease-out both;
 }
 
+/* New evidence fades in over the photo it was painted from. */
+.reveal {
+  animation: fade-in 1.4s ease-in-out both;
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -165,6 +170,7 @@ html:has(dialog[open]) {
   .target-trace,
   .callout,
   .fade-in,
+  .reveal,
   dialog.sheet[open] {
     animation: none;
   }
