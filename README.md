@@ -16,7 +16,7 @@ Play at [questory.run](https://questory.run)
 
 </div>
 
-Questory is made for phones. Open [questory.run](https://questory.run) on your phone, or scan the code it shows on a computer. It was built on the Meta Model API for the Meta Global AI Developer Hackathon.
+Questory is made for phones. Open [questory.run](https://questory.run) on your phone, or scan the code it shows on a computer. It was built on the Meta Model API for the Meta Global AI Developer Hackathon. Why it's played on foot, and with friends, is on the [Impact page](https://questory.run/impact).
 
 ## How to play
 
@@ -31,47 +31,48 @@ To play with a friend, choose "With a friend" and send them the link. The case g
 
 ## How it works
 
-Wren is an AI agent. It plans each case, reads every photo with what it remembers of the story, decides what happens next and changes its plan when your photos stop fitting it. Wren can't walk, so you do, and its quests say where to look. It has three subagents, each with one job.
+Wren is an AI agent. It plans each case, reads every photo with what it remembers of the story, writes what happens and sets the next quest. When your photos stop fitting its plan, it changes the plan. Wren can't walk, so you do, and its quests say where to look.
 
-Questory is a Next.js 16 app that uses four models from the Meta Model API:
+Questory is a Next.js 16 app. Wren runs on Muse Wonder and has three subagents, each another model from the Meta Model API with one job:
 
-| Model | Role | Used for |
+| Model | Role | What it does |
 | :--- | :--- | :--- |
-| Muse Wonder | Agent | Wren itself: planning the case, reading each photo and writing the story and quests |
-| Muse Spark | Subagent | Checking Wren's lines against the photo |
-| SAM 3.1 | Subagent | Outlining what a closer-look quest points at |
-| Muse Image | Subagent | Redrawing photos that turn up evidence as evidence cards |
+| Muse Wonder | Agent | Wren: plans the case, reads each photo, and writes the story and quests |
+| Muse Spark | Subagent | Checks Wren's lines against the photo |
+| SAM 3.1 | Subagent | Outlines what a closer-look quest points at |
+| Muse Image | Subagent | Paints the evidence from the photo |
 
-### A turn
+On a real game screen:
 
-A turn is one photo and everything Wren does with it.
+<img src="docs/screen.png" alt="A game screen with three numbered parts. 1: Muse Image painted the evidence from your photo. 2: Wren wrote the story on Muse Wonder, and Muse Spark checked it against your photo. 3: Wren set the next step, and SAM 3.1 outlined the door in your photo.">
 
-<img src="docs/turn.png" alt="One turn: your photo goes to Muse Wonder, then to Muse Spark and SAM 3.1 at the same time, then into the story memory, and Muse Image paints any evidence. Wren reads the memory again on the next photo.">
+### What happens to each photo
+
+<img src="docs/turn.png" alt="Your photo goes to Muse Wonder, then to Muse Spark and SAM 3.1 at the same time, then into the story memory, and Muse Image paints any evidence. Wren reads the memory again on the next photo.">
 
 1. You take a photo. The phone resizes it to 1280 px, re-encodes it as JPEG and uploads it.
-2. Muse Wonder reads the photo with the story so far. In one structured JSON reply, it decides what the photo means, writes a few lines and gives the next quest if there is one. A photo can answer the current quest, take the story somewhere new, or be a side note that leaves the quest open.
-3. Unless the photo was a side note, Muse Spark compares Wren's lines with the photo and removes anything described as visible that isn't there. At the same time, if the next quest is a closer look, SAM finds its target in the photo and outlines it, so you know where to look.
-4. If the photo turned up evidence, Muse Image paints an evidence card from it.
+2. Muse Wonder reads the photo with the story so far. In one structured JSON reply, Wren decides what the photo means, writes a few lines and gives the next quest if there is one. A photo can answer the current quest, take the story somewhere new, or be a side note that leaves the quest open.
+3. Unless the photo was a side note, Muse Spark compares Wren's lines with the photo and removes anything described as visible that isn't there. At the same time, if the next quest is a closer look, SAM 3.1 finds its target in the photo and outlines it, so you know where to look.
+4. The story memory is saved.
+5. If the photo turned up evidence, Muse Image paints it from the photo.
 
-### The case
+### How Wren keeps a case together
 
 Every case has one question and a hidden answer that Wren decides at the start. Wren plans each chapter as places and objects to find, and each quest goes where the last find pointed, so the evidence forms a trail.
 
 Each photo becomes something it could reasonably be in the story. After two side notes in a row, the next photo moves the story whatever it shows. If the evidence stops pointing to the answer, Wren changes the answer to fit everything found so far.
 
-### Story memory
-
-Wren keeps each story in three layers, saved after every turn:
+Wren's memory of a case has three layers, saved after every photo:
 
 | Layer | What it holds | How it changes |
 | :--- | :--- | :--- |
 | Skeleton | The hidden plan: the answer, what each chapter finds out, and the steps on each lead | Only when your photos no longer fit the plan |
-| Bindings | Which real thing is which story element | Added or swapped on any turn |
+| Bindings | Which real thing is which story element | Added or swapped with any photo |
 | Canon | Facts already established in play | New facts are added, and old ones never change |
 
 ### Two players
 
-A shared case has two leads that come at the answer from different sides, such as how it was done and who could have done it. Each player follows one lead without waiting for the other. Wren sees what both have found and mentions a partner's find when it changes what yours means. A chapter's ending is written from everything both players found. Turns are saved under a short per-story lock, so two photos sent at once both count. If your friend hasn't joined by the time your part is done, you can play their lead too.
+A shared case has two leads that come at the answer from different sides, such as how it was done and who could have done it. Each player follows one lead without waiting for the other. Wren sees what both have found and mentions a partner's find when it changes what yours means. A chapter's ending is written from everything both players found. Each photo is saved under a short per-story lock, so two photos sent at once both count. If your friend hasn't joined by the time your part is done, you can play their lead too.
 
 ## Privacy
 
@@ -105,7 +106,8 @@ The live game at [questory.run](https://questory.run) runs on [Vercel](https://v
 
 ```
 app/page.tsx        Landing page, with a code to scan on a computer
-app/how-it-works/   How a turn uses the four models
+app/how-it-works/   How Wren and its subagents turn photos into a case
+app/impact/         Why it's played on foot, and with friends
 app/privacy/        What happens to photos and stories
 app/play/           The game
 app/api/            Route handlers for stories, turns, evidence cards, media and health
