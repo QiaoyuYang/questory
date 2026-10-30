@@ -40,6 +40,8 @@ Questory is a Next.js 16 app that uses four models from the Meta Model API:
 
 ### A turn
 
+<img src="docs/turn.png" alt="One turn: your photo goes to Muse Wonder, then to Muse Spark and SAM 3.1 at the same time, then into the story memory, and Muse Image paints any evidence. Wren reads the memory again on the next photo.">
+
 1. You take a photo. The phone resizes it to 1280 px, re-encodes it as JPEG and uploads it.
 2. Muse Wonder reads the photo with the story so far. In one structured JSON reply, it decides what the photo means, writes a few lines and gives the next quest if there is one. A photo can answer the current quest, take the story somewhere new, or be a side note that leaves the quest open.
 3. Unless the photo was a side note, Muse Spark compares Wren's lines with the photo and removes anything described as visible that isn't there. At the same time, if the next quest is a closer look, SAM finds its target in the photo and outlines it, so you know where to look.
@@ -96,15 +98,17 @@ The live game at [questory.run](https://questory.run) runs on [Vercel](https://v
 ## Project structure
 
 ```
-app/page.tsx   Landing page, with a code to scan on a computer
-app/play/      The game
-app/api/       Route handlers for stories, turns, evidence cards, media and health
-components/    The mobile interface
-lib/gm/        The game master: state, prompts, output schemas, engine and a scripted mock
-lib/meta/      Meta Model API clients for structured JSON, SAM 3.1 and Muse Image
-lib/store/     Storage in local files or Appwrite
-lib/client/    Browser code for photos, API calls and invite links
-scripts/       Appwrite setup
+app/page.tsx        Landing page, with a code to scan on a computer
+app/how-it-works/   How a turn uses the four models
+app/privacy/        What happens to photos and stories
+app/play/           The game
+app/api/            Route handlers for stories, turns, evidence cards, media and health
+components/         The mobile interface
+lib/gm/             The game master: state, prompts, output schemas, engine and a scripted mock
+lib/meta/           Meta Model API clients for structured JSON, SAM 3.1 and Muse Image
+lib/store/          Storage in local files or Appwrite
+lib/client/         Browser code for photos, API calls and invite links
+scripts/            Appwrite setup
 ```
 
 ## License
