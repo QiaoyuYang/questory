@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { SITE_DESCRIPTION, linkPreview } from "@/lib/site";
 import "./globals.css";
 
 // Barlow takes its shapes from California highway signs: the voice of the game's signage.
@@ -34,8 +35,11 @@ const literata = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Questory",
-  description: "Turn photos of your street into a story. An AI game master builds a case from what you photograph.",
+  metadataBase: new URL("https://questory.run"),
+  title: { default: "Questory", template: "%s · Questory" },
+  description: SITE_DESCRIPTION,
+  ...linkPreview("Questory", SITE_DESCRIPTION),
+  twitter: { card: "summary_large_image" },
   applicationName: "Questory",
   appleWebApp: { capable: true, title: "Questory", statusBarStyle: "black-translucent" },
   // Stop iOS from turning numbers in the story into phone links.

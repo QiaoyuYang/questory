@@ -7,6 +7,7 @@ import type { InviteView } from "@/lib/types";
 import { Alert } from "./Alert";
 import { BottomBar } from "./BottomBar";
 import { BUTTON } from "./buttons";
+import { PhotoNote } from "./PhotoNote";
 import { Wordmark } from "./Wordmark";
 
 type Props = {
@@ -134,6 +135,7 @@ export function JoinScreen({ storyId, code, onJoined, onOpen, onHome }: Props) {
                       : "They've just started."
                   }`}
           </p>
+          {open && <PhotoNote className="mt-4" />}
 
           {!open && (
             <button type="button" onClick={onHome} className={`${BUTTON.secondary} mt-6 w-full`}>

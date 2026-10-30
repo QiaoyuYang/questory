@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { PlayCode } from "@/components/PlayCode";
-import { Wordmark } from "@/components/Wordmark";
+import { SiteFooter, SiteHeader } from "@/components/SiteNav";
 import { BUTTON } from "@/components/buttons";
 import { CameraIcon } from "@/components/icons";
 
@@ -64,7 +64,7 @@ const ROW =
 export default function Home() {
   return (
     <main className="mx-auto w-full max-w-6xl px-4 pt-[max(2rem,env(safe-area-inset-top))] pb-14 md:px-10 md:pt-12">
-      <Wordmark />
+      <SiteHeader current="home" />
 
       <section className="mt-10 grid gap-8 md:mt-14 md:grid-cols-[1fr_auto] md:items-center md:gap-16">
         <div>
@@ -112,12 +112,7 @@ export default function Home() {
         </ul>
       </section>
 
-      <footer className="mt-14 border-t border-seam pt-6 text-sm text-concrete md:flex md:justify-between md:gap-8">
-        <p>No account to make, and it never asks where you are.</p>
-        <p className="mt-2 md:mt-0">
-          Built for the Meta Global AI Developer Hackathon with Muse Wonder, Muse Spark, SAM 3.1 and Muse Image.
-        </p>
-      </footer>
+      <SiteFooter current="home">No account to make, and it never asks where you are.</SiteFooter>
     </main>
   );
 }

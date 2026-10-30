@@ -1,11 +1,12 @@
 import type { MetadataRoute } from "next";
+import { SITE_DESCRIPTION } from "@/lib/site";
 
 /** Lets the app be added to a phone's home screen and open full screen, like an installed app. */
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Questory",
     short_name: "Questory",
-    description: "Turn photos of your street into a story. An AI game master builds a case from what you photograph.",
+    description: SITE_DESCRIPTION,
     start_url: "/play",
     display: "standalone",
     orientation: "portrait",
