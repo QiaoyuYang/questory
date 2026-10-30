@@ -16,7 +16,7 @@ Play at [questory.run](https://questory.run)
 
 </div>
 
-Questory is made for phones. Open [questory.run](https://questory.run) on your phone, or scan the code it shows on a computer. It was built on the Meta Model API for the Meta Global AI Developer Hackathon. Why it's played on foot, and with friends, is on the [Impact page](https://questory.run/impact).
+Questory is made for phones. Open [questory.run](https://questory.run) on your phone, or scan the code it shows on a computer. It was built on the Meta Model API for the Meta Global AI Developer Hackathon. Why it's played on foot, and with a friend, is on the [Impact page](https://questory.run/impact).
 
 ## How to play
 
@@ -107,7 +107,7 @@ The live game at [questory.run](https://questory.run) runs on [Vercel](https://v
 ```
 app/page.tsx        Landing page, with a code to scan on a computer
 app/how-it-works/   How Wren and its subagents turn photos into a case
-app/impact/         Why it's played on foot, and with friends
+app/impact/         Why it's played on foot, and with a friend
 app/privacy/        What happens to photos and stories
 app/play/           The game
 app/api/            Route handlers for stories, turns, evidence cards, media and health

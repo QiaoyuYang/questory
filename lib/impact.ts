@@ -13,9 +13,6 @@ const LONELINESS: Source = {
   url: "https://www.who.int/news/item/30-06-2025-social-connection-linked-to-improved-heath-and-reduced-risk-of-early-death",
 };
 
-/** A 2026 review of Pokémon GO studies: activity gains often faded, and the social benefits came from playing together. */
-export const POKEMON_REVIEW: Source = { name: "a 2026 review", url: "https://doi.org/10.2196/89235" };
-
 export const WALKING_FACTS: Fact[] = [
   { value: "1 in 3", label: "adults don't get enough physical activity.", source: INACTIVITY },
   { value: "47%", label: "lower risk of death at 7,000 steps a day than at 2,000.", source: STEPS },
