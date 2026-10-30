@@ -14,7 +14,7 @@ type Props = {
 
 /** The big picture: the newest photo, or the evidence it turned up once that's drawn. */
 export function Scene({ turn, onRepaint, onZoom }: Props) {
-  if (turn.card) return <StoryCard turn={turn} onRepaint={onRepaint} onZoom={onZoom} />;
+  if (turn.card) return <StoryCard key={turn.id} turn={turn} onRepaint={onRepaint} onZoom={onZoom} />;
   if (!turn.photoUrl) return null;
   return (
     <HeroFrame

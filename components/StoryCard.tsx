@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import { useState } from "react";
 import type { TurnView } from "@/lib/types";
 import { HeroFrame } from "./HeroFrame";
 import type { Zoomed } from "./PhotoViewer";
@@ -13,9 +14,11 @@ type Props = {
 
 /**
  * The card Muse Image paints onto a photo that moved the story. The photo stands in
- * until it lands. A finished card carries its own title, so it needs no caption.
+ * until it lands, and the card then fades in over it, so the photo turns into the
+ * evidence in place. A finished card carries its own title, so it needs no caption.
  */
 export function StoryCard({ turn, onRepaint, onZoom }: Props) {
+  const [loaded, setLoaded] = useState(false);
   if (!turn.card || !turn.photoUrl) return null;
   const ready = turn.cardStatus === "ready" && turn.cardUrl !== null;
   const failed = turn.cardStatus === "failed";
@@ -29,12 +32,23 @@ export function StoryCard({ turn, onRepaint, onZoom }: Props) {
         label={ready ? "Open the card full screen" : "Open the photo full screen"}
         onClick={() => onZoom({ src, alt, size: turn.photoSize, overlay: null })}
       >
+        {/* Grayed as it was while the card was painted, so the handover doesn't show. */}
         <img
-          key={ready ? "card" : "photo"}
-          src={src}
-          alt={alt}
-          className={`fade-in block h-full w-full object-cover ${ready ? "" : "opacity-50 grayscale-[35%]"}`}
+          src={turn.photoUrl}
+          alt={ready ? "" : alt}
+          className={`block h-full w-full object-cover ${ready ? "opacity-70" : "opacity-50"} grayscale-[35%]`}
         />
+        {ready && (
+          <img
+            src={turn.cardUrl!}
+            alt={alt}
+            ref={(img) => {
+              if (img?.complete && img.naturalWidth > 0) setLoaded(true);
+            }}
+            onLoad={() => setLoaded(true)}
+            className={`absolute inset-0 h-full w-full object-cover ${loaded ? "reveal" : "opacity-0"}`}
+          />
+        )}
       </HeroFrame>
       {!ready && (
         <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center">

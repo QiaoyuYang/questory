@@ -19,7 +19,6 @@ import { BottomBar } from "./BottomBar";
 import { BUTTON } from "./buttons";
 import { CaptureButton, usePhotoVerb } from "./CaptureButton";
 import { CameraIcon, ChevronRightIcon } from "./icons";
-import { PhotoNote } from "./PhotoNote";
 import { Segmented } from "./Segmented";
 import { Sheet } from "./Sheet";
 import { Wordmark } from "./Wordmark";
@@ -278,10 +277,8 @@ export function HomeScreen({ stories, mode, onStarted, onOpen, onRemove }: Props
             )}
           </section>
 
-          <PhotoNote className="mt-6" />
-
           {mode === "mock" && (
-            <p className="mt-3 text-sm text-concrete">
+            <p className="mt-5 text-sm text-concrete">
               Demo mode: no Meta Model API key is set, so {GAME_MASTER} is reading from a script and can&apos;t see
               your photos.
             </p>
