@@ -4,8 +4,8 @@ import { GAME_MASTER } from "@/lib/types";
 type Box = { kicker: string; title: string; text: string };
 
 /**
- * One turn, in order. The third stop's two models run at the same time. The memory is
- * read again by the game master on the next photo, which the loop marks.
+ * One turn, in order. The third stop's two models run at the same time. The agent reads
+ * the memory again on the next photo, which the loop marks.
  */
 const STOPS: { boxes: Box[]; memory?: boolean; loop?: boolean }[] = [
   {
@@ -15,9 +15,9 @@ const STOPS: { boxes: Box[]; memory?: boolean; loop?: boolean }[] = [
     loop: true,
     boxes: [
       {
-        kicker: "Game master",
+        kicker: "Agent",
         title: "Muse Wonder",
-        text: `Plays ${GAME_MASTER}. Reads the photo with the story so far, then writes what happens and the next quest.`,
+        text: `${GAME_MASTER} reads the photo with the story so far, then writes what happens and the next quest.`,
       },
     ],
   },
@@ -51,7 +51,7 @@ const LOOP_LINE = "border-dashed border-concrete/50";
 
 /**
  * What happens to one photo, as stops along a lane line: down the screen on a phone, and
- * across on a computer, where a dashed loop takes the memory back to the game master.
+ * across on a computer, where a dashed loop takes the memory back to the agent.
  */
 export function TurnDiagram({ className = "" }: { className?: string }) {
   return (
@@ -89,7 +89,7 @@ export function TurnDiagram({ className = "" }: { className?: string }) {
                   </div>
                 </Fragment>
               ))}
-              {/* The loop leaves the memory and comes back up into the game master. */}
+              {/* The loop leaves the memory and comes back up into the agent. */}
               {stop.loop && (
                 <div className="relative hidden min-h-4 flex-1 md:block" aria-hidden="true">
                   <div className={`mx-auto h-full w-0 border-l-2 ${LOOP_LINE}`} />

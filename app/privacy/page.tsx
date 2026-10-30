@@ -34,15 +34,9 @@ export default function Privacy() {
       <div className="max-w-2xl">
         <h1 className="mt-10 font-sign text-[2.5rem] leading-[1.05] font-bold md:mt-14 md:text-6xl">Privacy</h1>
         <p className="mt-5 font-story text-lg leading-relaxed md:text-xl">
-          Questory has no accounts and never asks where you are. This is what happens to your photos and stories.
+          Questory has no accounts and never asks where you are.
         </p>
 
-        <Part title="Your photos go to Meta">
-          Wren runs on Meta&apos;s AI models through the Meta Model API. Each photo you take in the game is sent there
-          with the story so far, to write what happens, check it against the photo, outline what a quest points at and
-          paint the evidence. Meta may use what it receives to improve its products. Leave people&apos;s faces and number
-          plates out of your photos.
-        </Part>
         <Part title="No account">
           There is no sign-up. A random ID in a cookie links your stories to this browser, so if you clear your cookies,
           you can&apos;t open them here again.
@@ -64,6 +58,12 @@ export default function Privacy() {
         </Part>
         <Part title="Deleting a story">
           Deleting a story also deletes its photos and evidence pictures. Tap Edit above your stories to delete one.
+        </Part>
+        <Part title="Your photos go to Meta">
+          Wren runs on Meta&apos;s AI models through the Meta Model API. Each photo you take in the game is sent there
+          with the story so far, to write what happens, check it against the photo, outline what a quest points at and
+          paint the evidence. Meta may use what it receives to improve its products. Leave people&apos;s faces and number
+          plates out of your photos.
         </Part>
         <Part title="Questions">
           Open an issue on{" "}

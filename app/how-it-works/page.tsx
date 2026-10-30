@@ -6,7 +6,7 @@ import { SiteFooter, SiteHeader } from "@/components/SiteNav";
 import { GITHUB_URL, linkPreview } from "@/lib/site";
 import { TurnDiagram } from "@/components/TurnDiagram";
 
-const DESCRIPTION = "How Questory uses four models from the Meta Model API to build a case from your photos.";
+const DESCRIPTION = "How Wren, an AI agent built on Meta's models, turns your photos into a case.";
 
 export const metadata: Metadata = {
   title: "How it works",
@@ -48,7 +48,7 @@ function Heading({ id, children }: { id: string; children: string }) {
   );
 }
 
-/** The models behind a turn, and how a case holds together, for anyone curious and for judges. */
+/** The game from the top down: the loop you play, the agent that runs it, then the models and memory behind a turn. */
 export default function HowItWorks() {
   return (
     <main className="mx-auto w-full max-w-6xl px-4 pt-[max(2rem,env(safe-area-inset-top))] pb-14 md:px-10 md:pt-12">
@@ -56,10 +56,42 @@ export default function HowItWorks() {
 
       <h1 className="mt-10 font-sign text-[2.5rem] leading-[1.05] font-bold md:mt-14 md:text-6xl">How it works</h1>
       <p className="mt-5 max-w-2xl font-story text-lg leading-relaxed md:text-xl">
-        Questory uses four models from the Meta Model API. Every photo you take goes through them in one turn.
+        Questory is a game you play on a walk. Wren, its game master, is an AI agent: it builds a case from your photos
+        and sends you out to find the evidence.
       </p>
 
-      <section className="mt-12 md:mt-16" aria-labelledby="turn-title">
+      <section className="mt-12 md:mt-16" aria-labelledby="loop-title">
+        <Heading id="loop-title">The game loop</Heading>
+        <p className={TEXT}>
+          Each turn starts with a photo. Wren reads it, tells you what it means for the case and gives you a quest. A
+          quest asks for a closer look at something in your photo, or sends you a block or two away to find something.
+          Your photo of it starts the next turn.
+        </p>
+        <p className={TEXT}>
+          A photo that answers a quest becomes a piece of evidence, and the evidence leads to the answer. A case has
+          multiple chapters. You can stop after any photo, and your next photo picks the story up wherever you are.
+        </p>
+      </section>
+
+      <section className="mt-14 md:mt-20" aria-labelledby="agent-title">
+        <Heading id="agent-title">Wren, the agent</Heading>
+        <p className={TEXT}>
+          Wren is built on Muse Wonder. At the start of a case, it decides the answer and plans the evidence that leads
+          to it. On every turn, it reads your photo with what it remembers of the story, decides what the photo means,
+          writes what happens and sets the next quest. When your photos stop fitting the plan, it changes the plan.
+        </p>
+        <p className={TEXT}>
+          Wren can&apos;t walk, so you do. Each quest is Wren asking you to go and look, and your photo is how it sees
+          what you found.
+        </p>
+        <p className={TEXT}>
+          Three other models work with Wren. Muse Spark checks Wren&apos;s lines against your photo and takes out
+          anything the photo doesn&apos;t show. Wren uses the other two as tools: SAM 3.1 outlines what a closer-look
+          quest points at, and Muse Image paints the evidence from your photo.
+        </p>
+      </section>
+
+      <section className="mt-14 md:mt-20" aria-labelledby="turn-title">
         <Heading id="turn-title">A turn</Heading>
         <TurnDiagram className="mt-8" />
       </section>
@@ -67,8 +99,8 @@ export default function HowItWorks() {
       <section className="mt-10 md:mt-12" aria-labelledby="case-title">
         <Heading id="case-title">The case</Heading>
         <p className={TEXT}>
-          Every case has one question and a hidden answer that Wren decides at the start. Wren plans each chapter as
-          places and objects to find, and each quest goes where the last find pointed, so the evidence forms a trail.
+          Every case has one question and a hidden answer. Wren plans each chapter as places and objects to find, and
+          each quest goes where the last find pointed, so the evidence forms a trail.
         </p>
         <p className={TEXT}>
           A photo can answer the current quest, take the story somewhere new, or be a side note that leaves the quest
@@ -80,7 +112,10 @@ export default function HowItWorks() {
 
       <section className="mt-14 md:mt-20" aria-labelledby="memory-title">
         <Heading id="memory-title">Story memory</Heading>
-        <p className={TEXT}>Wren keeps each story in three layers, saved after every turn.</p>
+        <p className={TEXT}>
+          Wren keeps each story in three layers. They&apos;re saved after every turn, so a case can pick up again days
+          later.
+        </p>
         <ul className="mt-6 grid gap-3 md:grid-cols-3 md:gap-5">
           {LAYERS.map((layer) => (
             <li key={layer.name} className="rounded-[14px] bg-kerb px-4 py-3.5">
