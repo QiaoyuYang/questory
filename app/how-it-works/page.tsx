@@ -56,20 +56,21 @@ export default function HowItWorks() {
 
       <h1 className="mt-10 font-sign text-[2.5rem] leading-[1.05] font-bold md:mt-14 md:text-6xl">How it works</h1>
       <p className="mt-5 max-w-2xl font-story text-lg leading-relaxed md:text-xl">
-        Questory is a game you play on a walk. Wren, its game master, is an AI agent: it builds a case from your photos
-        and sends you out to find the evidence.
+        Questory is a game you play on a walk. Wren is the AI agent that runs it: it builds a case from your photos and
+        sends you out to find the evidence.
       </p>
 
       <section className="mt-12 md:mt-16" aria-labelledby="loop-title">
         <Heading id="loop-title">The game loop</Heading>
         <p className={TEXT}>
-          Each turn starts with a photo. Wren reads it, tells you what it means for the case and gives you a quest. A
-          quest asks for a closer look at something in your photo, or sends you a block or two away to find something.
-          Your photo of it starts the next turn.
+          The game is played in turns, and each turn is one photo. You take a photo, and Wren tells you what it means for
+          the case and gives you a quest: something to photograph next, up close or a block or two away. Your photo of it
+          starts the next turn.
         </p>
         <p className={TEXT}>
-          A photo that answers a quest becomes a piece of evidence, and the evidence leads to the answer. A case has
-          multiple chapters. You can stop after any photo, and your next photo picks the story up wherever you are.
+          A photo that moves the case forward becomes a piece of evidence, and the evidence leads to the answer. A case
+          has a few chapters, and finishing one ends your walk. You can stop after any photo, and your next photo picks
+          the story up wherever you are.
         </p>
       </section>
 
@@ -85,9 +86,9 @@ export default function HowItWorks() {
           what you found.
         </p>
         <p className={TEXT}>
-          Three other models work with Wren. Muse Spark checks Wren&apos;s lines against your photo and takes out
-          anything the photo doesn&apos;t show. Wren uses the other two as tools: SAM 3.1 outlines what a closer-look
-          quest points at, and Muse Image paints the evidence from your photo.
+          Wren has three subagents, each a different Meta model with one job. Muse Spark checks Wren&apos;s lines
+          against your photo and takes out anything the photo doesn&apos;t show. SAM 3.1 outlines what a closer-look quest
+          points at. Muse Image paints the evidence from your photo.
         </p>
       </section>
 
@@ -130,8 +131,8 @@ export default function HowItWorks() {
       <section className="mt-14 md:mt-20" aria-labelledby="two-title">
         <Heading id="two-title">Two players</Heading>
         <p className={TEXT}>
-          A shared case has two leads that come at the answer from different sides, such as how it was done and who
-          could have done it. Each player follows one lead without waiting for the other. Wren sees what both have found
+          A shared case has two leads, two trails of evidence that come at the answer from different sides, such as how
+          it was done and who could have done it. Each player follows one lead without waiting for the other. Wren sees what both have found
           and mentions a partner&apos;s find when it changes what yours means. A chapter&apos;s ending is written from
           everything both players found. Turns are saved under a short per-story lock, so two photos sent at once both
           count. If your friend hasn&apos;t joined by the time your part is done, you can play their lead too.

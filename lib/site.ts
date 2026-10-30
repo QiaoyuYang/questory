@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const GITHUB_URL = "https://github.com/QiaoyuYang/questory";
 
 export const SITE_DESCRIPTION =
-  "Turn photos of your street into a story. An AI game master builds a case from what you photograph.";
+  "Turn photos of your street into a story. An AI agent builds a case from what you photograph, and every case is solved on foot.";
 
 const PREVIEW_IMAGE = {
   url: "/link-preview.png",

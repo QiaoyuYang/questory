@@ -11,19 +11,19 @@ const MOMENTS = [
     src: "/landing/opening.webp",
     alt: "A photo of a bakery on a street corner, with the opening of a case below it: the bakery's sourdough starter has gone, and the next step is a closer look at the bench outside.",
     title: "Your street starts the case",
-    text: "Take a photo of where you are, even indoors. Wren writes the opening around it, and then leads you outside.",
+    text: "Take a photo of where you are, even indoors. Wren turns it into the start of a case, then leads you outside.",
   },
   {
     src: "/landing/evidence.webp",
     alt: "The photo redrawn as an evidence card called The waiting bench, with Wren's note that someone sat there before the bakery opened.",
     title: "Follow the quests",
-    text: "A quest asks for a closer look, or sends you a short walk away. When your photo turns up something new, it becomes a piece of evidence.",
+    text: "Each quest asks for a photo of something, up close or a short walk away. A photo that moves the case forward becomes a piece of evidence.",
   },
   {
     src: "/landing/case.webp",
     alt: "The case so far: two pieces of evidence found, and ten more to find before the answer.",
     title: "Solve the case",
-    text: "Collect the evidence as you go, until it points to the answer.",
+    text: "Collect evidence over a few walks, until it points to the answer.",
   },
 ];
 
@@ -57,6 +57,12 @@ function Moment({ src, alt, title, text, number, delay }: (typeof MOMENTS)[numbe
   );
 }
 
+/** Why a game you play on foot, with the studies behind it. */
+const WHY = [
+  { value: "31%", label: "of adults worldwide didn't get enough physical activity in 2022." },
+  { value: "6 weeks", label: "until the extra steps from Pokémon GO wore off." },
+];
+
 const ROW =
   "-mx-4 mt-8 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-4 md:mx-0 md:grid md:grid-cols-3 md:gap-10 md:overflow-visible md:px-0";
 
@@ -72,7 +78,7 @@ export default function Home() {
             Turn photos of your street into a story
           </h1>
           <p className="mt-5 max-w-xl font-story text-lg leading-relaxed md:text-xl">
-            Wren, an AI game master, builds a case from what you photograph.
+            Wren, an AI agent, builds a case from what you photograph. Every case is solved on foot.
           </p>
           <Link href="/play" className={`${BUTTON.primary} mt-7 w-full md:hidden`}>
             <CameraIcon className="h-6 w-6" />
@@ -96,14 +102,45 @@ export default function Home() {
         </ol>
       </section>
 
+      <section className="mt-14 md:mt-20" aria-labelledby="why-title">
+        <h2 id="why-title" className="font-sign text-2xl font-bold md:text-3xl">
+          Why on foot
+        </h2>
+        <div className="lane-line mt-3 w-24" aria-hidden="true" />
+        <dl className="mt-8 grid gap-3 sm:grid-cols-2 md:max-w-3xl md:gap-5">
+          {WHY.map((fact) => (
+            <div key={fact.value} className="flex flex-col rounded-[14px] bg-kerb px-5 py-4">
+              <dt className="order-2 mt-1 text-concrete text-pretty">{fact.label}</dt>
+              <dd className="order-1 font-sign text-5xl leading-none font-bold">{fact.value}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="mt-6 max-w-xl text-lg text-pretty">
+          A game can get people walking, but the effect fades within weeks. A Questory case runs over several walks, so
+          there&apos;s a reason to go out again. It&apos;s for anyone who would walk more with a reason to, alone or with a
+          friend who lives somewhere else.
+        </p>
+        <p className="mt-3 max-w-xl text-sm text-concrete">
+          Sources: Strain et al.,{" "}
+          <a href="https://doi.org/10.1016/S2214-109X(24)00150-5" className="underline underline-offset-4 hover:text-paint">
+            Lancet Global Health
+          </a>
+          , 2024. Howe et al.,{" "}
+          <a href="https://doi.org/10.1136/bmj.i6270" className="underline underline-offset-4 hover:text-paint">
+            BMJ
+          </a>
+          , 2016.
+        </p>
+      </section>
+
       <section className="mt-14 md:mt-20" aria-labelledby="friend-title">
         <h2 id="friend-title" className="font-sign text-2xl font-bold md:text-3xl">
           Play with a friend
         </h2>
         <div className="lane-line mt-3 w-24" aria-hidden="true" />
         <p className="mt-6 max-w-xl text-lg">
-          A case can have two players. You each follow your own lead on your own walk, and the evidence comes together
-          in one case.
+          A case can have two players. You each get a lead, your own trail of evidence to follow on your own walk, and
+          both trails end at the same answer.
         </p>
         <ul className={ROW}>
           {TOGETHER.map((moment) => (
