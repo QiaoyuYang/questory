@@ -41,6 +41,8 @@ const DRAWING_MS = 5_000;
 const STALE_MS = 3 * 60_000;
 /** How long the screen leaves a chapter's ending to the player who finished it before asking for it itself. */
 const CLOSE_GRACE_MS = 30_000;
+/** How long new evidence waits for its picture to load before it shows anyway. */
+const PRELOAD_MS = 5_000;
 
 const ANALYZING = "Analyzing the evidence…";
 const PUTTING_TOGETHER = `${GAME_MASTER} is putting it together…`;
@@ -78,6 +80,21 @@ async function howItCameOut(storyId: string, turn: TurnView): Promise<TurnView> 
     saved = await check();
   }
   return saved?.cardStatus === "ready" ? saved : { ...turn, cardStatus: "failed" };
+}
+
+/**
+ * Load a turn's photo and picture before the screen shows them, so the picture can fade
+ * in over the photo straight away. Gives up after a few seconds and shows them anyway.
+ */
+function withPictures(turn: TurnView): Promise<TurnView> {
+  const loads = [turn.photoUrl, turn.cardUrl].map((url) => {
+    if (!url) return Promise.resolve();
+    const img = new window.Image();
+    img.src = url;
+    return img.decode().catch(() => {});
+  });
+  const giveUp = new Promise((resolve) => window.setTimeout(resolve, PRELOAD_MS));
+  return Promise.race([Promise.all(loads), giveUp]).then(() => turn);
 }
 
 export function StoryScreen({ storyId, initial, onHome }: Props) {
@@ -122,14 +139,18 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
     setData((current) => (current ? { ...current, turns: withTurn(current.turns, turn) } : current));
   }, []);
 
-  // Ask Muse Image to draw the evidence. Settles with the turn as it came out, failed included.
+  // Ask Muse Image to draw the evidence. Settles with the turn as it came out, failed included,
+  // once its picture has loaded.
   const paint = useCallback(
     (turn: TurnView) => {
       requested.current.add(turn.id);
-      return api.paintCard(storyId, turn.id).then(
-        (result) => result.turn,
-        () => howItCameOut(storyId, turn),
-      );
+      return api
+        .paintCard(storyId, turn.id)
+        .then(
+          (result) => result.turn,
+          () => howItCameOut(storyId, turn),
+        )
+        .then(withPictures);
     },
     [storyId],
   );
