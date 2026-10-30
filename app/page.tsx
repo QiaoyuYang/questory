@@ -2,8 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { PlayCode } from "@/components/PlayCode";
 import { SiteFooter, SiteHeader } from "@/components/SiteNav";
+import { StatTiles } from "@/components/StatTiles";
 import { BUTTON } from "@/components/buttons";
 import { CameraIcon } from "@/components/icons";
+import { WALKING_FACTS } from "@/lib/impact";
 
 /** Three moments from a real case, played on a phone. */
 const MOMENTS = [
@@ -57,12 +59,6 @@ function Moment({ src, alt, title, text, number, delay }: (typeof MOMENTS)[numbe
   );
 }
 
-/** Why a game you play on foot, with the studies behind it. */
-const WHY = [
-  { value: "31%", label: "of adults worldwide didn't get enough physical activity in 2022." },
-  { value: "6 weeks", label: "until the extra steps from Pokémon GO wore off." },
-];
-
 const ROW =
   "-mx-4 mt-8 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-4 md:mx-0 md:grid md:grid-cols-3 md:gap-10 md:overflow-visible md:px-0";
 
@@ -102,37 +98,6 @@ export default function Home() {
         </ol>
       </section>
 
-      <section className="mt-14 md:mt-20" aria-labelledby="why-title">
-        <h2 id="why-title" className="font-sign text-2xl font-bold md:text-3xl">
-          Why on foot
-        </h2>
-        <div className="lane-line mt-3 w-24" aria-hidden="true" />
-        <dl className="mt-8 grid gap-3 sm:grid-cols-2 md:max-w-3xl md:gap-5">
-          {WHY.map((fact) => (
-            <div key={fact.value} className="flex flex-col rounded-[14px] bg-kerb px-5 py-4">
-              <dt className="order-2 mt-1 text-concrete text-pretty">{fact.label}</dt>
-              <dd className="order-1 font-sign text-5xl leading-none font-bold">{fact.value}</dd>
-            </div>
-          ))}
-        </dl>
-        <p className="mt-6 max-w-xl text-lg text-pretty">
-          A game can get people walking, but the effect fades within weeks. A Questory case runs over several walks, so
-          there&apos;s a reason to go out again. It&apos;s for anyone who would walk more with a reason to, alone or with a
-          friend who lives somewhere else.
-        </p>
-        <p className="mt-3 max-w-xl text-sm text-concrete">
-          Sources: Strain et al.,{" "}
-          <a href="https://doi.org/10.1016/S2214-109X(24)00150-5" className="underline underline-offset-4 hover:text-paint">
-            Lancet Global Health
-          </a>
-          , 2024. Howe et al.,{" "}
-          <a href="https://doi.org/10.1136/bmj.i6270" className="underline underline-offset-4 hover:text-paint">
-            BMJ
-          </a>
-          , 2016.
-        </p>
-      </section>
-
       <section className="mt-14 md:mt-20" aria-labelledby="friend-title">
         <h2 id="friend-title" className="font-sign text-2xl font-bold md:text-3xl">
           Play with a friend
@@ -147,6 +112,21 @@ export default function Home() {
             <Moment key={moment.src} {...moment} delay={0} />
           ))}
         </ul>
+      </section>
+
+      <section className="mt-14 md:mt-20" aria-labelledby="why-title">
+        <h2 id="why-title" className="font-sign text-2xl font-bold md:text-3xl">
+          Why on foot
+        </h2>
+        <div className="lane-line mt-3 w-24" aria-hidden="true" />
+        <StatTiles facts={WALKING_FACTS} className="mt-8" />
+        <p className="mt-5 text-concrete">
+          More on the{" "}
+          <Link href="/impact" className="font-semibold text-paint underline underline-offset-4 hover:text-lane">
+            Impact page
+          </Link>
+          , including why it&apos;s made for two.
+        </p>
       </section>
 
       <SiteFooter current="home">No account to make, and it never asks where you are.</SiteFooter>

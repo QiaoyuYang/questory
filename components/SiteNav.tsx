@@ -4,10 +4,11 @@ import { GITHUB_URL } from "@/lib/site";
 import { Wordmark } from "./Wordmark";
 
 /** The site's own pages, around the game. */
-type Page = "home" | "how-it-works" | "privacy";
+type Page = "home" | "how-it-works" | "impact" | "privacy";
 
 const PAGES: { href: string; label: string; page: Page | null }[] = [
   { href: "/how-it-works", label: "How it works", page: "how-it-works" },
+  { href: "/impact", label: "Impact", page: "impact" },
   { href: "/privacy", label: "Privacy", page: "privacy" },
   { href: GITHUB_URL, label: "GitHub", page: null },
 ];
