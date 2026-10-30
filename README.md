@@ -29,11 +29,13 @@ To play with a friend, choose "With a friend" and send them the link. You each f
 
 ## How it works
 
+Wren is an AI agent. It plans each case, reads every photo with what it remembers of the story, decides what happens next and changes its plan when your photos stop fitting it. Wren can't walk, so you do, and its quests say where to look.
+
 Questory is a Next.js 16 app that uses four models from the Meta Model API:
 
 | Model | Used for |
 | :--- | :--- |
-| Muse Wonder | Playing Wren: reading each photo and writing the story and quests |
+| Muse Wonder | Wren itself: planning the case, reading each photo and writing the story and quests |
 | Muse Spark | Checking Wren's lines against the photo |
 | SAM 3.1 | Outlining what a closer-look quest points at |
 | Muse Image | Redrawing photos that turn up evidence as evidence cards |
@@ -104,7 +106,7 @@ app/privacy/        What happens to photos and stories
 app/play/           The game
 app/api/            Route handlers for stories, turns, evidence cards, media and health
 components/         The mobile interface
-lib/gm/             The game master: state, prompts, output schemas, engine and a scripted mock
+lib/gm/             Wren, the agent: state, prompts, output schemas, engine and a scripted mock
 lib/meta/           Meta Model API clients for structured JSON, SAM 3.1 and Muse Image
 lib/store/          Storage in local files or Appwrite
 lib/client/         Browser code for photos, API calls and invite links
