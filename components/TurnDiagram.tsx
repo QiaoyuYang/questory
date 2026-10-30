@@ -23,8 +23,8 @@ const STOPS: { boxes: Box[]; memory?: boolean; loop?: boolean }[] = [
   },
   {
     boxes: [
-      { kicker: "Photo check", title: "Muse Spark", text: `Takes out anything ${GAME_MASTER} describes that the photo doesn't show.` },
-      { kicker: "Where to look", title: "SAM 3.1", text: "Outlines what a closer-look quest points at." },
+      { kicker: "Subagent", title: "Muse Spark", text: `Takes out anything ${GAME_MASTER} describes that the photo doesn't show.` },
+      { kicker: "Subagent", title: "SAM 3.1", text: "Outlines what a closer-look quest points at." },
     ],
   },
   {
@@ -32,14 +32,14 @@ const STOPS: { boxes: Box[]; memory?: boolean; loop?: boolean }[] = [
     loop: true,
     boxes: [
       {
-        kicker: "Saved",
+        kicker: "Memory",
         title: "Story memory",
         text: "The hidden plan, which real thing is which, and the facts so far.",
       },
     ],
   },
   {
-    boxes: [{ kicker: "Evidence", title: "Muse Image", text: "When the photo turns up evidence, paints it from your photo." }],
+    boxes: [{ kicker: "Subagent", title: "Muse Image", text: "When the photo turns up evidence, paints it from your photo." }],
   },
 ];
 
