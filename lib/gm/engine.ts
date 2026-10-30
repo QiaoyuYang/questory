@@ -57,11 +57,11 @@ async function spendCall(config: Config, playerId: string) {
   if (config.playerDailyCallLimit > 0) {
     const key = `${day}-${await visitorKey(day, playerId, config.meta.apiKey)}`;
     if (!(await store.countCall(key, config.playerDailyCallLimit))) {
-      throw new DailyLimitError("That's all for today. Come back after midnight UTC.");
+      throw new DailyLimitError("That's all for today. Come back tomorrow.");
     }
   }
   if (config.dailyCallLimit > 0 && !(await store.countCall(day, config.dailyCallLimit))) {
-    throw new DailyLimitError(`${GAME_MASTER} is done for today. Come back after midnight UTC.`);
+    throw new DailyLimitError(`${GAME_MASTER} is done for today. Come back tomorrow.`);
   }
 }
 

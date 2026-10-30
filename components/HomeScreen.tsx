@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { api, type TurnResult } from "@/lib/client/api";
+import { api, isDailyLimit, type TurnResult } from "@/lib/client/api";
 import { changedSinceSeen } from "@/lib/client/seen";
 import { forgetNextInvite, inviteLink, markNextInviteSent, nextInvite, peekNextInvite, shareLink } from "@/lib/client/share";
 import {
@@ -67,6 +67,8 @@ export function HomeScreen({ stories, mode, onStarted, onOpen, onRemove }: Props
   const [pending, setPending] = useState<PhotoUpload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [lastPhoto, setLastPhoto] = useState<PhotoUpload | null>(null);
+  // Today's calls are used up, so the same photo can't start a story until tomorrow.
+  const [limitReached, setLimitReached] = useState(false);
   const [editing, setEditing] = useState(false);
   const [removing, setRemoving] = useState<StorySummary | null>(null);
   const [removeBusy, setRemoveBusy] = useState(false);
@@ -82,6 +84,7 @@ export function HomeScreen({ stories, mode, onStarted, onOpen, onRemove }: Props
 
   async function start(photo: PhotoUpload) {
     setError(null);
+    setLimitReached(false);
     setLastPhoto(photo);
     setPending(photo);
     try {
@@ -94,6 +97,7 @@ export function HomeScreen({ stories, mode, onStarted, onOpen, onRemove }: Props
       onStarted(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : "The story couldn't start. Try again.");
+      setLimitReached(isDailyLimit(err));
     } finally {
       setPending(null);
     }
@@ -287,7 +291,7 @@ export function HomeScreen({ stories, mode, onStarted, onOpen, onRemove }: Props
           {error && (
             <Alert
               message={error}
-              retry={lastPhoto && !needsTheme ? () => start(lastPhoto) : null}
+              retry={lastPhoto && !needsTheme && !limitReached ? () => start(lastPhoto) : null}
               retryLabel="Try again with the same photo"
             />
           )}

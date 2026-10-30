@@ -9,6 +9,22 @@ import type {
 } from "@/lib/types";
 import { BUILD_HEADER, requestSettled, requestStarted } from "./deploys";
 
+/** A request the server turned down, with its status. */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+/** Today's model calls are used up, so trying again won't help until tomorrow. */
+export function isDailyLimit(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 429;
+}
+
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
   requestStarted();
   let build: string | null = null;
@@ -26,7 +42,7 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
     build = response.headers.get(BUILD_HEADER);
     const data = (await response.json().catch(() => null)) as (T & { error?: string }) | null;
     if (!response.ok || !data) {
-      throw new Error(data?.error ?? `The server returned ${response.status}. Try again.`);
+      throw new ApiError(data?.error ?? `The server returned ${response.status}. Try again.`, response.status);
     }
     return data;
   } finally {

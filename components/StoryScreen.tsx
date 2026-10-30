@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { api, type TurnResult } from "@/lib/client/api";
+import { api, isDailyLimit, type TurnResult } from "@/lib/client/api";
 import { markSeen } from "@/lib/client/seen";
 import { inviteLink, shareLink } from "@/lib/client/share";
 import { chapterTurns, walkStats } from "@/lib/walk";
@@ -15,6 +15,7 @@ import { PhotoViewer, type Zoomed } from "./PhotoViewer";
 import { QuestThumb } from "./QuestThumb";
 import { Scene } from "./Scene";
 import { Sheet } from "./Sheet";
+import { Solution } from "./Solution";
 import { StorySheet } from "./StorySheet";
 import { WalkSummary } from "./WalkSummary";
 import { Working } from "./Working";
@@ -224,7 +225,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
     } catch (err) {
       setError({
         message: err instanceof Error ? err.message : "That didn't work. Try again.",
-        retry: () => run(message, photo, task),
+        retry: isDailyLimit(err) ? null : () => run(message, photo, task),
       });
     } finally {
       setBusy(null);
@@ -338,6 +339,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
             {scene && <Scene turn={scene} onRepaint={() => repaint(scene)} onZoom={setZoomed} />}
             {lastFind && lastFind.kind !== "close" && <Telling turn={lastFind} />}
             {latest && <Telling turn={latest} solved={story.status === "complete"} />}
+            {story.status === "complete" && <Solution story={story} turns={turns} onZoom={setZoomed} />}
           </>
         )}
       </div>
@@ -506,11 +508,15 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
   );
 }
 
-/** What the game master said on a turn, with whose turn it was when that isn't obvious. */
+/**
+ * What the game master said on a turn, with whose turn it was when that isn't obvious. The
+ * last telling of a solved case says so, whether it's a chapter's ending or a solo case's last step.
+ */
 function Telling({ turn, solved = false }: { turn: TurnView; solved?: boolean }) {
-  const kicker =
-    turn.kind === "close"
-      ? { text: solved ? "Case solved" : "Putting it together", tone: "text-walk" }
+  const kicker = solved
+    ? { text: "Case solved", tone: "text-walk" }
+    : turn.kind === "close"
+      ? { text: "Putting it together", tone: "text-walk" }
       : turn.card
         ? { text: turn.playedBy === "partner" ? "Your partner found new evidence" : "New evidence", tone: "text-walk" }
         : turn.playedBy === "partner"
