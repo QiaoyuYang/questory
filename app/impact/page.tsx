@@ -34,8 +34,8 @@ export default function Impact() {
         <SectionHeading id="foot-title">On foot</SectionHeading>
         <StatTiles facts={WALKING_FACTS} className="mt-8" />
         <p className={TEXT}>
-          Evidence only turns up outdoors, so a case can&apos;t be solved from a chair. A quest that sends you somewhere
-          starts with a few minutes of walking, and the story gives you a reason to go back out.
+          Wren leads you outside, and a quest that sends you somewhere starts with a few minutes of walking. A case takes
+          a few walks, and the story gives you a reason to go back out.
         </p>
       </section>
 

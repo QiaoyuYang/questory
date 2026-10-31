@@ -284,10 +284,13 @@ export async function startStory(playerId: string, story: NewStory, photo: Photo
   turn.canonAdded = addCanon(state, check.text.facts, turn.number);
   turn.usage = check.usage ? [usage, check.usage] : [usage];
   state.bindings.push(...data.bindingsAdd.map((b) => ({ ...b, turn: turn.number })));
-  seat.quest = makeQuest(data.quest, activeBeatId(state.skeleton.beats, "a"), turn.number, {
-    at: turn.createdAt,
-    walkMinutes: config.walkMinutes,
-  });
+  seat.quest = makeQuest(
+    data.quest,
+    activeBeatId(state.skeleton.beats, "a"),
+    turn.number,
+    { at: turn.createdAt, walkMinutes: config.walkMinutes },
+    data.observations,
+  );
   seat.lastNarration = turn.narration;
   turn.quest = seat.quest;
   turn.overlay = overlay;
@@ -398,10 +401,13 @@ export async function resumeStory(state: StoryState, photo: Photo, playerId: str
     fresh.bindings.push(...data.bindingsAdd.map((b) => ({ ...b, turn: number })));
     if (data.planChange === "replan") fresh.skeleton.beats = replan(fresh.skeleton.beats, data.revisedBeats, seat.lead);
     if (fresh.skeleton.secret === secretSeen) reviseSecret(fresh, data.revisedSecret);
-    seat.quest = makeQuest(data.quest, activeBeatId(fresh.skeleton.beats, seat.lead), number, {
-      at: turn.createdAt,
-      walkMinutes: config.walkMinutes,
-    });
+    seat.quest = makeQuest(
+      data.quest,
+      activeBeatId(fresh.skeleton.beats, seat.lead),
+      number,
+      { at: turn.createdAt, walkMinutes: config.walkMinutes },
+      data.observations,
+    );
     seat.lastNarration = turn.narration;
     turn.quest = seat.quest;
     turn.overlay = overlay;

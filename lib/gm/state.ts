@@ -51,6 +51,8 @@ export const QuestStateSchema = z.object({
   issuedTurn: z.number(),
   /** An errand starts with a walk, and a photo for it counts only from this time on. Null for a closer look, and on older quests. */
   walkUntil: z.string().nullable().default(null),
+  /** What the photo it was given at showed, so the game master can tell whether an errand took the player somewhere else. Older quests have none. */
+  seen: z.array(z.string()).default([]),
 });
 export type QuestState = z.infer<typeof QuestStateSchema>;
 
