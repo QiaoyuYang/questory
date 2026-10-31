@@ -96,6 +96,8 @@ export type QuestView = {
   title: string;
   objective: string;
   targetMode: TargetMode;
+  /** For an errand, when the walk it starts with is over. */
+  walkUntil: string | null;
 };
 
 /** "end" is from when ending a walk closed its chapter; "close" tells a two-player chapter's ending. */

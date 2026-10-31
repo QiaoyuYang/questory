@@ -157,11 +157,17 @@ export const mockBrain: Brain = {
     };
   },
 
-  async photo(state, _photo, { playerId, mustProgress }) {
+  async photo(state, _photo, { playerId, mustProgress, onTheWay }) {
     await pause();
     const lead = seatOf(state, playerId)?.lead ?? "a";
     // Odd turns are side notes, even turns follow the quest; a forced turn bends the story.
-    const outcome = mustProgress ? "moves_story" : state.turnCount % 2 === 0 ? "follows_quest" : "side_note";
+    const outcome = onTheWay
+      ? "side_note"
+      : mustProgress
+        ? "moves_story"
+        : state.turnCount % 2 === 0
+          ? "follows_quest"
+          : "side_note";
     const moved = outcome !== "side_note";
     const done = stepsOn(state, lead);
     const { card, narration, fact } = STEPS[lead][Math.min(done, STEPS[lead].length - 1)];
@@ -172,7 +178,7 @@ export const mockBrain: Brain = {
     return {
       usage,
       data: {
-        where: "new_spot",
+        outdoors: true,
         outcome,
         narration: moved ? narration : SIDE_NOTE,
         card,

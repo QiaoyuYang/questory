@@ -54,6 +54,8 @@ export function getConfig() {
     dailyCallLimit: integer("DAILY_CALL_LIMIT", 200),
     /** Paid model calls per UTC day for one player (see lib/visitor.ts). 0 turns the limit off. */
     playerDailyCallLimit: integer("PLAYER_DAILY_CALL_LIMIT", 100),
+    /** Minutes of walking a quest that sends the player somewhere starts with. 0 turns it off. */
+    walkMinutes: integer("WALK_MINUTES", 3),
     storage: env("STORAGE", appwriteReady ? "appwrite" : "file") as "appwrite" | "file",
     dataDir: env("DATA_DIR", ".data"),
     appwrite: {
