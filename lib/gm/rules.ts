@@ -24,14 +24,24 @@ export const LEAD_STEPS = CHAPTERS * STEPS_PER_CHAPTER;
 export const TEAM_SIZE = 2;
 
 /**
- * How many photos in a row may leave the story where it is. The next photo has to move
- * it, so a player who ignores the quests still gets a story.
+ * How many photos in a row may leave the story where it is. The next photo taken on foot
+ * has to move it, so a player who ignores the quests still gets a story.
  */
 export const FREE_PHOTOS = 2;
 
 /** True when the player's coming photo has to move the story forward. */
 export function mustMoveStory(seat: Seat): boolean {
   return seat.photosSinceProgress >= FREE_PHOTOS;
+}
+
+/**
+ * A case only moves on foot: never from indoors, and on an errand only once the player has
+ * gone somewhere the photo it was given at didn't show. A closer look is meant to be
+ * where they stand.
+ */
+export function onFoot(where: PhotoTurnOut["where"], quest: QuestState | null): boolean {
+  if (where === "indoors") return false;
+  return where === "new_spot" || quest?.targetMode === "in_view";
 }
 
 export function seatOf(state: StoryState, playerId: string): Seat | null {
@@ -133,7 +143,7 @@ export function checked(written: CheckIn, check: CheckOut): CheckIn {
   };
 }
 
-export function makeQuest(out: QuestOut, beatId: string | null, turn: number): QuestState {
+export function makeQuest(out: QuestOut, beatId: string | null, turn: number, seen: string[] = []): QuestState {
   return {
     id: crypto.randomUUID(),
     title: out.title.trim(),
@@ -145,6 +155,7 @@ export function makeQuest(out: QuestOut, beatId: string | null, turn: number): Q
     successCriteria: out.successCriteria.trim(),
     beatId,
     issuedTurn: turn,
+    seen,
   };
 }
 
@@ -263,8 +274,10 @@ export function applyPhotoTurn(state: StoryState, data: PhotoTurnOut, turn: numb
   const seat = seatOf(state, playerId);
   if (!seat) throw new Error("That player has no seat in this story.");
   const { lead } = seat;
-  // The game master was told this photo has to count, so hold it to that.
-  const outcome: Outcome = data.outcome === "side_note" && mustMoveStory(seat) ? "moves_story" : data.outcome;
+  // A case only moves on foot. Past that, the game master was told this photo has to count, so hold it to that.
+  let outcome: Outcome = data.outcome;
+  if (!onFoot(data.where, seat.quest)) outcome = "side_note";
+  else if (outcome === "side_note" && mustMoveStory(seat)) outcome = "moves_story";
   const moved = outcome !== "side_note";
   const card = moved ? evidenceCard(data.card) : null;
 
@@ -303,7 +316,7 @@ export function applyPhotoTurn(state: StoryState, data: PhotoTurnOut, turn: numb
   }
 
   if (data.quest) {
-    seat.quest = makeQuest(data.quest, activeBeatId(state.skeleton.beats, lead), turn);
+    seat.quest = makeQuest(data.quest, activeBeatId(state.skeleton.beats, lead), turn, data.observations);
     return { outcome, canonAdded, questIssued: true, card };
   }
   // A side note can leave the open quest in place; a step forward has used it up.

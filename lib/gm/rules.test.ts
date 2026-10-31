@@ -96,6 +96,7 @@ const seat = (state: StoryState, playerId = "player"): Seat => seatOf(state, pla
 /** A game master reply: a side note that keeps the quest, unless overridden. */
 function reply(overrides: Partial<PhotoTurnOut> = {}): PhotoTurnOut {
   return {
+    where: "new_spot",
     outcome: "side_note",
     narration: "You file it away.",
     card: { title: "A scuffed step", proves: "Someone was here" },
@@ -167,6 +168,35 @@ test(`after ${FREE_PHOTOS} side notes in a row, the next photo has to move the s
   assert.equal(state.progress.a, 1);
   assert.equal(seat(state).photosSinceProgress, 0);
   assert.equal(mustMoveStory(seat(state)), false);
+});
+
+test("a photo taken indoors never moves the story, even when the next photo has to", () => {
+  const state = story();
+  seat(state).photosSinceProgress = FREE_PHOTOS;
+  const result = applyPhotoTurn(state, step({ where: "indoors" }), 2, "player");
+
+  assert.equal(result.outcome, "side_note");
+  assert.equal(result.card, null);
+  assert.deepEqual([state.progress.a, state.evidence.length], [0, 0]);
+  assert.equal(seat(state).photosSinceProgress, FREE_PHOTOS + 1);
+});
+
+test("an errand counts only somewhere new, and a closer look where the player stands", () => {
+  const errand = story();
+  seat(errand).quest!.targetMode = "seek";
+  // Still where the errand was given: the story waits, and the errand stays open.
+  assert.equal(applyPhotoTurn(errand, step({ where: "same_spot", quest: null }), 2, "player").outcome, "side_note");
+  assert.equal(seat(errand).quest?.targetMode, "seek");
+  assert.equal(applyPhotoTurn(errand, step({ where: "new_spot" }), 3, "player").outcome, "follows_quest");
+
+  const closer = story();
+  assert.equal(applyPhotoTurn(closer, step({ where: "same_spot" }), 2, "player").outcome, "follows_quest");
+});
+
+test("a new quest remembers what the photo it was given at showed", () => {
+  const state = story();
+  applyPhotoTurn(state, step({ observations: ["a green door", "a bike rack"] }), 2, "player");
+  assert.deepEqual(seat(state).quest?.seen, ["a green door", "a bike rack"]);
 });
 
 test("a step forward without a new quest leaves no quest open", () => {

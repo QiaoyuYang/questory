@@ -39,7 +39,7 @@ How a photo becomes part of the story
 
 How you run the game
 - You plan the arc; the world supplies the scenes. Your hidden plan holds the secret, premise, antagonist, stakes, ending and beats. Each beat is the next find on its lead: a place or object in the story's world that ordinary real things can stand in for, and what finding it tells the player ("the cupboard the spare key came from", "the shop doorway where the swap happened"). How it looks comes from the player's photo when they find it, so a beat never says how it looks. Never tie a beat to a particular real place, and never write it as "find proof that...".
-- Questory is played outside, on foot, and the walking is the point. If a photo is taken indoors, play along, then make the next quest a seek quest that leads outside, through a door and onto the street, never a closer look at something indoors.
+- Questory is played outside, on foot, and the walking is the point, so a case only moves on foot. A photo taken indoors is always a side_note, and so is a photo for a seek quest that shows the place the quest was given at, since the player hasn't gone anywhere yet. A closer look is meant to be where they stand. After an indoor photo, make the next quest a seek quest that leads outside, through a door and onto the street, never a closer look at something indoors.
 - Every photo is a move in the story. Never reject a photo or tell the player it is wrong. Decide what it means:
   - follows_quest: it does what the current quest asked. Be generous: the right idea, an unclear photo or a similar object all count.
   - moves_story: it does not match the quest, but it shows something you can build the next step on. Use it.
@@ -49,7 +49,7 @@ How you run the game
 - There are two kinds of quest:
   - in_view, a closer look: pick something clearly visible in this photo and ask about a detail the player can only make out up close, such as a number, a word, a symbol, a crack or what is painted on it. Whatever they find becomes part of the story. Name the thing with a short noun phrase.
   - seek, a small errand a short walk away, a block or two: find something that can be the next find ("a bench by a bus stop", "a door with a number on it"), or go somewhere and photograph what is there.
-  Choose a closer look when something in this photo can be the next find, and an errand otherwise, so over a walk the two mix. Errands keep the walk moving; closer looks show the player you can see their world.
+  Choose a closer look when something in this photo can be the next find, and an errand otherwise, but never two closer looks in a row. Errands keep the walk moving; closer looks show the player you can see their world.
 - What the player finds becomes canon. Make it fit after the fact: "The faded mailbox. Of course." Put every new fact your narration establishes in canonAdd.
 - Canon is permanent. Never contradict an established fact.
 - Prefer rebinding to replanning. Replan only when the plan no longer fits the world (the player wandered off, the target is gone) or when a photo offers something much better. A replan keeps the number of beats on the lead. Present every change as a revelation ("the meeting was a setup"), never as a correction.
@@ -225,6 +225,7 @@ export function describeState(state: StoryState, options: { includePlan: boolean
     lines.push(`- Title: ${quest.title}`);
     lines.push(`- Objective: ${quest.objective}`);
     lines.push(`- Target (${quest.targetMode}): ${quest.targetDescription} [phrase: "${quest.targetPhrase}"]`);
+    if (quest.seen.length) lines.push(`- Given at a photo that showed: ${quest.seen.join("; ")}`);
     if (options.includePlan) lines.push(`- Success criteria: ${quest.successCriteria}`);
     lines.push(`- Beat: ${quest.beatId ?? "none"}; issued on turn ${quest.issuedTurn} (the story is on turn ${state.turnCount})`);
   }
@@ -303,7 +304,7 @@ export function photoTask(state: StoryState, options: { playerId: string; mustPr
     singleLead(state) ? "" : "A step forward finishes the active beat on the player's own lead.",
     questTarget(state, lead),
     options.mustProgress
-      ? `The player has sent ${seat?.photosSinceProgress ?? 0} photos in a row that did not move the story. This one must: choose follows_quest or moves_story, and build the next step on what it shows.`
+      ? `The player has sent ${seat?.photosSinceProgress ?? 0} photos in a row that did not move the story. Unless this one was taken indoors, or for a seek quest where it was given, it must: choose follows_quest or moves_story, and build the next step on what it shows.`
       : "",
     stepEnding(state, lead),
   ]

@@ -49,6 +49,8 @@ export const QuestStateSchema = z.object({
   successCriteria: z.string(),
   beatId: z.string().nullable(),
   issuedTurn: z.number(),
+  /** What the photo it was given at showed, so an errand counts only once the player has gone somewhere else. Older quests have none. */
+  seen: z.array(z.string()).default([]),
 });
 export type QuestState = z.infer<typeof QuestStateSchema>;
 

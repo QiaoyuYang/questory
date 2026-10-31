@@ -191,10 +191,16 @@ const planFields = {
 
 /** Any photo the player sends during a walk. */
 export const PhotoTurnSchema = z.object({
+  // Decided before the outcome, which depends on it.
+  where: z
+    .enum(["indoors", "same_spot", "new_spot"])
+    .describe(
+      "Where the player took this photo. indoors: inside a building. same_spot: outdoors, showing the place the current quest was given at, or a closer look at part of it. new_spot: outdoors anywhere else. When you can't tell, choose new_spot.",
+    ),
   outcome: z
     .enum(["follows_quest", "moves_story", "side_note"])
     .describe(
-      "follows_quest: the photo does what the current quest asked; be generous. moves_story: it does not, but you use what it shows to move the story forward anyway. side_note: it adds atmosphere or a small detail but nothing new about the case, and the story waits for more.",
+      "follows_quest: the photo does what the current quest asked; be generous. moves_story: it does not, but you use what it shows to move the story forward anyway. side_note: it adds atmosphere or a small detail but nothing new about the case, and the story waits for more. Always side_note when where is indoors, or same_spot for a seek quest.",
     ),
   narration: prose(NARRATION).describe(
     "2 or 3 short sentences, at most 40 words: what the player found here and the one new thing it tells them. For a side_note, 1 or 2 sentences: a moment at this place, and nothing about what is still to find.",

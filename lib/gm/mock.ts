@@ -172,6 +172,7 @@ export const mockBrain: Brain = {
     return {
       usage,
       data: {
+        where: "new_spot",
         outcome,
         narration: moved ? narration : SIDE_NOTE,
         card,
