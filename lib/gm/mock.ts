@@ -3,7 +3,7 @@ import type { Usage } from "@/lib/meta/structured";
 import { unfinishedBeats, type Lead } from "./beats";
 import type { Brain } from "./brain";
 import type { CardOut, QuestOut } from "./outputs";
-import { CHAPTERS, STEPS_PER_CHAPTER, seatOf, singleLead, stepsLeft } from "./rules";
+import { seatOf, singleLead, stepsLeft } from "./rules";
 import type { StoryState } from "./state";
 
 /**
@@ -115,17 +115,17 @@ function stepsOn(state: StoryState, lead: Lead): number {
 }
 
 export const mockBrain: Brain = {
-  async genesis(_genre, _theme, mode) {
+  async genesis(_genre, _theme, mode, size) {
     await pause();
     const findsOut = ["How the bell left the door", "Who could reach it", "Where it is now and why"];
     const steps = (lead: Lead, chapter: number) =>
       Object.fromEntries(
         STEPS[lead]
-          .slice(chapter * STEPS_PER_CHAPTER, (chapter + 1) * STEPS_PER_CHAPTER)
+          .slice(chapter * size.steps, (chapter + 1) * size.steps)
           .map((s, i) => [`step${i + 1}`, `Find ${s.card.title.toLowerCase()}`]),
       );
     const chapters = Object.fromEntries(
-      Array.from({ length: CHAPTERS }, (_, i) => [
+      Array.from({ length: size.chapters }, (_, i) => [
         `chapter${i + 1}`,
         { findsOut: findsOut[i] ?? "", steps: steps("a", i), ...(mode === "team" ? { partnerSteps: steps("b", i) } : {}) },
       ]),

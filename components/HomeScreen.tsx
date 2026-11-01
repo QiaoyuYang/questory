@@ -283,7 +283,7 @@ export function HomeScreen({ stories, mode, onStarted, onOpen, onRemove }: Props
             <h2 id="walk-title" className="font-sign text-xl font-bold">
               How long do you want to walk?
             </h2>
-            <WalkLengthPicker value={walk} onChange={setWalk} hint className="mt-3" />
+            <WalkLengthPicker value={walk} onChange={setWalk} className="mt-3" />
           </section>
 
           {mode === "mock" && (

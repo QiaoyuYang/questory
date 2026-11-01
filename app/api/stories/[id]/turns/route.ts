@@ -3,7 +3,6 @@ import { storyView, turnView } from "@/lib/gm/state";
 import { BadRequestError, readPhoto } from "@/lib/photo";
 import { loadInvitedStory, loadStory, readJsonBody, respond } from "@/lib/server";
 import type { PhotoUpload } from "@/lib/types";
-import { WALK_LENGTHS, isWalkLength } from "@/lib/walk";
 
 export const maxDuration = 120;
 
@@ -17,9 +16,7 @@ export const maxDuration = 120;
 export async function POST(request: Request, ctx: RouteContext<"/api/stories/[id]/turns">) {
   return respond(async () => {
     const { id } = await ctx.params;
-    const body = await readJsonBody<PhotoUpload & { kind: string; code: string; takeOver: boolean; walk: unknown }>(
-      request,
-    );
+    const body = await readJsonBody<PhotoUpload & { kind: string; code: string; takeOver: boolean }>(request);
     if (body.kind !== "photo" && body.kind !== "resume") throw new BadRequestError('kind must be "photo" or "resume".');
     const photo = readPhoto(body);
     const joining = body.kind === "resume" && typeof body.code === "string";
@@ -27,10 +24,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/stories/[id
     const { state, turn } =
       body.kind === "photo"
         ? await takePhoto(story, photo, playerId)
-        : await resumeStory(story, photo, playerId, {
-            takeOver: body.takeOver === true,
-            walkLength: isWalkLength(body.walk) ? body.walk : WALK_LENGTHS[0],
-          });
+        : await resumeStory(story, photo, playerId, { takeOver: body.takeOver === true });
     return { story: storyView(state, playerId), turn: turnView(turn, playerId, state.playerId) };
   });
 }

@@ -6,10 +6,10 @@ import { Segmented } from "./Segmented";
 
 const KEY = "questory:walk-length";
 
-const OPTIONS: { id: `${WalkLength}`; label: string; hint: string }[] = [
-  { id: "15", label: "15 min", hint: "A quick break" },
-  { id: "30", label: "30 min", hint: "A walk after lunch" },
-  { id: "60", label: "1 hour", hint: "A longer walk" },
+const OPTIONS: { id: `${WalkLength}`; label: string }[] = [
+  { id: "15", label: "15 min" },
+  { id: "30", label: "30 min" },
+  { id: "60", label: "1 hour" },
 ];
 
 /** How long to walk, starting from what was chosen last on this phone. */
@@ -35,20 +35,17 @@ export function useWalkLength(): [WalkLength, (length: WalkLength) => void] {
   return [length, choose];
 }
 
-type Props = { value: WalkLength; onChange: (length: WalkLength) => void; hint?: boolean; className?: string };
+type Props = { value: WalkLength; onChange: (length: WalkLength) => void; className?: string };
 
-/** How long the player wants to walk, which sets how far away a quest that sends them somewhere is. */
-export function WalkLengthPicker({ value, onChange, hint = false, className = "" }: Props) {
-  const selected = String(value) as `${WalkLength}`;
+/** How long the player wants to walk, which sets how big the case is. */
+export function WalkLengthPicker({ value, onChange, className = "" }: Props) {
   return (
-    <div className={className}>
-      <Segmented
-        label="How long a walk"
-        options={OPTIONS}
-        value={selected}
-        onChange={(id) => onChange(Number(id) as WalkLength)}
-      />
-      {hint && <p className="mt-2 text-sm text-concrete">{OPTIONS.find((option) => option.id === selected)?.hint}</p>}
-    </div>
+    <Segmented
+      label="How long a walk"
+      options={OPTIONS}
+      value={String(value) as `${WalkLength}`}
+      onChange={(id) => onChange(Number(id) as WalkLength)}
+      className={className}
+    />
   );
 }

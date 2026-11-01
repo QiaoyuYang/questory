@@ -11,17 +11,6 @@ export function isWalkLength(value: unknown): value is WalkLength {
   return WALK_LENGTHS.includes(value as WalkLength);
 }
 
-/**
- * How many minutes' walk away an errand's find is, for each walk length: round numbers, and few
- * enough that a chapter's errands and closer looks fit in about the time chosen.
- */
-const ERRAND_MINUTES: Record<WalkLength, number> = { 15: 5, 30: 10, 60: 15 };
-
-/** Walks from before the choice count as the shortest. */
-export function errandMinutes(length: number | null): number {
-  return ERRAND_MINUTES[isWalkLength(length) ? length : WALK_LENGTHS[0]];
-}
-
 /** A longer gap between two turns means the player stopped and came back later. */
 export const BREAK_MINUTES = 45;
 

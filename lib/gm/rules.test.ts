@@ -3,8 +3,8 @@ import { test } from "node:test";
 import { activateNextBeat, completeActiveBeat, makeBeats } from "./beats";
 import type { PhotoTurnOut, QuestOut } from "./outputs";
 import {
+  CASE_SIZES,
   FREE_PHOTOS,
-  STEPS_PER_CHAPTER,
   applyClose,
   applyPhotoTurn,
   checked,
@@ -33,6 +33,9 @@ const QUEST: QuestOut = {
 
 const goals = (count: number) => Array.from({ length: count }, (_, i) => `goal ${i + 1}`);
 
+/** The full case, which an hour's walk gets and older cases have. */
+const HOUR = CASE_SIZES[60];
+
 /** A one-player story on turn 1 with an open quest and beats b1 (active) to b3. */
 function story(beats: string[] = ["one", "two", "three"]): StoryState {
   const state: StoryState = {
@@ -42,6 +45,7 @@ function story(beats: string[] = ["one", "two", "three"]): StoryState {
     genre: "mystery",
     theme: null,
     mode: "solo",
+    size: HOUR,
     createdAt: "2026-10-26T00:00:00.000Z",
     updatedAt: "2026-10-26T00:00:00.000Z",
     title: "The courier's letter",
@@ -85,7 +89,7 @@ function shared(): StoryState {
   const state = story([]);
   state.mode = "team";
   state.invite = { code: "code", size: 2 };
-  const steps = 3 * STEPS_PER_CHAPTER;
+  const steps = HOUR.chapters * HOUR.steps;
   state.skeleton.beats = activateNextBeat([...makeBeats(goals(steps), 0, "a"), ...makeBeats(goals(steps), steps, "b")]);
   state.partners.push("friend");
   return state;
@@ -209,11 +213,18 @@ test("an errand counts only once the walk it starts with is over, and a closer l
   assert.equal(makeQuest({ ...QUEST, targetMode: "seek" }, null, 1, { ...at(0), walkMinutes: 0 }).walkUntil, null);
 });
 
-test("a walk keeps how long the player chose to walk", () => {
-  const state = story();
-  seat(state).walking = false;
-  startWalk(state, "player", { lead: "a", joining: false, newChapter: false }, state.createdAt, 60);
-  assert.equal(seat(state).walkLength, 60);
+test("a 15-minute case is one chapter of three steps, solved on the walk", () => {
+  const state = story(goals(3));
+  state.size = CASE_SIZES[15];
+  for (let turn = 2; turn < 5; turn++) applyPhotoTurn(state, step(), turn, "player");
+  assert.deepEqual([state.status, seat(state).walking], ["complete", false]);
+});
+
+test("a 30-minute case ends its first chapter after three steps", () => {
+  const state = story(goals(6));
+  state.size = CASE_SIZES[30];
+  for (let turn = 2; turn < 5; turn++) applyPhotoTurn(state, step(), turn, "player");
+  assert.deepEqual([state.closed, state.status], [1, "active"]);
 });
 
 test("a step forward without a new quest leaves no quest open", () => {
@@ -224,13 +235,13 @@ test("a step forward without a new quest leaves no quest open", () => {
   assert.equal(seat(state).walking, true);
 });
 
-test(`step ${STEPS_PER_CHAPTER} of a chapter closes it, which saves the recap and ends the walk`, () => {
-  const state = story(goals(3 * STEPS_PER_CHAPTER));
-  for (let turn = 2; turn < 1 + STEPS_PER_CHAPTER; turn++) {
+test(`step ${HOUR.steps} of a chapter closes it, which saves the recap and ends the walk`, () => {
+  const state = story(goals(HOUR.chapters * HOUR.steps));
+  for (let turn = 2; turn < 1 + HOUR.steps; turn++) {
     applyPhotoTurn(state, step(), turn, "player");
     assert.equal(seat(state).walking, true);
   }
-  applyPhotoTurn(state, step({ recap: " You found the door. " }), 1 + STEPS_PER_CHAPTER, "player");
+  applyPhotoTurn(state, step({ recap: " You found the door. " }), 1 + HOUR.steps, "player");
   assert.equal(seat(state).walking, false);
   assert.equal(seat(state).quest, null);
   assert.equal(state.recap, "You found the door.");
@@ -245,7 +256,7 @@ test(`step ${STEPS_PER_CHAPTER} of a chapter closes it, which saves the recap an
 });
 
 test("ending a walk partway leaves the chapter open for the next one", () => {
-  const state = story(goals(3 * STEPS_PER_CHAPTER));
+  const state = story(goals(HOUR.chapters * HOUR.steps));
   applyPhotoTurn(state, step(), 2, "player");
   seat(state).walking = false;
   assert.deepEqual(planWalk(state, "player"), { lead: "a", joining: false, newChapter: false });
@@ -285,14 +296,14 @@ test("a two-player chapter waits for both leads, whichever finishes first, then 
     startWalk(state, "friend", { lead: "b", joining: false, newChapter: false }, state.createdAt);
     const second = first === "player" ? "friend" : "player";
     let turn = 2;
-    for (let i = 0; i < STEPS_PER_CHAPTER; i++) applyPhotoTurn(state, step(), turn++, first);
+    for (let i = 0; i < HOUR.steps; i++) applyPhotoTurn(state, step(), turn++, first);
     // The first player's part is done: their walk ends, but the chapter doesn't.
     assert.equal(seat(state, first).walking, false);
     assert.equal(state.closed, 0);
     assert.equal(closeDue(state), false);
     assert.match((planWalk(state, first) as { refused: string }).refused, /Your part of chapter 1 is done/);
 
-    for (let i = 0; i < STEPS_PER_CHAPTER; i++) applyPhotoTurn(state, step({ recap: "ignored" }), turn++, second);
+    for (let i = 0; i < HOUR.steps; i++) applyPhotoTurn(state, step({ recap: "ignored" }), turn++, second);
     // Neither photo told the ending: it waits to be told on its own.
     assert.equal(state.recap, "");
     assert.equal(closeDue(state), true);
@@ -313,7 +324,7 @@ test("the last two-player chapter's ending solves the case", () => {
   const state = shared();
   state.skeleton.beats = state.skeleton.beats.map((beat) => ({ ...beat, status: "done" }));
   state.chapter = 3;
-  state.progress = { a: STEPS_PER_CHAPTER, b: STEPS_PER_CHAPTER };
+  state.progress = { a: HOUR.steps, b: HOUR.steps };
   state.closed = 2;
   assert.equal(closeDue(state), true);
   applyClose(state, { narration: "Teo did it.", recap: "You two solved it.", revisedSecret: " Teo hid it. " });
@@ -324,7 +335,7 @@ test("the last two-player chapter's ending solves the case", () => {
 test("a friend who hasn't joined leaves their lead free, so the owner can walk it too", () => {
   const state = shared();
   state.partners = [];
-  for (let turn = 2; turn < 2 + STEPS_PER_CHAPTER; turn++) applyPhotoTurn(state, step(), turn, "player");
+  for (let turn = 2; turn < 2 + HOUR.steps; turn++) applyPhotoTurn(state, step(), turn, "player");
   assert.match((planWalk(state, "player") as { refused: string }).refused, /Your part/);
   assert.deepEqual(planWalk(state, "player", true), { lead: "b", joining: false, newChapter: false });
 

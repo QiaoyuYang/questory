@@ -25,7 +25,7 @@ const MOMENTS = [
     src: "/landing/case.webp",
     alt: "The case so far: two pieces of evidence found, and ten more to find before the answer.",
     title: "Solve the case",
-    text: "Collect evidence over a few walks, until it points to the answer.",
+    text: "Collect evidence until it points to the answer, by the end of your walk.",
   },
 ];
 

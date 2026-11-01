@@ -7,11 +7,13 @@ import type { Photo } from "@/lib/photo";
 import { getStore } from "@/lib/store";
 import { GAME_MASTER, type NewInvite, type TargetOverlay } from "@/lib/types";
 import { visitorKey } from "@/lib/visitor";
-import { errandMinutes, type WalkLength } from "@/lib/walk";
+import type { WalkLength } from "@/lib/walk";
 import { activateNextBeat, activeBeatId, makeBeats, replan } from "./beats";
 import { getBrain } from "./brain";
 import { storyCardPrompt } from "./card";
 import {
+  CASE_SIZES,
+  ERRAND_MINUTES,
   TEAM_SIZE,
   addCanon,
   applyClose,
@@ -33,7 +35,7 @@ import {
   type WalkPlan,
 } from "./rules";
 import type { CheckIn } from "./outputs";
-import type { QuestState, Seat, StoryState, TurnRecord } from "./state";
+import type { QuestState, StoryState, TurnRecord } from "./state";
 
 export class GameRuleError extends Error {}
 
@@ -207,14 +209,15 @@ type NewStory = {
   walkLength: WalkLength;
 };
 
-/** When a photo was sent, and how long the errands on `seat`'s walk start with. */
-function clockFor(config: Config, seat: Seat, at: string): Clock {
-  return { at, walkMinutes: config.walkTimer ? errandMinutes(seat.walkLength) : 0 };
+/** When a photo was sent, and how long an errand given then has to be walked. */
+function clockFor(config: Config, at: string): Clock {
+  return { at, walkMinutes: config.walkTimer ? ERRAND_MINUTES : 0 };
 }
 
 /** First photo of a new story: the game master invents the plan and the first quest. */
 export async function startStory(playerId: string, story: NewStory, photo: Photo) {
   const { genre, theme, mode } = story;
+  const size = CASE_SIZES[story.walkLength];
   const config = getConfig();
   const store = getStore();
   let invite = story.invite;
@@ -231,7 +234,7 @@ export async function startStory(playerId: string, story: NewStory, photo: Photo
   await spendCall(config, playerId);
   const [photoId, genesis] = await Promise.all([
     store.putImage({ bytes: photo.bytes, mime: photo.mime }),
-    getBrain(config).genesis(genre, theme, mode, story.walkLength, photo.dataUrl),
+    getBrain(config).genesis(genre, theme, mode, size, photo.dataUrl),
   ]);
   const { data, usage } = genesis;
   logUsage("genesis", usage);
@@ -242,7 +245,7 @@ export async function startStory(playerId: string, story: NewStory, photo: Photo
   ]);
 
   const createdAt = now();
-  const plan = planOf(data);
+  const plan = planOf(data, size);
   // A two-player case gets the second lead, for the friend.
   const lead = makeBeats(plan.lead, 0, "a");
   const partnerLead = mode === "team" ? makeBeats(plan.partnerLead, lead.length, "b") : [];
@@ -253,6 +256,7 @@ export async function startStory(playerId: string, story: NewStory, photo: Photo
     genre,
     theme,
     mode,
+    size,
     createdAt,
     updatedAt: createdAt,
     title: data.title.trim(),
@@ -285,7 +289,7 @@ export async function startStory(playerId: string, story: NewStory, photo: Photo
     recap: "",
     status: "active",
   };
-  const seat = startWalk(state, playerId, { lead: "a", joining: false, newChapter: false }, createdAt, story.walkLength);
+  const seat = startWalk(state, playerId, { lead: "a", joining: false, newChapter: false }, createdAt);
 
   const turn = newTurn(state, "genesis", playerId, photoId, photo);
   turn.narration = check.text.narration.trim();
@@ -297,7 +301,7 @@ export async function startStory(playerId: string, story: NewStory, photo: Photo
     data.quest,
     activeBeatId(state.skeleton.beats, "a"),
     turn.number,
-    clockFor(config, seat, turn.createdAt),
+    clockFor(config, turn.createdAt),
     data.observations,
   );
   seat.lastNarration = turn.narration;
@@ -319,7 +323,7 @@ export async function takePhoto(state: StoryState, photo: Photo, playerId: strin
   const config = getConfig();
   const store = getStore();
   await spendCall(config, playerId);
-  const clock = clockFor(config, seat, now());
+  const clock = clockFor(config, now());
   const [photoId, played] = await Promise.all([
     store.putImage({ bytes: photo.bytes, mime: photo.mime }),
     getBrain(config).photo(state, photo.dataUrl, {
@@ -372,7 +376,7 @@ export async function resumeStory(
   state: StoryState,
   photo: Photo,
   playerId: string,
-  options: { takeOver?: boolean; walkLength: WalkLength },
+  options: { takeOver?: boolean } = {},
 ) {
   const plan = allowed(planWalk(state, playerId, options.takeOver));
   const config = getConfig();
@@ -383,7 +387,7 @@ export async function resumeStory(
   await spendCall(config, playerId);
   // The game master sees the walk as it starts: the player on their lead, in the chapter they're playing.
   const starting = structuredClone(state);
-  startWalk(starting, playerId, plan, now(), options.walkLength);
+  startWalk(starting, playerId, plan, now());
   const takeOver = !plan.newChapter && plan.lead !== (seatOf(state, playerId)?.lead ?? plan.lead);
 
   const [photoId, resumed] = await Promise.all([
@@ -410,7 +414,7 @@ export async function resumeStory(
   return commitTurn(state.id, turn, (fresh, number) => {
     // The other player may have opened the chapter meanwhile, or taken the free lead.
     const plan = allowed(planWalk(fresh, playerId, options.takeOver));
-    const seat = startWalk(fresh, playerId, plan, turn.createdAt, options.walkLength);
+    const seat = startWalk(fresh, playerId, plan, turn.createdAt);
     turn.chapter = fresh.chapter;
     turn.canonAdded = addCanon(fresh, check.text.facts, number);
     fresh.bindings.push(...data.bindingsAdd.map((b) => ({ ...b, turn: number })));
@@ -420,7 +424,7 @@ export async function resumeStory(
       data.quest,
       activeBeatId(fresh.skeleton.beats, seat.lead),
       number,
-      clockFor(config, seat, turn.createdAt),
+      clockFor(config, turn.createdAt),
       data.observations,
     );
     seat.lastNarration = turn.narration;
@@ -487,7 +491,6 @@ export async function joinStory(state: StoryState, playerId: string): Promise<St
         startedAt: null,
         photosSinceProgress: 0,
         lastNarration: "",
-        walkLength: null,
       });
     }
   });
