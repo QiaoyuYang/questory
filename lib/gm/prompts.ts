@@ -1,5 +1,6 @@
 import "server-only";
 import { GAME_MASTER, GENRES } from "@/lib/types";
+import { WALK_LENGTHS, errandMinutes } from "@/lib/walk";
 import { openBeats, unfinishedBeats, type Lead } from "./beats";
 import type { CheckIn } from "./outputs";
 import { CHAPTERS, LEAD_STEPS, STEPS_PER_CHAPTER, otherLead, seatOf, singleLead, stepsLeft } from "./rules";
@@ -39,7 +40,8 @@ How a photo becomes part of the story
 
 How you run the game
 - You plan the arc; the world supplies the scenes. Your hidden plan holds the secret, premise, antagonist, stakes, ending and beats. Each beat is the next find on its lead: a place or object in the story's world that ordinary real things can stand in for, and what finding it tells the player ("the cupboard the spare key came from", "the shop doorway where the swap happened"). How it looks comes from the player's photo when they find it, so a beat never says how it looks. Never tie a beat to a particular real place, and never write it as "find proof that...".
-- Questory is played outside, on foot, and the walking is the point, so a case only moves on foot. A photo taken indoors is always a side_note. An errand starts with a few minutes of walking, which the game counts down for the player, and a photo sent before then is a side_note too: a moment on the way, which keeps the errand. A closer look is meant to be where they stand. After an indoor photo, make the next quest a seek quest that leads outside, through a door and onto the street, never a closer look at something indoors.
+- Questory is played outside, on foot, and the walking is the point. If a photo is taken indoors, play along, then make the next quest a seek quest that leads outside, through a door and onto the street, never a closer look at something indoors.
+- An errand starts with a few minutes of walking, which the game counts down for the player, and has to be done somewhere else. A photo sent before the walk is over, or one that shows the place the errand was given at, is a side_note: a moment on the way, which keeps the errand. A closer look is meant to be where the player stands.
 - Every photo is a move in the story. Never reject a photo or tell the player it is wrong. Decide what it means:
   - follows_quest: it does what the current quest asked. Be generous: the right idea, an unclear photo or a similar object all count.
   - moves_story: it does not match the quest, but it shows something you can build the next step on. Use it.
@@ -215,6 +217,7 @@ export function describeState(state: StoryState, options: { includePlan: boolean
     lines.push(
       `${chapter}: the player has ${stepsLeft(state, lead)} of ${STEPS_PER_CHAPTER} steps forward left on their lead${partner}. ${seat.photosSinceProgress} photos since their last step forward.`,
     );
+    if (seat.walking) lines.push(walkLine(seat.walkLength ?? WALK_LENGTHS[0]));
   } else {
     lines.push(`${chapter}.`);
   }
@@ -225,6 +228,7 @@ export function describeState(state: StoryState, options: { includePlan: boolean
     lines.push(`- Title: ${quest.title}`);
     lines.push(`- Objective: ${quest.objective}`);
     lines.push(`- Target (${quest.targetMode}): ${quest.targetDescription} [phrase: "${quest.targetPhrase}"]`);
+    if (quest.seen.length) lines.push(`- Given at a photo that showed: ${quest.seen.join("; ")}`);
     if (options.includePlan) lines.push(`- Success criteria: ${quest.successCriteria}`);
     lines.push(`- Beat: ${quest.beatId ?? "none"}; issued on turn ${quest.issuedTurn} (the story is on turn ${state.turnCount})`);
   }
@@ -246,6 +250,7 @@ export function genesisTask(
   genre: string,
   theme: string | null,
   mode: "solo" | "team",
+  walkLength: number,
   style = OPENING_STYLES[Math.floor(Math.random() * OPENING_STYLES.length)],
 ): string {
   return [
@@ -259,10 +264,16 @@ export function genesisTask(
       : "",
     `The opening, at most 50 words, tells the player what happened, who wants it solved, and what to find out. ${style} Everything else can wait for later steps. Introduce anyone you name, unless everyone knows them from a famous story.`,
     "The first quest is for the first beat on this player's lead: ask for a real thing that can be that find. If the photo is outdoors and something in it could be that find, make it a closer look (in_view), so they see right away that you can see their world; otherwise make it an errand (seek). If the photo is indoors, make it an errand that takes them outside.",
+    walkLine(walkLength),
     "Put every fact the opening establishes in canonAdd.",
   ]
     .filter(Boolean)
     .join("\n");
+}
+
+/** How far an errand sends the player, from how long they chose to walk. */
+function walkLine(walkLength: number): string {
+  return `The player chose a ${walkLength}-minute walk, so an errand starts with ${errandMinutes(walkLength)} minutes of walking: send them about that far.`;
 }
 
 /** What the coming step means for the chapter and the story, if it's the last of either. */
@@ -306,7 +317,7 @@ export function photoTask(
     : [
         questTarget(state, lead),
         options.mustProgress
-          ? `The player has sent ${seat?.photosSinceProgress ?? 0} photos in a row that did not move the story. Unless this one was taken indoors, it must: choose follows_quest or moves_story, and build the next step on what it shows.`
+          ? `The player has sent ${seat?.photosSinceProgress ?? 0} photos in a row that did not move the story. Unless this one is for an errand and shows the place it was given at, it must: choose follows_quest or moves_story, and build the next step on what it shows.`
           : "",
         stepEnding(state, lead),
       ];

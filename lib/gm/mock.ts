@@ -178,7 +178,7 @@ export const mockBrain: Brain = {
     return {
       usage,
       data: {
-        outdoors: true,
+        samePlace: false,
         outcome,
         narration: moved ? narration : SIDE_NOTE,
         card,

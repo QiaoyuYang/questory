@@ -5,6 +5,7 @@ import { BadRequestError, readPhoto } from "@/lib/photo";
 import { getPlayerId, readJsonBody, respond } from "@/lib/server";
 import { getStore } from "@/lib/store";
 import { GAME_MASTER, cleanTheme, isGenre, readNewInvite, type PhotoUpload } from "@/lib/types";
+import { WALK_LENGTHS, isWalkLength } from "@/lib/walk";
 
 export const maxDuration = 120;
 
@@ -41,7 +42,9 @@ export async function GET(request: Request) {
  */
 export async function POST(request: Request) {
   return respond(async () => {
-    const body = await readJsonBody<PhotoUpload & { genre: string; theme: string; mode: string; invite: unknown }>(request);
+    const body = await readJsonBody<
+      PhotoUpload & { genre: string; theme: string; mode: string; invite: unknown; walk: unknown }
+    >(request);
     if (!isGenre(body.genre)) throw new BadRequestError("Pick a kind of story.");
     const theme = body.genre === "custom" ? cleanTheme(body.theme) : "";
     if (body.genre === "custom" && !theme) throw new BadRequestError(`Tell ${GAME_MASTER} what kind of story you'd like.`);
@@ -49,7 +52,12 @@ export async function POST(request: Request) {
     const playerId = await getPlayerId();
     const mode = body.mode === "team" ? "team" : "solo";
     const invite = mode === "team" ? readNewInvite(body.invite) : null;
-    const { state, turn } = await startStory(playerId, { genre: body.genre, theme: theme || null, mode, invite }, photo);
+    const walkLength = isWalkLength(body.walk) ? body.walk : WALK_LENGTHS[0];
+    const { state, turn } = await startStory(
+      playerId,
+      { genre: body.genre, theme: theme || null, mode, invite, walkLength },
+      photo,
+    );
     return { story: storyView(state, playerId), turn: turnView(turn, playerId, playerId) };
   });
 }

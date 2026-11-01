@@ -22,9 +22,9 @@ Questory is made for phones. Open [questory.run](https://questory.run) on your p
 
 A case is a question with a hidden answer, like where a bakery's sourdough starter went. You solve it by photographing what Wren asks for.
 
-1. Pick a theme for the story.
+1. Pick a theme for the story, and how long you want to walk: 15 minutes, 30 minutes or an hour.
 2. Take a photo of where you are. Wren writes the opening of the case around it, then leads you outside if you aren't already.
-3. Follow the quests to find evidence. A quest asks for a closer look at something in your last photo, or sends you a few minutes' walk away to find something. A photo that moves the case forward becomes a piece of evidence. Evidence only turns up outdoors, and a quest that sends you somewhere starts with a few minutes of walking.
+3. Follow the quests to find evidence. A quest asks for a closer look at something in your last photo, or sends you a few minutes' walk away to find something. A photo that moves the case forward becomes a piece of evidence. A quest that sends you somewhere starts with a quarter of your walk, counted down on screen, and counts only from somewhere else.
 4. Collect evidence until it points to the answer. A case has multiple chapters, and finishing one ends your walk. You can stop at any time, and your next photo picks the story up wherever you are.
 
 To play with a friend, choose "With a friend" and send them the link. The case gets two leads, one for each of you: two trails of evidence that end at the same answer. You each follow yours on your own walk, at the same time or not, and a chapter ends once you have both finished your part.
@@ -62,7 +62,7 @@ Every case has one question and a hidden answer that Wren decides at the start. 
 
 Each photo becomes something it could reasonably be in the story. After two side notes in a row, the next photo that can count moves the story whatever it shows. If the evidence stops pointing to the answer, Wren changes the answer to fit everything found so far.
 
-A case only moves on foot. Wren notes whether each photo was taken outdoors, and indoors the story waits. A quest that sends you somewhere starts with a walk of a few minutes, counted down on screen (`WALK_MINUTES`, 3 by default), and a photo sent before it's over is a side note. A closer look counts where you stand, and Wren never gives two in a row. Time stands in for distance, so the game never needs your location.
+A case moves on foot. A quest that sends you somewhere starts with a quarter of the walk you chose, counted down on screen: about 4, 8 or 15 minutes (`WALK_TIMER=off` turns it off). Wren is told how long your walk is, so it sends you about that far. Each quest remembers what its photo showed, so Wren can tell whether the next photo was taken somewhere else. A photo sent before the walk is over, or from the same place, is a side note. After a photo taken indoors, the next quest leads outside. A closer look counts where you stand, and Wren never gives two in a row. Time and the photos stand in for distance, so the game never needs your location.
 
 Wren's memory of a case has three layers, saved after every photo:
 

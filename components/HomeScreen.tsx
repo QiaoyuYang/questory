@@ -21,6 +21,7 @@ import { CaptureButton, usePhotoVerb } from "./CaptureButton";
 import { CameraIcon, ChevronRightIcon } from "./icons";
 import { Segmented } from "./Segmented";
 import { Sheet } from "./Sheet";
+import { WalkLengthPicker, useWalkLength } from "./WalkLengthPicker";
 import { Wordmark } from "./Wordmark";
 import { Working } from "./Working";
 
@@ -56,6 +57,7 @@ export function HomeScreen({ stories, mode, onStarted, onOpen, onRemove }: Props
   const [genre, setGenre] = useState<GenreId>("mystery");
   const verb = usePhotoVerb();
   const [theme, setTheme] = useState("");
+  const [walk, setWalk] = useWalkLength();
   // A link already sent means the next case is probably with that friend.
   const [players, setPlayers] = useState<Players>(() => (peekNextInvite()?.sent ? "team" : "solo"));
   // The story id of the link sent from here, until its case begins.
@@ -90,7 +92,7 @@ export function HomeScreen({ stories, mode, onStarted, onOpen, onRemove }: Props
     try {
       const invite = players === "team" ? nextInvite() : null;
       const result = await api.startStory(
-        { genre, theme, mode: players, invite: invite && { storyId: invite.storyId, code: invite.code } },
+        { genre, theme, mode: players, invite: invite && { storyId: invite.storyId, code: invite.code }, walk },
         photo,
       );
       if (invite) forgetNextInvite();
@@ -275,6 +277,13 @@ export function HomeScreen({ stories, mode, onStarted, onOpen, onRemove }: Props
                 )}
               </>
             )}
+          </section>
+
+          <section className="mt-7" aria-labelledby="walk-title">
+            <h2 id="walk-title" className="font-sign text-xl font-bold">
+              How long do you want to walk?
+            </h2>
+            <WalkLengthPicker value={walk} onChange={setWalk} hint className="mt-3" />
           </section>
 
           {mode === "mock" && (

@@ -3,6 +3,22 @@
  * permissions. The browser uses it, so it has no server-only imports.
  */
 
+/** How long a player can choose to walk: a quick break, a walk after lunch or a longer walk. */
+export const WALK_LENGTHS = [15, 30, 60] as const;
+export type WalkLength = (typeof WALK_LENGTHS)[number];
+
+export function isWalkLength(value: unknown): value is WalkLength {
+  return WALK_LENGTHS.includes(value as WalkLength);
+}
+
+/**
+ * Minutes of walking an errand starts with: a quarter of the walk, so its errands and closer
+ * looks fill about the time chosen. Walks from before the choice count as the shortest.
+ */
+export function errandMinutes(length: number | null): number {
+  return Math.round((length ?? WALK_LENGTHS[0]) / 4);
+}
+
 /** A longer gap between two turns means the player stopped and came back later. */
 export const BREAK_MINUTES = 45;
 

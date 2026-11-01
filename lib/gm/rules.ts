@@ -144,8 +144,17 @@ export function checked(written: CheckIn, check: CheckOut): CheckIn {
   };
 }
 
-/** A new quest. An errand given at `clock.at` starts with a walk; a closer look is where the player stands. */
-export function makeQuest(out: QuestOut, beatId: string | null, turn: number, clock?: Clock): QuestState {
+/**
+ * A new quest, given at a photo that showed `seen`. An errand given at `clock.at` starts with
+ * a walk; a closer look is where the player stands.
+ */
+export function makeQuest(
+  out: QuestOut,
+  beatId: string | null,
+  turn: number,
+  clock?: Clock,
+  seen: string[] = [],
+): QuestState {
   const walks = out.targetMode === "seek" && clock !== undefined && clock.walkMinutes > 0;
   return {
     id: crypto.randomUUID(),
@@ -159,6 +168,7 @@ export function makeQuest(out: QuestOut, beatId: string | null, turn: number, cl
     beatId,
     issuedTurn: turn,
     walkUntil: walks ? new Date(Date.parse(clock.at) + clock.walkMinutes * 60_000).toISOString() : null,
+    seen,
   };
 }
 
@@ -222,14 +232,20 @@ export function planWalk(state: StoryState, playerId: string, takeOver = false):
   return { lead, joining, newChapter };
 }
 
-/** Put the player on their walk. Mutates `state` and returns the player's seat. */
-export function startWalk(state: StoryState, playerId: string, plan: WalkPlan, at: string): Seat {
+/** Put the player on a walk of `walkLength` minutes. Mutates `state` and returns the player's seat. */
+export function startWalk(
+  state: StoryState,
+  playerId: string,
+  plan: WalkPlan,
+  at: string,
+  walkLength: number | null = null,
+): Seat {
   if (plan.joining) state.partners.push(playerId);
   if (plan.newChapter) {
     state.chapter += 1;
     state.progress = { a: 0, b: 0 };
   }
-  const walk = { lead: plan.lead, quest: null, walking: true, startedAt: at, photosSinceProgress: 0 };
+  const walk = { lead: plan.lead, quest: null, walking: true, startedAt: at, photosSinceProgress: 0, walkLength };
   let seat = seatOf(state, playerId);
   if (seat) Object.assign(seat, walk);
   else {
@@ -286,12 +302,14 @@ export function applyPhotoTurn(
   const seat = seatOf(state, playerId);
   if (!seat) throw new Error("That player has no seat in this story.");
   const { lead } = seat;
-  // A case only moves on foot: outdoors, and on an errand once its walk is over. A photo on the
-  // way keeps the errand and its walk. Past that, the game master was told this photo has to
-  // count, so hold it to that.
+  // An errand counts once its walk is over, and only from somewhere other than where it was
+  // given. Until then a photo keeps the errand and its walk. Past that, the game master was
+  // told this photo has to count, so hold it to that.
   const early = clock !== undefined && onTheWay(seat.quest, clock.at);
+  const stayed = seat.quest?.targetMode === "seek" && data.samePlace;
+  const counts = !early && !stayed;
   let outcome: Outcome = data.outcome;
-  if (!data.outdoors || early) outcome = "side_note";
+  if (!counts) outcome = "side_note";
   else if (outcome === "side_note" && mustMoveStory(seat)) outcome = "moves_story";
   const moved = outcome !== "side_note";
   const card = moved ? evidenceCard(data.card) : null;
@@ -330,8 +348,8 @@ export function applyPhotoTurn(
     return { outcome, canonAdded, questIssued: false, card };
   }
 
-  if (data.quest && !early) {
-    seat.quest = makeQuest(data.quest, activeBeatId(state.skeleton.beats, lead), turn, clock);
+  if (data.quest && counts) {
+    seat.quest = makeQuest(data.quest, activeBeatId(state.skeleton.beats, lead), turn, clock, data.observations);
     return { outcome, canonAdded, questIssued: true, card };
   }
   // A side note can leave the open quest in place; a step forward has used it up.

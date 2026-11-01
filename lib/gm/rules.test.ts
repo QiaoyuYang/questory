@@ -96,7 +96,7 @@ const seat = (state: StoryState, playerId = "player"): Seat => seatOf(state, pla
 /** A game master reply: a side note that keeps the quest, unless overridden. */
 function reply(overrides: Partial<PhotoTurnOut> = {}): PhotoTurnOut {
   return {
-    outdoors: true,
+    samePlace: false,
     outcome: "side_note",
     narration: "You file it away.",
     card: { title: "A scuffed step", proves: "Someone was here" },
@@ -170,15 +170,25 @@ test(`after ${FREE_PHOTOS} side notes in a row, the next photo has to move the s
   assert.equal(mustMoveStory(seat(state)), false);
 });
 
-test("a photo taken indoors never moves the story, even when the next photo has to", () => {
-  const state = story();
-  seat(state).photosSinceProgress = FREE_PHOTOS;
-  const result = applyPhotoTurn(state, step({ outdoors: false }), 2, "player");
+test("an errand counts only from somewhere other than where it was given, and a closer look anywhere", () => {
+  const errand = story();
+  seat(errand).quest!.targetMode = "seek";
+  seat(errand).photosSinceProgress = FREE_PHOTOS;
+  // Still where the errand was given: the story waits, even when the next photo has to move it,
+  // and the errand stays open.
+  const stayed = applyPhotoTurn(errand, step({ samePlace: true }), 2, "player");
+  assert.deepEqual([stayed.outcome, stayed.questIssued, stayed.card], ["side_note", false, null]);
+  assert.equal(seat(errand).quest?.targetMode, "seek");
+  assert.equal(applyPhotoTurn(errand, step(), 3, "player").outcome, "follows_quest");
 
-  assert.equal(result.outcome, "side_note");
-  assert.equal(result.card, null);
-  assert.deepEqual([state.progress.a, state.evidence.length], [0, 0]);
-  assert.equal(seat(state).photosSinceProgress, FREE_PHOTOS + 1);
+  const closer = story();
+  assert.equal(applyPhotoTurn(closer, step({ samePlace: true }), 2, "player").outcome, "follows_quest");
+});
+
+test("a new quest remembers what the photo it was given at showed", () => {
+  const state = story();
+  applyPhotoTurn(state, step({ observations: ["a green door", "a bike rack"] }), 2, "player");
+  assert.deepEqual(seat(state).quest?.seen, ["a green door", "a bike rack"]);
 });
 
 test("an errand counts only once the walk it starts with is over, and a closer look at once", () => {
@@ -197,6 +207,13 @@ test("an errand counts only once the walk it starts with is over, and a closer l
   assert.equal(seat(closer).quest?.walkUntil, null);
   // With no minutes set, an errand starts with no walk.
   assert.equal(makeQuest({ ...QUEST, targetMode: "seek" }, null, 1, { ...at(0), walkMinutes: 0 }).walkUntil, null);
+});
+
+test("a walk keeps how long the player chose to walk", () => {
+  const state = story();
+  seat(state).walking = false;
+  startWalk(state, "player", { lead: "a", joining: false, newChapter: false }, state.createdAt, 60);
+  assert.equal(seat(state).walkLength, 60);
 });
 
 test("a step forward without a new quest leaves no quest open", () => {
