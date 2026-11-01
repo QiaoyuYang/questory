@@ -1,22 +1,34 @@
-<div align="center">
-
-# Questory
-
-**Turn photos of your street into a story.**
-
-Wren, an AI agent, builds a case from what you photograph. Every case is solved on foot.
-
-Play at [questory.run](https://questory.run)
-
-<p>
-  <img src="public/landing/opening.webp" width="240" alt="A photo of a bakery on a street corner, with the opening of a case below it">
-  <img src="public/landing/evidence.webp" width="240" alt="The photo redrawn as an evidence card called The waiting bench">
-  <img src="public/landing/case.webp" width="240" alt="The case so far: two pieces of evidence found, and ten more to find">
+<p align="center">
+  <a href="https://questory.run"><img src="docs/banner.webp" alt="Questory: turn your walk into a story. Wren, an AI agent, builds a case from what you photograph, and every case is solved on foot. A street photo sits beside the same photo painted as a piece of evidence."></a>
 </p>
 
-</div>
+<p align="center">
+  <a href="https://questory.run"><img src="https://img.shields.io/badge/play-questory.run-f4bc1c?style=flat-square&labelColor=1e2227" alt="Play at questory.run"></a>
+  <a href="https://github.com/QiaoyuYang/questory/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/QiaoyuYang/questory/ci.yml?branch=main&style=flat-square&label=CI&labelColor=1e2227" alt="CI status"></a>
+  <a href="#how-it-works"><img src="https://img.shields.io/badge/Meta_Model_API-Muse_%2B_SAM_3.1-0866ff?style=flat-square&logo=meta&logoColor=white&labelColor=1e2227" alt="Built on the Meta Model API: Muse and SAM 3.1"></a>
+  <a href="https://nextjs.org"><img src="https://img.shields.io/badge/Next.js-16-edeff1?style=flat-square&logo=nextdotjs&logoColor=white&labelColor=1e2227" alt="Next.js 16"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-9ba2ab?style=flat-square&labelColor=1e2227" alt="MIT License"></a>
+</p>
+
+<p align="center">
+  <a href="https://questory.run">Play</a> ·
+  <a href="#how-to-play">How to play</a> ·
+  <a href="#how-it-works">How it works</a> ·
+  <a href="#privacy">Privacy</a> ·
+  <a href="#run-it-locally">Run it locally</a>
+</p>
 
 Questory is made for phones. Open [questory.run](https://questory.run) on your phone, or scan the code it shows on a computer. It was built on the Meta Model API for the Meta Global AI Developer Hackathon. Why it's played on foot, and with a friend, is on the [Impact page](https://questory.run/impact).
+
+<div align="center">
+<table>
+  <tr>
+    <td align="center"><img src="public/landing/opening.webp" width="230" alt="A photo of a bakery on a street corner, with the opening of a case below it"><br>Your street starts the case</td>
+    <td align="center"><img src="public/landing/evidence.webp" width="230" alt="The photo redrawn as an evidence card called The waiting bench"><br>Follow the quests</td>
+    <td align="center"><img src="public/landing/case.webp" width="230" alt="The case so far: two pieces of evidence found, and ten more to find"><br>Solve the case</td>
+  </tr>
+</table>
+</div>
 
 ## How to play
 
@@ -75,6 +87,15 @@ Wren's memory of a case has three layers, saved after every photo:
 ### Two players
 
 A shared case has two leads that come at the answer from different sides, such as how it was done and who could have done it. Each player follows one lead without waiting for the other. Wren sees what both have found and mentions a partner's find when it changes what yours means. A chapter's ending is written from everything both players found. Each photo is saved under a short per-story lock, so two photos sent at once both count. If your friend hasn't joined by the time your part is done, you can play their lead too.
+
+<div align="center">
+<table>
+  <tr>
+    <td align="center"><img src="public/landing/join.webp" width="230" alt="A friend's phone opening the invite: a case about prize tomato seedlings missing from a shed, with a button to join it"><br>Send a friend the link</td>
+    <td align="center"><img src="public/landing/together.webp" width="230" alt="The shared case: one piece of evidence found by you and one by your partner, with 22 more to find"><br>Solve it together</td>
+  </tr>
+</table>
+</div>
 
 ## Privacy
 
