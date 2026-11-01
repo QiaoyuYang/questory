@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { WALK_LENGTHS, chapterTurns, currentChapter, errandMinutes, formatMinutes, formatPlaces, walkStats } from "./walk";
 
-test("an errand starts with a quarter of the walk, and a walk from before the choice counts as the shortest", () => {
-  assert.deepEqual(WALK_LENGTHS.map(errandMinutes), [4, 8, 15]);
-  assert.equal(errandMinutes(null), 4);
+test("an errand's find is 5, 10 or 15 minutes away, and a walk from before the choice counts as the shortest", () => {
+  assert.deepEqual(WALK_LENGTHS.map(errandMinutes), [5, 10, 15]);
+  assert.equal(errandMinutes(null), 5);
 });
 
 const at = (minute: number) => new Date(Date.UTC(2026, 10, 1, 9, 0) + minute * 60_000).toISOString();

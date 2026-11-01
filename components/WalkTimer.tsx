@@ -2,13 +2,10 @@
 
 import { useEffect, useState } from "react";
 
-/** "2:05" */
-function minutesAndSeconds(ms: number): string {
-  const seconds = Math.ceil(ms / 1000);
-  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
-}
-
-/** Counts down the walk an errand starts with. A photo for the errand counts once it's over. */
+/**
+ * How far off an errand's find is, in whole minutes, counting down from when the quest was given.
+ * A photo for the errand counts once the player gets there.
+ */
 export function WalkTimer({ until }: { until: string }) {
   const end = Date.parse(until);
   const [left, setLeft] = useState(() => end - Date.now());
@@ -18,15 +15,10 @@ export function WalkTimer({ until }: { until: string }) {
     return () => clearInterval(timer);
   }, [end]);
 
+  const minutes = Math.ceil(left / 60_000);
   return (
     <p role="timer" className="mt-1 text-sm font-semibold text-lane">
-      {left > 0 ? (
-        <>
-          Keep walking for <span className="tabular-nums">{minutesAndSeconds(left)}</span>, then look for it
-        </>
-      ) : (
-        "Look for it now"
-      )}
+      {minutes > 0 ? `About ${minutes} minute${minutes === 1 ? "" : "s"} away` : "You should be close now"}
     </p>
   );
 }

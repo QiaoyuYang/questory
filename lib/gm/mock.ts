@@ -103,6 +103,7 @@ const STEPS: Record<Lead, Step[]> = {
 };
 
 const SIDE_NOTE = "You file it away. It isn't a chalk arrow, but now you're looking twice at every wall.";
+const ON_THE_WAY = "Rosa walks past here every morning on her way to the market. The arrows lead further on.";
 
 function questAfter(found: number): QuestOut {
   return QUESTS[found % QUESTS.length];
@@ -180,7 +181,7 @@ export const mockBrain: Brain = {
       data: {
         samePlace: false,
         outcome,
-        narration: moved ? narration : SIDE_NOTE,
+        narration: moved ? narration : onTheWay ? ON_THE_WAY : SIDE_NOTE,
         card,
         observations: ["(mock mode)"],
         canonAdd: moved ? [fact] : [],

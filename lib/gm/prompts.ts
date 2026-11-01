@@ -41,7 +41,7 @@ How a photo becomes part of the story
 How you run the game
 - You plan the arc; the world supplies the scenes. Your hidden plan holds the secret, premise, antagonist, stakes, ending and beats. Each beat is the next find on its lead: a place or object in the story's world that ordinary real things can stand in for, and what finding it tells the player ("the cupboard the spare key came from", "the shop doorway where the swap happened"). How it looks comes from the player's photo when they find it, so a beat never says how it looks. Never tie a beat to a particular real place, and never write it as "find proof that...".
 - Questory is played outside, on foot, and the walking is the point. If a photo is taken indoors, play along, then make the next quest a seek quest that leads outside, through a door and onto the street, never a closer look at something indoors.
-- An errand starts with a few minutes of walking, which the game counts down for the player, and has to be done somewhere else. A photo sent before the walk is over, or one that shows the place the errand was given at, is a side_note: a moment on the way, which keeps the errand. A closer look is meant to be where the player stands.
+- An errand's find is a walk away, as many minutes as you're told, and the story gives it a reason to be that far: where someone went, where something was taken, where the trail leads next ("the van stops ten minutes down the road"). The game counts the minutes down for the player, so never tell them how long to keep walking. A photo sent before they get there, or one that shows the place the errand was given at, is a side_note: something they pass on the way, which keeps the errand. A closer look is meant to be where the player stands.
 - Every photo is a move in the story. Never reject a photo or tell the player it is wrong. Decide what it means:
   - follows_quest: it does what the current quest asked. Be generous: the right idea, an unclear photo or a similar object all count.
   - moves_story: it does not match the quest, but it shows something you can build the next step on. Use it.
@@ -273,7 +273,7 @@ export function genesisTask(
 
 /** How far an errand sends the player, from how long they chose to walk. */
 function walkLine(walkLength: number): string {
-  return `The player chose a ${walkLength}-minute walk, so an errand starts with ${errandMinutes(walkLength)} minutes of walking: send them about that far.`;
+  return `The player chose a ${walkLength}-minute walk, so an errand's find is ${errandMinutes(walkLength)} minutes' walk away.`;
 }
 
 /** What the coming step means for the chapter and the story, if it's the last of either. */
@@ -309,10 +309,10 @@ export function photoTask(
 ): string {
   const seat = seatOf(state, options.playerId);
   const lead = seat?.lead ?? "a";
-  // On the walk an errand starts with, a photo can only be a moment on the way.
+  // Until the player reaches an errand's find, a photo can only be something they pass on the way.
   const step = options.onTheWay
     ? [
-        "The player is still on the walk their errand started with, so this photo can't move the story yet. It is a side_note, a moment on the way, and keeps the current quest (quest null).",
+        "The player is on their way to the errand's find and hasn't reached it yet, so this photo can't move the story. It is a side_note, something they pass on the way, and keeps the current quest (quest null). Here you may say the find is further on, but never hurry them.",
       ]
     : [
         questTarget(state, lead),
