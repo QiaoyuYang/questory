@@ -24,14 +24,25 @@ export const LEAD_STEPS = CHAPTERS * STEPS_PER_CHAPTER;
 export const TEAM_SIZE = 2;
 
 /**
- * How many photos in a row may leave the story where it is. The next photo has to move
- * it, so a player who ignores the quests still gets a story.
+ * How many photos in a row may leave the story where it is. The next photo that can count
+ * has to move it, so a player who ignores the quests still gets a story.
  */
 export const FREE_PHOTOS = 2;
 
 /** True when the player's coming photo has to move the story forward. */
 export function mustMoveStory(seat: Seat): boolean {
   return seat.photosSinceProgress >= FREE_PHOTOS;
+}
+
+/**
+ * When a photo was sent, and the minutes of walking an errand starts with. Time stands in
+ * for distance, so the game never needs the player's location.
+ */
+export type Clock = { at: string; walkMinutes: number };
+
+/** True while the player is still on the walk their errand started with, so a photo for it can't count yet. */
+export function onTheWay(quest: QuestState | null, at: string): boolean {
+  return quest?.walkUntil != null && Date.parse(at) < Date.parse(quest.walkUntil);
 }
 
 export function seatOf(state: StoryState, playerId: string): Seat | null {
@@ -133,7 +144,9 @@ export function checked(written: CheckIn, check: CheckOut): CheckIn {
   };
 }
 
-export function makeQuest(out: QuestOut, beatId: string | null, turn: number): QuestState {
+/** A new quest. An errand given at `clock.at` starts with a walk; a closer look is where the player stands. */
+export function makeQuest(out: QuestOut, beatId: string | null, turn: number, clock?: Clock): QuestState {
+  const walks = out.targetMode === "seek" && clock !== undefined && clock.walkMinutes > 0;
   return {
     id: crypto.randomUUID(),
     title: out.title.trim(),
@@ -145,6 +158,7 @@ export function makeQuest(out: QuestOut, beatId: string | null, turn: number): Q
     successCriteria: out.successCriteria.trim(),
     beatId,
     issuedTurn: turn,
+    walkUntil: walks ? new Date(Date.parse(clock.at) + clock.walkMinutes * 60_000).toISOString() : null,
   };
 }
 
@@ -258,13 +272,27 @@ export function reviseSecret(state: StoryState, revised: string | null) {
   if (secret) state.skeleton.secret = secret;
 }
 
-/** Apply the game master's reading of `playerId`'s photo to the story. Mutates `state`. */
-export function applyPhotoTurn(state: StoryState, data: PhotoTurnOut, turn: number, playerId: string): PhotoTurnResult {
+/**
+ * Apply the game master's reading of `playerId`'s photo to the story. Mutates `state`.
+ * `clock` says when the photo was sent; without it, errands start with no walk.
+ */
+export function applyPhotoTurn(
+  state: StoryState,
+  data: PhotoTurnOut,
+  turn: number,
+  playerId: string,
+  clock?: Clock,
+): PhotoTurnResult {
   const seat = seatOf(state, playerId);
   if (!seat) throw new Error("That player has no seat in this story.");
   const { lead } = seat;
-  // The game master was told this photo has to count, so hold it to that.
-  const outcome: Outcome = data.outcome === "side_note" && mustMoveStory(seat) ? "moves_story" : data.outcome;
+  // A case only moves on foot: outdoors, and on an errand once its walk is over. A photo on the
+  // way keeps the errand and its walk. Past that, the game master was told this photo has to
+  // count, so hold it to that.
+  const early = clock !== undefined && onTheWay(seat.quest, clock.at);
+  let outcome: Outcome = data.outcome;
+  if (!data.outdoors || early) outcome = "side_note";
+  else if (outcome === "side_note" && mustMoveStory(seat)) outcome = "moves_story";
   const moved = outcome !== "side_note";
   const card = moved ? evidenceCard(data.card) : null;
 
@@ -302,8 +330,8 @@ export function applyPhotoTurn(state: StoryState, data: PhotoTurnOut, turn: numb
     return { outcome, canonAdded, questIssued: false, card };
   }
 
-  if (data.quest) {
-    seat.quest = makeQuest(data.quest, activeBeatId(state.skeleton.beats, lead), turn);
+  if (data.quest && !early) {
+    seat.quest = makeQuest(data.quest, activeBeatId(state.skeleton.beats, lead), turn, clock);
     return { outcome, canonAdded, questIssued: true, card };
   }
   // A side note can leave the open quest in place; a step forward has used it up.

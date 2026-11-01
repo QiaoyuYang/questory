@@ -69,8 +69,9 @@ export default function HowItWorks() {
           ))}
         </ol>
         <p className={TEXT}>
-          A photo that moves the case forward becomes a piece of evidence. The case is solved when the evidence points to
-          the answer, usually over a few walks.
+          A photo that moves the case forward becomes a piece of evidence. Evidence only turns up outdoors, and a quest
+          that sends you somewhere starts with a few minutes of walking, counted down on screen. The case is solved when
+          the evidence points to the answer, usually over a few walks.
         </p>
       </section>
 

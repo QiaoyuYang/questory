@@ -19,6 +19,7 @@ import {
   closeDue,
   makeQuest,
   mustMoveStory,
+  onTheWay,
   planOf,
   planWalk,
   reviseSecret,
@@ -283,7 +284,10 @@ export async function startStory(playerId: string, story: NewStory, photo: Photo
   turn.canonAdded = addCanon(state, check.text.facts, turn.number);
   turn.usage = check.usage ? [usage, check.usage] : [usage];
   state.bindings.push(...data.bindingsAdd.map((b) => ({ ...b, turn: turn.number })));
-  seat.quest = makeQuest(data.quest, activeBeatId(state.skeleton.beats, "a"), turn.number);
+  seat.quest = makeQuest(data.quest, activeBeatId(state.skeleton.beats, "a"), turn.number, {
+    at: turn.createdAt,
+    walkMinutes: config.walkMinutes,
+  });
   seat.lastNarration = turn.narration;
   turn.quest = seat.quest;
   turn.overlay = overlay;
@@ -303,9 +307,14 @@ export async function takePhoto(state: StoryState, photo: Photo, playerId: strin
   const config = getConfig();
   const store = getStore();
   await spendCall(config, playerId);
+  const clock = { at: now(), walkMinutes: config.walkMinutes };
   const [photoId, played] = await Promise.all([
     store.putImage({ bytes: photo.bytes, mime: photo.mime }),
-    getBrain(config).photo(state, photo.dataUrl, { playerId, mustProgress: mustMoveStory(seat) }),
+    getBrain(config).photo(state, photo.dataUrl, {
+      playerId,
+      mustProgress: mustMoveStory(seat),
+      onTheWay: onTheWay(seat.quest, clock.at),
+    }),
   ]);
   const { data, usage } = played;
   logUsage("photo", usage);
@@ -331,7 +340,7 @@ export async function takePhoto(state: StoryState, photo: Photo, playerId: strin
     if (!seatOf(fresh, playerId)?.walking) throw new GameRuleError("This walk has ended.");
     // If the other player's turn changed the answer meanwhile, this reply never saw it.
     const revisedSecret = fresh.skeleton.secret === secretSeen ? data.revisedSecret : null;
-    const applied = applyPhotoTurn(fresh, { ...reply, revisedSecret }, number, playerId);
+    const applied = applyPhotoTurn(fresh, { ...reply, revisedSecret }, number, playerId, clock);
     turn.chapter = fresh.chapter;
     turn.outcome = applied.outcome;
     turn.card = applied.card;
@@ -389,7 +398,10 @@ export async function resumeStory(state: StoryState, photo: Photo, playerId: str
     fresh.bindings.push(...data.bindingsAdd.map((b) => ({ ...b, turn: number })));
     if (data.planChange === "replan") fresh.skeleton.beats = replan(fresh.skeleton.beats, data.revisedBeats, seat.lead);
     if (fresh.skeleton.secret === secretSeen) reviseSecret(fresh, data.revisedSecret);
-    seat.quest = makeQuest(data.quest, activeBeatId(fresh.skeleton.beats, seat.lead), number);
+    seat.quest = makeQuest(data.quest, activeBeatId(fresh.skeleton.beats, seat.lead), number, {
+      at: turn.createdAt,
+      walkMinutes: config.walkMinutes,
+    });
     seat.lastNarration = turn.narration;
     turn.quest = seat.quest;
     turn.overlay = overlay;

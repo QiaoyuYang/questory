@@ -96,6 +96,7 @@ const seat = (state: StoryState, playerId = "player"): Seat => seatOf(state, pla
 /** A game master reply: a side note that keeps the quest, unless overridden. */
 function reply(overrides: Partial<PhotoTurnOut> = {}): PhotoTurnOut {
   return {
+    outdoors: true,
     outcome: "side_note",
     narration: "You file it away.",
     card: { title: "A scuffed step", proves: "Someone was here" },
@@ -167,6 +168,35 @@ test(`after ${FREE_PHOTOS} side notes in a row, the next photo has to move the s
   assert.equal(state.progress.a, 1);
   assert.equal(seat(state).photosSinceProgress, 0);
   assert.equal(mustMoveStory(seat(state)), false);
+});
+
+test("a photo taken indoors never moves the story, even when the next photo has to", () => {
+  const state = story();
+  seat(state).photosSinceProgress = FREE_PHOTOS;
+  const result = applyPhotoTurn(state, step({ outdoors: false }), 2, "player");
+
+  assert.equal(result.outcome, "side_note");
+  assert.equal(result.card, null);
+  assert.deepEqual([state.progress.a, state.evidence.length], [0, 0]);
+  assert.equal(seat(state).photosSinceProgress, FREE_PHOTOS + 1);
+});
+
+test("an errand counts only once the walk it starts with is over, and a closer look at once", () => {
+  const at = (minute: number) => ({ at: `2026-10-26T00:0${minute}:00.000Z`, walkMinutes: 3 });
+  const errand = story();
+  applyPhotoTurn(errand, step({ quest: { ...QUEST, targetMode: "seek" } }), 2, "player", at(0));
+  assert.equal(seat(errand).quest?.walkUntil, "2026-10-26T00:03:00.000Z");
+
+  // On the way: the story waits, and the errand keeps its walk, even if a new quest comes back.
+  const early = applyPhotoTurn(errand, step(), 3, "player", at(2));
+  assert.deepEqual([early.outcome, early.questIssued, seat(errand).quest?.walkUntil], ["side_note", false, "2026-10-26T00:03:00.000Z"]);
+  assert.equal(applyPhotoTurn(errand, step(), 4, "player", at(3)).outcome, "follows_quest");
+
+  const closer = story();
+  applyPhotoTurn(closer, step(), 2, "player", at(0));
+  assert.equal(seat(closer).quest?.walkUntil, null);
+  // With no minutes set, an errand starts with no walk.
+  assert.equal(makeQuest({ ...QUEST, targetMode: "seek" }, null, 1, { ...at(0), walkMinutes: 0 }).walkUntil, null);
 });
 
 test("a step forward without a new quest leaves no quest open", () => {

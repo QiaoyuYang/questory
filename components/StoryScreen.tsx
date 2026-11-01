@@ -18,6 +18,7 @@ import { Sheet } from "./Sheet";
 import { Solution } from "./Solution";
 import { StorySheet } from "./StorySheet";
 import { WalkSummary } from "./WalkSummary";
+import { WalkTimer } from "./WalkTimer";
 import { Working } from "./Working";
 
 type Loaded = { story: StoryView; turns: TurnView[] };
@@ -385,6 +386,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
                   <p className="mt-0.5 line-clamp-3 font-sign text-lg leading-snug font-semibold text-pretty">
                     {quest.objective}
                   </p>
+                  {quest.walkUntil && <WalkTimer until={quest.walkUntil} />}
                 </div>
               </div>
             ) : (

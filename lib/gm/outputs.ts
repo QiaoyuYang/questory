@@ -62,10 +62,10 @@ export const QuestOutSchema = z.object({
   targetMode: z
     .enum(["in_view", "seek"])
     .describe(
-      "in_view: a closer look at something clearly visible in this photo. seek: a small errand nearby that ends in a photo.",
+      "in_view: a closer look at something clearly visible in this photo. seek: an errand a few minutes' walk away that ends in a photo.",
     ),
   objective: text(SENTENCE).describe(
-    'One sentence of at most 16 words naming the real thing to find, e.g. "Find a bench or a bus stop nearby and photograph it." For in_view, ask about a detail they can only make out up close.',
+    'One sentence of at most 16 words naming the real thing to find. For seek, send them on first, e.g. "Walk on down the street, then find a bench or a bus stop." For in_view, ask about a detail they can only make out up close.',
   ),
 
   targetPhrase: text(LABEL).describe(
@@ -191,10 +191,12 @@ const planFields = {
 
 /** Any photo the player sends during a walk. */
 export const PhotoTurnSchema = z.object({
+  // Decided before the outcome, which depends on it.
+  outdoors: z.boolean().describe("Whether the player took this photo outdoors. When you can't tell, true."),
   outcome: z
     .enum(["follows_quest", "moves_story", "side_note"])
     .describe(
-      "follows_quest: the photo does what the current quest asked; be generous. moves_story: it does not, but you use what it shows to move the story forward anyway. side_note: it adds atmosphere or a small detail but nothing new about the case, and the story waits for more.",
+      "follows_quest: the photo does what the current quest asked; be generous. moves_story: it does not, but you use what it shows to move the story forward anyway. side_note: it adds atmosphere or a small detail but nothing new about the case, and the story waits for more. Always side_note when outdoors is false.",
     ),
   narration: prose(NARRATION).describe(
     "2 or 3 short sentences, at most 40 words: what the player found here and the one new thing it tells them. For a side_note, 1 or 2 sentences: a moment at this place, and nothing about what is still to find.",

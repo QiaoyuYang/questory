@@ -49,6 +49,8 @@ export const QuestStateSchema = z.object({
   successCriteria: z.string(),
   beatId: z.string().nullable(),
   issuedTurn: z.number(),
+  /** An errand starts with a walk, and a photo for it counts only from this time on. Null for a closer look, and on older quests. */
+  walkUntil: z.string().nullable().default(null),
 });
 export type QuestState = z.infer<typeof QuestStateSchema>;
 
@@ -194,6 +196,7 @@ export function questView(quest: QuestState | null): QuestView | null {
     title: quest.title,
     objective: quest.objective,
     targetMode: quest.targetMode,
+    walkUntil: quest.walkUntil,
   };
 }
 

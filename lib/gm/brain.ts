@@ -25,11 +25,14 @@ export type Result<T> = { data: T; usage: Usage };
 export type Brain = {
   /** `theme` is the player's own idea, for a custom story. A "team" case gets a lead for each player. */
   genesis(genre: string, theme: string | null, mode: "solo" | "team", photo: string): Promise<Result<GenesisOut>>;
-  /** Any photo during `playerId`'s walk. `mustProgress` is set when this photo has to move the story. */
+  /**
+   * Any photo during `playerId`'s walk. `mustProgress` is set when this photo has to move the
+   * story, and `onTheWay` while the walk their errand started with isn't over, so it can't.
+   */
   photo(
     state: StoryState,
     photo: string,
-    options: { playerId: string; mustProgress: boolean },
+    options: { playerId: string; mustProgress: boolean; onTheWay: boolean },
   ): Promise<Result<PhotoTurnOut>>;
   /**
    * The first photo of a walk. `newPlayer` is a partner's first walk on the case; `newChapter`
