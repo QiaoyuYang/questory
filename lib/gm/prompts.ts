@@ -1,5 +1,6 @@
 import "server-only";
 import { GAME_MASTER, GENRES } from "@/lib/types";
+import { WALK_LENGTHS, errandMinutes } from "@/lib/walk";
 import { openBeats, unfinishedBeats, type Lead } from "./beats";
 import type { CheckIn } from "./outputs";
 import { CHAPTERS, LEAD_STEPS, STEPS_PER_CHAPTER, otherLead, seatOf, singleLead, stepsLeft } from "./rules";
@@ -216,6 +217,7 @@ export function describeState(state: StoryState, options: { includePlan: boolean
     lines.push(
       `${chapter}: the player has ${stepsLeft(state, lead)} of ${STEPS_PER_CHAPTER} steps forward left on their lead${partner}. ${seat.photosSinceProgress} photos since their last step forward.`,
     );
+    if (seat.walking) lines.push(walkLine(seat.walkLength ?? WALK_LENGTHS[0]));
   } else {
     lines.push(`${chapter}.`);
   }
@@ -248,6 +250,7 @@ export function genesisTask(
   genre: string,
   theme: string | null,
   mode: "solo" | "team",
+  walkLength: number,
   style = OPENING_STYLES[Math.floor(Math.random() * OPENING_STYLES.length)],
 ): string {
   return [
@@ -261,10 +264,16 @@ export function genesisTask(
       : "",
     `The opening, at most 50 words, tells the player what happened, who wants it solved, and what to find out. ${style} Everything else can wait for later steps. Introduce anyone you name, unless everyone knows them from a famous story.`,
     "The first quest is for the first beat on this player's lead: ask for a real thing that can be that find. If the photo is outdoors and something in it could be that find, make it a closer look (in_view), so they see right away that you can see their world; otherwise make it an errand (seek). If the photo is indoors, make it an errand that takes them outside.",
+    walkLine(walkLength),
     "Put every fact the opening establishes in canonAdd.",
   ]
     .filter(Boolean)
     .join("\n");
+}
+
+/** How far an errand sends the player, from how long they chose to walk. */
+function walkLine(walkLength: number): string {
+  return `The player chose a ${walkLength}-minute walk, so an errand starts with ${errandMinutes(walkLength)} minutes of walking: send them about that far.`;
 }
 
 /** What the coming step means for the chapter and the story, if it's the last of either. */

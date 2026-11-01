@@ -209,6 +209,13 @@ test("an errand counts only once the walk it starts with is over, and a closer l
   assert.equal(makeQuest({ ...QUEST, targetMode: "seek" }, null, 1, { ...at(0), walkMinutes: 0 }).walkUntil, null);
 });
 
+test("a walk keeps how long the player chose to walk", () => {
+  const state = story();
+  seat(state).walking = false;
+  startWalk(state, "player", { lead: "a", joining: false, newChapter: false }, state.createdAt, 60);
+  assert.equal(seat(state).walkLength, 60);
+});
+
 test("a step forward without a new quest leaves no quest open", () => {
   const state = story();
   const result = applyPhotoTurn(state, reply({ outcome: "moves_story" }), 2, "player");

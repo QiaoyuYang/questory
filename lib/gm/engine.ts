@@ -7,6 +7,7 @@ import type { Photo } from "@/lib/photo";
 import { getStore } from "@/lib/store";
 import { GAME_MASTER, type NewInvite, type TargetOverlay } from "@/lib/types";
 import { visitorKey } from "@/lib/visitor";
+import { errandMinutes, type WalkLength } from "@/lib/walk";
 import { activateNextBeat, activeBeatId, makeBeats, replan } from "./beats";
 import { getBrain } from "./brain";
 import { storyCardPrompt } from "./card";
@@ -28,10 +29,11 @@ import {
   startWalk,
   targetPhrases,
   unclaimedLead,
+  type Clock,
   type WalkPlan,
 } from "./rules";
 import type { CheckIn } from "./outputs";
-import type { QuestState, StoryState, TurnRecord } from "./state";
+import type { QuestState, Seat, StoryState, TurnRecord } from "./state";
 
 export class GameRuleError extends Error {}
 
@@ -201,7 +203,14 @@ type NewStory = {
   mode: "solo" | "team";
   /** A two-player case's id and invite code, when its link went out before the case began. */
   invite: NewInvite | null;
+  /** How long the player chose to walk, in minutes. */
+  walkLength: WalkLength;
 };
+
+/** When a photo was sent, and how long the errands on `seat`'s walk start with. */
+function clockFor(config: Config, seat: Seat, at: string): Clock {
+  return { at, walkMinutes: config.walkTimer ? errandMinutes(seat.walkLength) : 0 };
+}
 
 /** First photo of a new story: the game master invents the plan and the first quest. */
 export async function startStory(playerId: string, story: NewStory, photo: Photo) {
@@ -222,7 +231,7 @@ export async function startStory(playerId: string, story: NewStory, photo: Photo
   await spendCall(config, playerId);
   const [photoId, genesis] = await Promise.all([
     store.putImage({ bytes: photo.bytes, mime: photo.mime }),
-    getBrain(config).genesis(genre, theme, mode, photo.dataUrl),
+    getBrain(config).genesis(genre, theme, mode, story.walkLength, photo.dataUrl),
   ]);
   const { data, usage } = genesis;
   logUsage("genesis", usage);
@@ -276,7 +285,7 @@ export async function startStory(playerId: string, story: NewStory, photo: Photo
     recap: "",
     status: "active",
   };
-  const seat = startWalk(state, playerId, { lead: "a", joining: false, newChapter: false }, createdAt);
+  const seat = startWalk(state, playerId, { lead: "a", joining: false, newChapter: false }, createdAt, story.walkLength);
 
   const turn = newTurn(state, "genesis", playerId, photoId, photo);
   turn.narration = check.text.narration.trim();
@@ -288,7 +297,7 @@ export async function startStory(playerId: string, story: NewStory, photo: Photo
     data.quest,
     activeBeatId(state.skeleton.beats, "a"),
     turn.number,
-    { at: turn.createdAt, walkMinutes: config.walkMinutes },
+    clockFor(config, seat, turn.createdAt),
     data.observations,
   );
   seat.lastNarration = turn.narration;
@@ -310,7 +319,7 @@ export async function takePhoto(state: StoryState, photo: Photo, playerId: strin
   const config = getConfig();
   const store = getStore();
   await spendCall(config, playerId);
-  const clock = { at: now(), walkMinutes: config.walkMinutes };
+  const clock = clockFor(config, seat, now());
   const [photoId, played] = await Promise.all([
     store.putImage({ bytes: photo.bytes, mime: photo.mime }),
     getBrain(config).photo(state, photo.dataUrl, {
@@ -359,7 +368,12 @@ export async function takePhoto(state: StoryState, photo: Photo, playerId: strin
  * friend's first walk on a two-player case. `takeOver` walks the other lead too, while no
  * friend has taken it.
  */
-export async function resumeStory(state: StoryState, photo: Photo, playerId: string, options: { takeOver?: boolean } = {}) {
+export async function resumeStory(
+  state: StoryState,
+  photo: Photo,
+  playerId: string,
+  options: { takeOver?: boolean; walkLength: WalkLength },
+) {
   const plan = allowed(planWalk(state, playerId, options.takeOver));
   const config = getConfig();
   const store = getStore();
@@ -369,7 +383,7 @@ export async function resumeStory(state: StoryState, photo: Photo, playerId: str
   await spendCall(config, playerId);
   // The game master sees the walk as it starts: the player on their lead, in the chapter they're playing.
   const starting = structuredClone(state);
-  startWalk(starting, playerId, plan, now());
+  startWalk(starting, playerId, plan, now(), options.walkLength);
   const takeOver = !plan.newChapter && plan.lead !== (seatOf(state, playerId)?.lead ?? plan.lead);
 
   const [photoId, resumed] = await Promise.all([
@@ -395,7 +409,8 @@ export async function resumeStory(state: StoryState, photo: Photo, playerId: str
   const secretSeen = state.skeleton.secret;
   return commitTurn(state.id, turn, (fresh, number) => {
     // The other player may have opened the chapter meanwhile, or taken the free lead.
-    const seat = startWalk(fresh, playerId, allowed(planWalk(fresh, playerId, options.takeOver)), turn.createdAt);
+    const plan = allowed(planWalk(fresh, playerId, options.takeOver));
+    const seat = startWalk(fresh, playerId, plan, turn.createdAt, options.walkLength);
     turn.chapter = fresh.chapter;
     turn.canonAdded = addCanon(fresh, check.text.facts, number);
     fresh.bindings.push(...data.bindingsAdd.map((b) => ({ ...b, turn: number })));
@@ -405,7 +420,7 @@ export async function resumeStory(state: StoryState, photo: Photo, playerId: str
       data.quest,
       activeBeatId(fresh.skeleton.beats, seat.lead),
       number,
-      { at: turn.createdAt, walkMinutes: config.walkMinutes },
+      clockFor(config, seat, turn.createdAt),
       data.observations,
     );
     seat.lastNarration = turn.narration;
@@ -464,7 +479,16 @@ export async function joinStory(state: StoryState, playerId: string): Promise<St
     // In a two-player case the friend takes the free lead now; their first photo starts it.
     const lead = singleLead(fresh) ? null : unclaimedLead(fresh);
     if (lead) {
-      fresh.seats.push({ playerId, lead, quest: null, walking: false, startedAt: null, photosSinceProgress: 0, lastNarration: "" });
+      fresh.seats.push({
+        playerId,
+        lead,
+        quest: null,
+        walking: false,
+        startedAt: null,
+        photosSinceProgress: 0,
+        lastNarration: "",
+        walkLength: null,
+      });
     }
   });
   return saved;

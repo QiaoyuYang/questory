@@ -232,14 +232,20 @@ export function planWalk(state: StoryState, playerId: string, takeOver = false):
   return { lead, joining, newChapter };
 }
 
-/** Put the player on their walk. Mutates `state` and returns the player's seat. */
-export function startWalk(state: StoryState, playerId: string, plan: WalkPlan, at: string): Seat {
+/** Put the player on a walk of `walkLength` minutes. Mutates `state` and returns the player's seat. */
+export function startWalk(
+  state: StoryState,
+  playerId: string,
+  plan: WalkPlan,
+  at: string,
+  walkLength: number | null = null,
+): Seat {
   if (plan.joining) state.partners.push(playerId);
   if (plan.newChapter) {
     state.chapter += 1;
     state.progress = { a: 0, b: 0 };
   }
-  const walk = { lead: plan.lead, quest: null, walking: true, startedAt: at, photosSinceProgress: 0 };
+  const walk = { lead: plan.lead, quest: null, walking: true, startedAt: at, photosSinceProgress: 0, walkLength };
   let seat = seatOf(state, playerId);
   if (seat) Object.assign(seat, walk);
   else {

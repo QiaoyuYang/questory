@@ -78,6 +78,8 @@ export const SeatSchema = z.object({
   photosSinceProgress: z.number(),
   /** The game master's last narration to this player, so the next one can carry on from it without repeating it. */
   lastNarration: z.string(),
+  /** How long the player chose to walk this time, in minutes. Older walks have none. */
+  walkLength: z.number().nullable().default(null),
 });
 export type Seat = z.infer<typeof SeatSchema>;
 
