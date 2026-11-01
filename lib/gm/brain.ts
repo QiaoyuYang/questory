@@ -5,9 +5,9 @@ import { mockBrain } from "./mock";
 import {
   CheckSchema,
   CloseSchema,
-  PhotoTurnSchema,
   ResumeSchema,
   genesisSchema,
+  photoTurnSchema,
   type CheckIn,
   type CheckOut,
   type CloseOut,
@@ -33,12 +33,13 @@ export type Brain = {
   ): Promise<Result<GenesisOut>>;
   /**
    * Any photo during `playerId`'s walk. `mustProgress` is set when this photo has to move the
-   * story, and `onTheWay` while the walk their errand started with isn't over, so it can't.
+   * story, `onTheWay` while the walk their errand started with isn't over, so it can't, and
+   * `closerLook` when the next quest can be a closer look instead of an errand.
    */
   photo(
     state: StoryState,
     photo: string,
-    options: { playerId: string; mustProgress: boolean; onTheWay: boolean },
+    options: { playerId: string; mustProgress: boolean; onTheWay: boolean; closerLook: boolean },
   ): Promise<Result<PhotoTurnOut>>;
   /**
    * The first photo of a walk. `newPlayer` is a partner's first walk on the case; `newChapter`
@@ -85,7 +86,7 @@ export function liveBrain(config: Config): Brain {
       respondJson({
         ...gm,
         content: withPhoto(photoTask(state, options), photo),
-        schema: PhotoTurnSchema,
+        schema: photoTurnSchema(options.closerLook),
         schemaName: "questory_photo",
       }),
 

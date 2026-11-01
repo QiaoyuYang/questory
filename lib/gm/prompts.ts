@@ -48,9 +48,9 @@ How you run the game
 - After every photo, leave the player one quest: a next step that ends in a photo. Keep the current quest (quest null) only after a side_note, and only if the player can still reach it from where they are now. Otherwise write a new one.
 - Each quest goes where the last find pointed. Its title says what the player is looking for in the story ("The bus stop bench", "Where the bag went"), and its objective says what real thing to find and photograph ("Walk on down the street, then find a bench or a bus stop.").
 - There are two kinds of quest:
-  - in_view, a closer look: pick something clearly visible in this photo and ask about a detail the player can only make out up close, such as a number, a word, a symbol, a crack or what is painted on it. Whatever they find becomes part of the story. Name the thing with a short noun phrase.
   - seek, an errand further on: send the player on, then have them find something that can be the next find ("a bench by a bus stop", "a door with a number on it"), or photograph where they end up.
-  Choose a closer look when something in this photo can be the next find, and an errand otherwise, but never two closer looks in a row. Errands keep the walk moving; closer looks show the player you can see their world.
+  - in_view, a closer look: pick something clearly visible in this photo and ask about a detail the player can only make out up close, such as a number, a word, a symbol, a crack or what is painted on it. Whatever they find becomes part of the story. Name the thing with a short noun phrase.
+  Most quests are errands, and every walk starts with one. A closer look is the exception: at most one a chapter, after an errand has brought the player somewhere new, and only when something in their photo is worth a look up close. The task says when one is allowed.
 - What the player finds becomes canon. Make it fit after the fact: "The faded mailbox. Of course." Put every new fact your narration establishes in canonAdd.
 - Canon is permanent. Never contradict an established fact.
 - Prefer rebinding to replanning. Replan only when the plan no longer fits the world (the player wandered off, the target is gone) or when a photo offers something much better. A replan keeps the number of beats on the lead. Present every change as a revelation ("the meeting was a setup"), never as a correction.
@@ -264,7 +264,7 @@ export function genesisTask(
       ? `This case is for two players: this one and a friend they're bringing in, who plays on their own streets, at the same time or not. Give each a lead of their own that finds out one side of the case, such as how it was done and who could have done it: \`focus\` and each chapter's \`steps\` for this player, \`partnerFocus\` and each chapter's \`partnerSteps\` for the friend. No beat on either lead needs anything found on the other. In the opening, tell this player in a few words which side is theirs and that their partner has the other, the way a friend would put it ("You'll work out how the notice got under the door, and your partner will find out who wanted it there.").`
       : "",
     `The opening, at most 50 words, tells the player what happened, who wants it solved, and what to find out. ${style} Everything else can wait for later steps. Introduce anyone you name, unless everyone knows them from a famous story.`,
-    "The first quest is for the first beat on this player's lead: ask for a real thing that can be that find. If the photo is outdoors and something in it could be that find, make it a closer look (in_view), so they see right away that you can see their world; otherwise make it an errand (seek). If the photo is indoors, make it an errand that takes them outside.",
+    "The first quest is an errand (seek) for the first beat on this player's lead: send them on, then ask for a real thing that can be that find. If the photo is indoors, the errand takes them outside first.",
     "Put every fact the opening establishes in canonAdd.",
   ]
     .filter(Boolean)
@@ -307,7 +307,7 @@ function questTarget(state: StoryState, lead: Lead): string {
 
 export function photoTask(
   state: StoryState,
-  options: { playerId: string; mustProgress: boolean; onTheWay: boolean },
+  options: { playerId: string; mustProgress: boolean; onTheWay: boolean; closerLook: boolean },
 ): string {
   const seat = seatOf(state, options.playerId);
   const lead = seat?.lead ?? "a";
@@ -318,6 +318,9 @@ export function photoTask(
       ]
     : [
         questTarget(state, lead),
+        options.closerLook
+          ? "A new quest can be a closer look (in_view) if something clearly visible in this photo can be the next find. A chapter gets one at most, so save it for a find worth seeing up close; otherwise make it an errand (seek)."
+          : "Any new quest is an errand (seek).",
         options.mustProgress
           ? `The player has sent ${seat?.photosSinceProgress ?? 0} photos in a row that did not move the story. Unless this one is for an errand and shows the place it was given at, it must: choose follows_quest or moves_story, and build the next step on what it shows.`
           : "",
@@ -327,7 +330,7 @@ export function photoTask(
     describeState(state, { includePlan: true, playerId: options.playerId }),
     "",
     "The player just sent this photo.",
-    "Decide what it is in the story and what it tells the player, update the canon, and leave the next quest. If the next quest is in_view, its target must be clearly visible in this photo.",
+    "Decide what it is in the story and what it tells the player, update the canon, and leave the next quest.",
     singleLead(state) ? "" : "A step forward finishes the active beat on the player's own lead.",
     ...step,
   ]
@@ -356,7 +359,7 @@ export function resumeTask(
     describeState(state, { includePlan: true, playerId: options.playerId }),
     "",
     situation,
-    `Issue the next quest for the active beat on the player's lead${active ? `, ${active.id}, "${active.goal}": ask for a real thing that can be that find` : ""}. If the quest is in_view, its target must be clearly visible in this photo.`,
+    `Issue the next quest, an errand (seek), for the active beat on the player's lead${active ? `, ${active.id}, "${active.goal}": send them on, then ask for a real thing that can be that find` : ""}. If the photo is indoors, the errand takes them outside first.`,
     'Never say "chapter" in the narration.',
     "Put every new fact in canonAdd.",
   ].join("\n");

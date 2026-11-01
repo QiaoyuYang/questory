@@ -17,8 +17,9 @@ import type { QuestState, Seat, StoryState, TurnRecord } from "./state";
 export type CaseSize = { chapters: number; steps: number };
 
 /**
- * The case for each length of walk, small enough to solve on it: a step takes an errand of
- * ERRAND_MINUTES or a closer look on the spot. An hour gets the full case.
+ * The case for each length of walk, small enough to solve on it: most steps take an errand
+ * of ERRAND_MINUTES, and a chapter has at most one closer look on the spot. An hour gets the
+ * full case.
  */
 export const CASE_SIZES: Record<WalkLength, CaseSize> = {
   15: { chapters: 1, steps: 3 },
@@ -52,6 +53,14 @@ export type Clock = { at: string; walkMinutes: number };
 /** True while the player is still on the walk their errand started with, so a photo for it can't count yet. */
 export function onTheWay(quest: QuestState | null, at: string): boolean {
   return quest?.walkUntil != null && Date.parse(at) < Date.parse(quest.walkUntil);
+}
+
+/**
+ * True when the player's next quest can be a closer look. Every walk starts with an errand, and
+ * a closer look only follows one, once a chapter at most, so most of a case is found on foot.
+ */
+export function closerLookOpen(state: StoryState, seat: Seat): boolean {
+  return seat.quest?.targetMode === "seek" && seat.closerLookChapter !== state.chapter;
 }
 
 export function seatOf(state: StoryState, playerId: string): Seat | null {
@@ -255,7 +264,7 @@ export function startWalk(state: StoryState, playerId: string, plan: WalkPlan, a
   let seat = seatOf(state, playerId);
   if (seat) Object.assign(seat, walk);
   else {
-    seat = { playerId, ...walk, lastNarration: "" };
+    seat = { playerId, ...walk, lastNarration: "", closerLookChapter: null };
     state.seats.push(seat);
   }
   state.skeleton.beats = activateNextBeat(state.skeleton.beats);
@@ -356,6 +365,7 @@ export function applyPhotoTurn(
 
   if (data.quest && counts) {
     seat.quest = makeQuest(data.quest, activeBeatId(state.skeleton.beats, lead), turn, clock, data.observations);
+    if (seat.quest.targetMode === "in_view") seat.closerLookChapter = state.chapter;
     return { outcome, canonAdded, questIssued: true, card };
   }
   // A side note can leave the open quest in place; a step forward has used it up.

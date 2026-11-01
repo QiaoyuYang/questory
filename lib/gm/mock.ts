@@ -2,7 +2,7 @@ import "server-only";
 import type { Usage } from "@/lib/meta/structured";
 import { unfinishedBeats, type Lead } from "./beats";
 import type { Brain } from "./brain";
-import type { CardOut, QuestOut } from "./outputs";
+import type { CardOut, ErrandOut, QuestOut } from "./outputs";
 import { seatOf, singleLead, stepsLeft } from "./rules";
 import type { StoryState } from "./state";
 
@@ -22,16 +22,19 @@ const usage: Usage = {
 
 const pause = () => new Promise((resolve) => setTimeout(resolve, 700));
 
-const QUESTS: QuestOut[] = [
-  {
-    title: "The first mark",
-    objective: "Walk up to the nearest door in your photo. Is anything chalked, painted or numbered on it?",
-    targetMode: "in_view",
-    targetPhrase: "door",
-    targetLandmark: "door",
-    targetDescription: "the nearest door in your photo",
-    successCriteria: "A door, close up.",
-  },
+/** The closer look a chapter gets, once an errand has brought the player somewhere. */
+const CLOSER_LOOK: QuestOut = {
+  title: "The chalk mark",
+  objective: "Walk up to the nearest door in your photo. Is anything chalked, painted or numbered on it?",
+  targetMode: "in_view",
+  targetPhrase: "door",
+  targetLandmark: "door",
+  targetDescription: "the nearest door in your photo",
+  successCriteria: "A door, close up.",
+};
+
+/** Every walk starts with an errand, and most steps are one. */
+const ERRANDS: ErrandOut[] = [
   {
     title: "Something red",
     objective: "Find something red that has been here a long time.",
@@ -105,8 +108,8 @@ const STEPS: Record<Lead, Step[]> = {
 const SIDE_NOTE = "You file it away. It isn't a chalk arrow, but now you're looking twice at every wall.";
 const ON_THE_WAY = "Rosa walks past here every morning on her way to the market. The arrows lead further on.";
 
-function questAfter(found: number): QuestOut {
-  return QUESTS[found % QUESTS.length];
+function errandAfter(found: number): ErrandOut {
+  return ERRANDS[found % ERRANDS.length];
 }
 
 /** Steps forward made so far on a lead. */
@@ -149,16 +152,16 @@ export const mockBrain: Brain = {
         narration:
           mode === "team"
             ? "Rosa, the baker on the corner, is furious: someone took the brass bell from her shop door last night. You follow the chalk arrows they left. Your partner can find out who in the house was awake."
-            : "Rosa, the baker on the corner, is furious: someone took the brass bell from her shop door last night. They left a trail of small chalk arrows. Find out who took the bell. The first arrow should be close.",
+            : "Rosa, the baker on the corner, is furious: someone took the brass bell from her shop door last night. They left a trail of small chalk arrows down the street. Find out who took the bell.",
         observations: ["(mock mode: the scripted game master can't see photos)"],
         canonAdd: ["Someone took the brass bell from Rosa's bakery door last night."],
         bindingsAdd: [{ abstract: "the first chalk arrow", concrete: "the place in your first photo" }],
-        quest: questAfter(0),
+        quest: errandAfter(0),
       },
     };
   },
 
-  async photo(state, _photo, { playerId, mustProgress, onTheWay }) {
+  async photo(state, _photo, { playerId, mustProgress, onTheWay, closerLook }) {
     await pause();
     const lead = seatOf(state, playerId)?.lead ?? "a";
     // Odd turns are side notes, even turns follow the quest; a forced turn bends the story.
@@ -197,8 +200,8 @@ export const mockBrain: Brain = {
           : one && partEnds
             ? `You followed the bell thief's trail for another chapter. The latest find: ${card.title.toLowerCase()}.`
             : null,
-        // A side note keeps the open quest; a step forward brings the next one.
-        quest: partEnds || !moved ? null : questAfter(done + 1),
+        // A side note keeps the open quest; a step forward brings the next one, a closer look when it can.
+        quest: partEnds || !moved ? null : closerLook ? CLOSER_LOOK : errandAfter(done + 1),
       },
     };
   },
@@ -210,12 +213,12 @@ export const mockBrain: Brain = {
       usage,
       data: {
         narration: takeOver
-          ? "Your partner hasn't turned up, so the other side of the case is yours too: who in the house was up in the night? Start close by."
+          ? "Your partner hasn't turned up, so the other side of the case is yours too: who in the house was up in the night?"
           : newPlayer
-            ? "Someone took Rosa's brass bell from her bakery door, and your partner is following the thief's chalk arrows. Your side is the people: who in the house was up in the night? Start close by."
+            ? "Someone took Rosa's brass bell from her bakery door, and your partner is following the thief's chalk arrows. Your side is the people: who in the house was up in the night?"
             : newChapter
-              ? `Chapter ${state.chapter} of Rosa's missing bell. The thief knows the bakery from the inside, and there's more to find. The next clue should be close.`
-              : "Back on the trail of Rosa's missing bell, right where you left it. The next clue should be close.",
+              ? `Chapter ${state.chapter} of Rosa's missing bell. The thief knows the bakery from the inside, and there's more to find. The trail goes on from here.`
+              : "Back on the trail of Rosa's missing bell, right where you left it. The trail goes on from here.",
         observations: ["(mock mode)"],
         canonAdd: [],
         bindingsAdd: [],
@@ -223,7 +226,7 @@ export const mockBrain: Brain = {
         planReason: "",
         revisedBeats: null,
         revisedSecret: null,
-        quest: questAfter(stepsOn(state, lead)),
+        quest: errandAfter(stepsOn(state, lead)),
       },
     };
   },
