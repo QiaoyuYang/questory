@@ -1,7 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { clipText } from "@/lib/meta/structured";
-import { CHAPTERS, LEAD_STEPS, STEPS_PER_CHAPTER } from "./rules";
+import { CASE_SIZES, type CaseSize } from "./rules";
 
 /** What the game master returns. These double as the structured-output schemas. */
 
@@ -14,7 +14,7 @@ const RECAP = 600;
 const PLAN = 1200;
 const SENTENCE = 300;
 const LABEL = 100;
-const LIST = Math.max(12, LEAD_STEPS);
+const LIST = Math.max(12, ...Object.values(CASE_SIZES).map((size) => size.chapters * size.steps));
 
 const text = (max: number) => z.string().max(max);
 
@@ -113,28 +113,32 @@ const genesisPlan = {
 };
 
 /** A chapter's beats on one lead, one field each, so the plan always has every step. */
-function chapterSteps(whose: string) {
+function chapterSteps(whose: string, steps: number) {
   const shape: Record<string, z.ZodString> = {};
-  for (let i = 1; i <= STEPS_PER_CHAPTER; i++) shape[`step${i}`] = text(SENTENCE);
+  for (let i = 1; i <= steps; i++) shape[`step${i}`] = text(SENTENCE);
   return z
     .object(shape)
     .describe(
-      `Private: ${whose} ${STEPS_PER_CHAPTER} beats in this chapter, in order, one per step forward. Each is the next find on the trail and what it tells the player: a place or object in the story's world that ordinary real things can stand in for, e.g. "The office stamp, so the notice came from inside". How it looks comes from the player's photo. Never something the player already knows.`,
+      `Private: ${whose} ${steps} beats in this chapter, in order, one per step forward. Each is the next find on the trail and what it tells the player: a place or object in the story's world that ordinary real things can stand in for, e.g. "The office stamp, so the notice came from inside". How it looks comes from the player's photo. Never something the player already knows.`,
     );
 }
 
 /** The plan, chapter by chapter, one field each for the same reason. */
-function chapterPlan(team: boolean) {
+function chapterPlan(team: boolean, size: CaseSize) {
   const own = z.object({
     findsOut: text(SENTENCE).describe(
       'What this chapter finds out on the way to the answer, never something the opening tells, e.g. "How the notice got onto the door". The last chapter finds out the answer.',
     ),
-    steps: chapterSteps(team ? "this player's lead:" : "the"),
+    steps: chapterSteps(team ? "this player's lead:" : "the", size.steps),
   });
-  const chapter = team ? own.extend({ partnerSteps: chapterSteps("the partner's lead:") }) : own;
+  const chapter = team ? own.extend({ partnerSteps: chapterSteps("the partner's lead:", size.steps) }) : own;
   const shape: Record<string, typeof chapter> = {};
-  for (let i = 1; i <= CHAPTERS; i++) shape[`chapter${i}`] = chapter;
-  return z.object(shape).describe(`Private: the case's ${CHAPTERS} chapters, in order.`);
+  for (let i = 1; i <= size.chapters; i++) shape[`chapter${i}`] = chapter;
+  return z
+    .object(shape)
+    .describe(
+      size.chapters === 1 ? "Private: the case's one chapter." : `Private: the case's ${size.chapters} chapters, in order.`,
+    );
 }
 
 const genesisOpening = {
@@ -152,23 +156,26 @@ const genesisOpening = {
   quest: QuestOutSchema,
 };
 
-export const GenesisSchema = z.object({ ...genesisPlan, chapters: chapterPlan(false), ...genesisOpening });
-
-/** A case for two players, who each follow a lead of their own. */
-export const GenesisTeamSchema = z.object({
-  ...genesisPlan,
+/** The side of the case each lead finds out, in a case for two players. */
+const leadFocus = {
   focus: text(LABEL).describe(
     'Private: the side of the case this player\'s lead finds out, 3 to 8 words, e.g. "how the deed was swapped".',
   ),
   partnerFocus: text(LABEL).describe(
     'Private: the side the partner\'s lead finds out, 3 to 8 words, e.g. "who could have done it". No beat on either lead needs anything found on the other.',
   ),
-  chapters: chapterPlan(true),
-  ...genesisOpening,
-});
+};
+
+/** A case of `size`: for one player, or for two who each follow a lead of their own. */
+export function genesisSchema(team: boolean, size: CaseSize) {
+  const chapters = chapterPlan(team, size);
+  return team
+    ? z.object({ ...genesisPlan, ...leadFocus, chapters, ...genesisOpening })
+    : z.object({ ...genesisPlan, chapters, ...genesisOpening });
+}
 
 type ChapterOut = { findsOut: string; steps: Record<string, string>; partnerSteps?: Record<string, string> };
-export type GenesisOut = Omit<z.infer<typeof GenesisSchema>, "chapters"> & {
+export type GenesisOut = z.infer<z.ZodObject<typeof genesisPlan & typeof genesisOpening>> & {
   focus?: string;
   partnerFocus?: string;
   chapters: Record<string, ChapterOut>;

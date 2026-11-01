@@ -1,4 +1,5 @@
 import { GAME_MASTER, type Outcome } from "@/lib/types";
+import type { WalkLength } from "@/lib/walk";
 import { LEADS, activateNextBeat, activeBeatId, unfinishedBeats, updateBeats, type Lead } from "./beats";
 import type { CheckIn, CheckOut, GenesisOut, PhotoTurnOut, QuestOut } from "./outputs";
 import type { QuestState, Seat, StoryState, TurnRecord } from "./state";
@@ -8,17 +9,25 @@ import type { QuestState, Seat, StoryState, TurnRecord } from "./state";
  * engine (which talks to the models and the store) so it can be tested.
  */
 
-/** Chapters in a case. */
-export const CHAPTERS = 3;
+/**
+ * How big a case is: its chapters, and the steps forward on each lead in a chapter. Each step
+ * finishes a beat and turns up a piece of evidence, so a player finds `steps` per chapter,
+ * alone or with a friend.
+ */
+export type CaseSize = { chapters: number; steps: number };
 
 /**
- * Steps forward on each lead in a chapter. Each one finishes a beat and turns up a piece
- * of evidence, so a player finds this many per chapter, alone or with a friend.
+ * The case for each length of walk, small enough to solve on it: a step takes an errand of
+ * ERRAND_MINUTES or a closer look on the spot. An hour gets the full case.
  */
-export const STEPS_PER_CHAPTER = 4;
+export const CASE_SIZES: Record<WalkLength, CaseSize> = {
+  15: { chapters: 1, steps: 3 },
+  30: { chapters: 2, steps: 3 },
+  60: { chapters: 3, steps: 4 },
+};
 
-/** Steps forward on one lead over a whole case. */
-export const LEAD_STEPS = CHAPTERS * STEPS_PER_CHAPTER;
+/** Minutes of walking before an errand's evidence can turn up. Time stands in for distance. */
+export const ERRAND_MINUTES = 5;
 
 /** Players a case takes when its owner invites a friend. */
 export const TEAM_SIZE = 2;
@@ -71,7 +80,7 @@ export function unclaimedLead(state: StoryState): Lead | null {
 
 /** Steps forward still to make on a lead in this chapter. */
 export function stepsLeft(state: StoryState, lead: Lead): number {
-  const room = Math.max(0, STEPS_PER_CHAPTER - state.progress[lead]);
+  const room = Math.max(0, state.size.steps - state.progress[lead]);
   return Math.min(room, unfinishedBeats(state.skeleton.beats, lead));
 }
 
@@ -93,10 +102,13 @@ export function closeDue(state: StoryState): boolean {
   return state.status === "active" && !singleLead(state) && state.closed < state.chapter && chapterComplete(state);
 }
 
-/** The opening's plan as lists: what each chapter finds out, and each lead's beats in order. */
-export function planOf(data: Pick<GenesisOut, "chapters">): { findsOut: string[]; lead: string[]; partnerLead: string[] } {
-  const chapters = Array.from({ length: CHAPTERS }, (_, i) => data.chapters[`chapter${i + 1}`]).filter(Boolean);
-  const steps = (of: Record<string, string>) => Array.from({ length: STEPS_PER_CHAPTER }, (_, i) => of[`step${i + 1}`] ?? "");
+/** The plan for a case of `size` as lists: what each chapter finds out, and each lead's beats in order. */
+export function planOf(
+  data: Pick<GenesisOut, "chapters">,
+  size: CaseSize,
+): { findsOut: string[]; lead: string[]; partnerLead: string[] } {
+  const chapters = Array.from({ length: size.chapters }, (_, i) => data.chapters[`chapter${i + 1}`]).filter(Boolean);
+  const steps = (of: Record<string, string>) => Array.from({ length: size.steps }, (_, i) => of[`step${i + 1}`] ?? "");
   return {
     findsOut: chapters.map((chapter) => chapter.findsOut.trim()).filter(Boolean),
     lead: chapters.flatMap((chapter) => steps(chapter.steps)),
@@ -232,20 +244,14 @@ export function planWalk(state: StoryState, playerId: string, takeOver = false):
   return { lead, joining, newChapter };
 }
 
-/** Put the player on a walk of `walkLength` minutes. Mutates `state` and returns the player's seat. */
-export function startWalk(
-  state: StoryState,
-  playerId: string,
-  plan: WalkPlan,
-  at: string,
-  walkLength: number | null = null,
-): Seat {
+/** Put the player on their walk. Mutates `state` and returns the player's seat. */
+export function startWalk(state: StoryState, playerId: string, plan: WalkPlan, at: string): Seat {
   if (plan.joining) state.partners.push(playerId);
   if (plan.newChapter) {
     state.chapter += 1;
     state.progress = { a: 0, b: 0 };
   }
-  const walk = { lead: plan.lead, quest: null, walking: true, startedAt: at, photosSinceProgress: 0, walkLength };
+  const walk = { lead: plan.lead, quest: null, walking: true, startedAt: at, photosSinceProgress: 0 };
   let seat = seatOf(state, playerId);
   if (seat) Object.assign(seat, walk);
   else {

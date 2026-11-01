@@ -1,9 +1,8 @@
 import "server-only";
 import { GAME_MASTER, GENRES } from "@/lib/types";
-import { WALK_LENGTHS, errandMinutes } from "@/lib/walk";
 import { openBeats, unfinishedBeats, type Lead } from "./beats";
 import type { CheckIn } from "./outputs";
-import { CHAPTERS, LEAD_STEPS, STEPS_PER_CHAPTER, otherLead, seatOf, singleLead, stepsLeft } from "./rules";
+import { ERRAND_MINUTES, otherLead, seatOf, singleLead, stepsLeft, type CaseSize } from "./rules";
 import type { StoryState } from "./state";
 
 const SAFETY = `Safety and respect, always:
@@ -19,11 +18,11 @@ export const GM_INSTRUCTIONS = `You are ${GAME_MASTER}, the game master of Quest
 The shape of a story
 - Every story is a case: one question the player wants answered, such as "Who forged the eviction notice?" or "Where did the bakery's sourdough starter go?". The opening sets it, and it stays the same to the end.
 - The secret is the answer. You decide it at the start, and it has to keep fitting the evidence: if what the player has found stops pointing to it, change it (revisedSecret) to an answer that explains every piece found so far, using only people the player has met. The player never sees the change; the evidence just keeps adding up.
-- A case is ${CHAPTERS} chapters, and each one finds out part of the answer. A player follows a lead: beats played in order, ${STEPS_PER_CHAPTER} per chapter, one per step forward. Every step forward turns up one piece of evidence, and the player collects them.
+- A case is one to three chapters, small enough to solve on the walk the player chose, and each one finds out part of the answer. A player follows a lead: beats played in order, a few per chapter, one per step forward. Every step forward turns up one piece of evidence, and the player collects them.
 - Evidence is a place or object you could really find in the story's world: the noticeboard the fake notice went up on, the cupboard where the spare key hangs, the bin where the wrapper ended up. Each piece tells the player one thing they didn't know about how it was done, who did it, why, or where the missing thing is now. Never spend a step on what they already know.
 - The finds on a lead make one trail: each turns up where the last one pointed (the bus stop leads to the alley, and the alley to the shed where it was hidden). Every piece points toward the secret without giving it away, so a sharp player could guess the answer before the end. Nothing is a dead end.
 - Keep the cast small: two characters at most, including whoever is behind the secret, and nobody else, named or not. The player reads you a few lines at a time and can't keep track of more.
-- Play fair: whoever is behind the secret is one of the two and appears in the first chapter, without giving themselves away. Until the last chapter, evidence narrows down who did it by what they have or did (a green scarf, a spare key, a free hour), never by name, so the answer stays a guess.
+- Play fair: whoever is behind the secret is one of the two and appears in the first chapter, without giving themselves away. Until the last chapter (in a one-chapter case, the last step), evidence narrows down who did it by what they have or did (a green scarf, a spare key, a free hour), never by name, so the answer stays a guess.
 - The last step solves the case: say the answer outright and tie it to two of the pieces found.
 
 Two players
@@ -41,7 +40,7 @@ How a photo becomes part of the story
 How you run the game
 - You plan the arc; the world supplies the scenes. Your hidden plan holds the secret, premise, antagonist, stakes, ending and beats. Each beat is the next find on its lead: a place or object in the story's world that ordinary real things can stand in for, and what finding it tells the player ("the cupboard the spare key came from", "the shop doorway where the swap happened"). How it looks comes from the player's photo when they find it, so a beat never says how it looks. Never tie a beat to a particular real place, and never write it as "find proof that...".
 - Questory is played outside, on foot, and the walking is the point. If a photo is taken indoors, play along, then make the next quest a seek quest that leads outside, through a door and onto the street, never a closer look at something indoors.
-- An errand's find is a walk away, as many minutes as you're told, and the story gives it a reason to be that far: where someone went, where something was taken, where the trail leads next ("the van stops ten minutes down the road"). The game counts the minutes down for the player, so never tell them how long to keep walking. A photo sent before they get there, or one that shows the place the errand was given at, is a side_note: something they pass on the way, which keeps the errand. A closer look is meant to be where the player stands.
+- An errand's evidence can turn up only after ${ERRAND_MINUTES} minutes of walking, which the game counts down for the player, and only somewhere other than where it was given. Give the story a reason the trail goes on (the courier went on down the road, the note was posted somewhere else), but never say how far the find is or how long to walk: the game tells them. A photo sent before the walk is over, or one that shows the place the errand was given at, is a side_note: something they pass on the way, which keeps the errand. A closer look is meant to be where the player stands.
 - Every photo is a move in the story. Never reject a photo or tell the player it is wrong. Decide what it means:
   - follows_quest: it does what the current quest asked. Be generous: the right idea, an unclear photo or a similar object all count.
   - moves_story: it does not match the quest, but it shows something you can build the next step on. Use it.
@@ -50,7 +49,7 @@ How you run the game
 - Each quest goes where the last find pointed. Its title says what the player is looking for in the story ("The bus stop bench", "Where the bag went"), and its objective says what real thing to find and photograph ("Walk on down the street, then find a bench or a bus stop.").
 - There are two kinds of quest:
   - in_view, a closer look: pick something clearly visible in this photo and ask about a detail the player can only make out up close, such as a number, a word, a symbol, a crack or what is painted on it. Whatever they find becomes part of the story. Name the thing with a short noun phrase.
-  - seek, an errand a few minutes' walk away: send the player on, then have them find something that can be the next find ("a bench by a bus stop", "a door with a number on it"), or photograph where they end up.
+  - seek, an errand further on: send the player on, then have them find something that can be the next find ("a bench by a bus stop", "a door with a number on it"), or photograph where they end up.
   Choose a closer look when something in this photo can be the next find, and an errand otherwise, but never two closer looks in a row. Errands keep the walk moving; closer looks show the player you can see their world.
 - What the player finds becomes canon. Make it fit after the fact: "The faded mailbox. Of course." Put every new fact your narration establishes in canonAdd.
 - Canon is permanent. Never contradict an established fact.
@@ -144,7 +143,7 @@ export function describeState(state: StoryState, options: { includePlan: boolean
     const listBeats = (onLead: Lead | null) => {
       const beats = skeleton.beats.filter((beat) => onLead === null || beat.lead === onLead);
       beats.forEach((beat, i) => {
-        const chapter = planned ? ` (chapter ${Math.floor(i / STEPS_PER_CHAPTER) + 1})` : "";
+        const chapter = planned ? ` (chapter ${Math.floor(i / state.size.steps) + 1})` : "";
         lines.push(`  [${beat.status}] ${beat.id}${chapter}: ${beat.goal}`);
       });
     };
@@ -211,13 +210,15 @@ export function describeState(state: StoryState, options: { includePlan: boolean
     lines.push(`Your last narration${seat ? " to this player" : ""} (follow on from it without repeating it: don't open the same way, restate what it said or reuse its phrases): "${narration}"`);
   }
 
-  const chapter = state.skeleton.chapters.length > 0 ? `Chapter ${state.chapter} of ${CHAPTERS}` : `Chapter ${state.chapter}`;
+  const chapter =
+    state.skeleton.chapters.length > 0
+      ? `Chapter ${state.chapter} of ${state.size.chapters}`
+      : `Chapter ${state.chapter}`;
   if (seat) {
     const partner = two ? `; their partner has ${stepsLeft(state, otherLead(lead))} left on theirs` : "";
     lines.push(
-      `${chapter}: the player has ${stepsLeft(state, lead)} of ${STEPS_PER_CHAPTER} steps forward left on their lead${partner}. ${seat.photosSinceProgress} photos since their last step forward.`,
+      `${chapter}: the player has ${stepsLeft(state, lead)} of ${state.size.steps} steps forward left on their lead${partner}. ${seat.photosSinceProgress} photos since their last step forward.`,
     );
-    if (seat.walking) lines.push(walkLine(seat.walkLength ?? WALK_LENGTHS[0]));
   } else {
     lines.push(`${chapter}.`);
   }
@@ -250,30 +251,31 @@ export function genesisTask(
   genre: string,
   theme: string | null,
   mode: "solo" | "team",
-  walkLength: number,
+  size: CaseSize,
   style = OPENING_STYLES[Math.floor(Math.random() * OPENING_STYLES.length)],
 ): string {
   return [
     `Genre: ${genreLine(genre, theme)}`,
     "",
     "A new player just started. This photo shows where they are standing right now.",
-    `Invent a case that could begin here: decide the question and its secret answer, then write the hidden plan (${CHAPTERS} chapters, each with what it finds out and ${STEPS_PER_CHAPTER} beats, ${LEAD_STEPS} in all), the opening narration set in this exact place, and the first quest.`,
-    "Every chapter finds out something the opening doesn't tell. Every beat is a new find on its lead's trail, picking up where the one before it pointed, and no two beats find the same thing. The first beat starts where the opening leaves off, so it is never the thing the opening is about. Before the last chapter, no beat names whoever is behind the secret.",
+    `Invent a case that could begin here: decide the question and its secret answer, then write the hidden plan (${planShape(size)}), the opening narration set in this exact place, and the first quest. The case is this small so the player can solve it on the walk they're starting.`,
+    `Every chapter finds out something the opening doesn't tell. Every beat is a new find on its lead's trail, picking up where the one before it pointed, and no two beats find the same thing. The first beat starts where the opening leaves off, so it is never the thing the opening is about. Before the ${size.chapters === 1 ? "last beat" : "last chapter"}, no beat names whoever is behind the secret.`,
     mode === "team"
       ? `This case is for two players: this one and a friend they're bringing in, who plays on their own streets, at the same time or not. Give each a lead of their own that finds out one side of the case, such as how it was done and who could have done it: \`focus\` and each chapter's \`steps\` for this player, \`partnerFocus\` and each chapter's \`partnerSteps\` for the friend. No beat on either lead needs anything found on the other. In the opening, tell this player in a few words which side is theirs and that their partner has the other, the way a friend would put it ("You'll work out how the notice got under the door, and your partner will find out who wanted it there.").`
       : "",
     `The opening, at most 50 words, tells the player what happened, who wants it solved, and what to find out. ${style} Everything else can wait for later steps. Introduce anyone you name, unless everyone knows them from a famous story.`,
     "The first quest is for the first beat on this player's lead: ask for a real thing that can be that find. If the photo is outdoors and something in it could be that find, make it a closer look (in_view), so they see right away that you can see their world; otherwise make it an errand (seek). If the photo is indoors, make it an errand that takes them outside.",
-    walkLine(walkLength),
     "Put every fact the opening establishes in canonAdd.",
   ]
     .filter(Boolean)
     .join("\n");
 }
 
-/** How far an errand sends the player, from how long they chose to walk. */
-function walkLine(walkLength: number): string {
-  return `The player chose a ${walkLength}-minute walk, so an errand's find is ${errandMinutes(walkLength)} minutes' walk away.`;
+/** The hidden plan's shape for a case of `size`. */
+function planShape(size: CaseSize): string {
+  return size.chapters === 1
+    ? `one chapter, with what it finds out and ${size.steps} beats`
+    : `${size.chapters} chapters, each with what it finds out and ${size.steps} beats, ${size.chapters * size.steps} in all`;
 }
 
 /** What the coming step means for the chapter and the story, if it's the last of either. */
@@ -309,10 +311,10 @@ export function photoTask(
 ): string {
   const seat = seatOf(state, options.playerId);
   const lead = seat?.lead ?? "a";
-  // Until the player reaches an errand's find, a photo can only be something they pass on the way.
+  // Until an errand's walk is over, a photo can only be something the player passes on the way.
   const step = options.onTheWay
     ? [
-        "The player is on their way to the errand's find and hasn't reached it yet, so this photo can't move the story. It is a side_note, something they pass on the way, and keeps the current quest (quest null). Here you may say the find is further on, but never hurry them.",
+        "The walk this errand started with isn't over yet, so this photo can't move the story. It is a side_note, something the player passes on the way, and keeps the current quest (quest null). You may say the trail goes on, but never hurry them or say how long is left.",
       ]
     : [
         questTarget(state, lead),

@@ -34,8 +34,8 @@ export default function Impact() {
         <SectionHeading id="foot-title">On foot</SectionHeading>
         <StatTiles facts={WALKING_FACTS} className="mt-8" />
         <p className={TEXT}>
-          You choose how long to walk, from a 15-minute break to an hour, and Wren puts clues 5 to 15 minutes&apos; walk
-          away to fit. A case takes a few walks, and the story gives you a reason to go back out.
+          You choose how long to walk, from a 15-minute break to an hour, and Wren plans the case so you solve it on that
+          walk, with new evidence every few minutes along the way. Next time, there&apos;s a new case.
         </p>
       </section>
 

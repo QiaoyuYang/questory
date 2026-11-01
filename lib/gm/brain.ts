@@ -5,10 +5,9 @@ import { mockBrain } from "./mock";
 import {
   CheckSchema,
   CloseSchema,
-  GenesisSchema,
-  GenesisTeamSchema,
   PhotoTurnSchema,
   ResumeSchema,
+  genesisSchema,
   type CheckIn,
   type CheckOut,
   type CloseOut,
@@ -17,6 +16,7 @@ import {
   type ResumeOut,
 } from "./outputs";
 import { CHECK_INSTRUCTIONS, GM_INSTRUCTIONS, checkTask, closeTask, genesisTask, photoTask, resumeTask } from "./prompts";
+import type { CaseSize } from "./rules";
 import type { StoryState } from "./state";
 
 export type Result<T> = { data: T; usage: Usage };
@@ -28,7 +28,7 @@ export type Brain = {
     genre: string,
     theme: string | null,
     mode: "solo" | "team",
-    walkLength: number,
+    size: CaseSize,
     photo: string,
   ): Promise<Result<GenesisOut>>;
   /**
@@ -73,11 +73,11 @@ export function liveBrain(config: Config): Brain {
   };
 
   return {
-    genesis: (genre, theme, mode, walkLength, photo) =>
+    genesis: (genre, theme, mode, size, photo) =>
       respondJson({
         ...gm,
-        content: withPhoto(genesisTask(genre, theme, mode, walkLength), photo),
-        schema: mode === "team" ? GenesisTeamSchema : GenesisSchema,
+        content: withPhoto(genesisTask(genre, theme, mode, size), photo),
+        schema: genesisSchema(mode === "team", size),
         schemaName: "questory_genesis",
       }),
 

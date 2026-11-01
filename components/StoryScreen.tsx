@@ -17,7 +17,6 @@ import { Scene } from "./Scene";
 import { Sheet } from "./Sheet";
 import { Solution } from "./Solution";
 import { StorySheet } from "./StorySheet";
-import { WalkLengthPicker, useWalkLength } from "./WalkLengthPicker";
 import { WalkSummary } from "./WalkSummary";
 import { WalkTimer } from "./WalkTimer";
 import { Working } from "./Working";
@@ -105,7 +104,6 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
   const [busy, setBusy] = useState<Hold | null>(null);
   const [error, setError] = useState<{ message: string; retry: (() => void) | null } | null>(null);
   const [panel, setPanel] = useState<Panel>(null);
-  const [walk, setWalk] = useWalkLength();
   const [zoomed, setZoomed] = useState<Zoomed | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const requested = useRef(new Set<string>());
@@ -259,9 +257,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
   const photoError = (message: string) => setError({ message, retry: null });
   const takePhoto = (photo: PhotoUpload) => run(ANALYZING, photo, () => api.takeTurn(storyId, "photo", photo));
   const resume = (photo: PhotoUpload, takeOver = false) =>
-    run(`${GAME_MASTER} is picking up the case…`, photo, () =>
-      api.takeTurn(storyId, "resume", photo, { takeOver, walk }),
-    );
+    run(`${GAME_MASTER} is picking up the case…`, photo, () => api.takeTurn(storyId, "resume", photo, { takeOver }));
 
   async function end() {
     setPanel(null);
@@ -440,7 +436,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
               <p className="text-sm text-concrete">
                 {team
                   ? `Start your part of chapter ${story.chapter + 1} whenever you're ready, wherever you are.`
-                  : `You can start chapter ${story.chapter + 1} now or on your next walk.`}
+                  : `You can start chapter ${story.chapter + 1} now, wherever you are.`}
               </p>
             </div>
           )}
@@ -458,9 +454,6 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
             </div>
           )}
 
-          {(stage === "ready" || stage === "between") && (
-            <WalkLengthPicker value={walk} onChange={setWalk} className="mt-2" />
-          )}
           <div className="mt-2 flex items-center gap-2">
             <button type="button" onClick={() => setPanel("story")} className={BUTTON.tool}>
               <MagnifierIcon />

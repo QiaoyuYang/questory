@@ -67,23 +67,18 @@ export const api = {
 
   /** `theme` is the player's own idea for a custom story; mode "team" makes a two-player case. */
   /** A two-player case brings the `invite` its link was made with (see lib/client/share.ts). */
-  /** `walk` is how long the player wants to walk, in minutes. */
+  /** `walk` is how long the player wants to walk, in minutes, which sets how big the case is. */
   startStory: (
     story: { genre: GenreId; theme: string; mode: "solo" | "team"; invite: NewInvite | null; walk: WalkLength },
     photo: PhotoUpload,
   ) =>
     call<TurnResult>("/api/stories", { method: "POST", body: JSON.stringify({ ...story, ...photo }) }),
 
-  /** `takeOver` walks the other lead too, while no friend has taken it. A walk starts `walk` minutes long. */
-  takeTurn: (
-    id: string,
-    kind: "photo" | "resume",
-    photo: PhotoUpload,
-    options: { takeOver?: boolean; walk?: WalkLength } = {},
-  ) =>
+  /** `takeOver` walks the other lead too, while no friend has taken it. */
+  takeTurn: (id: string, kind: "photo" | "resume", photo: PhotoUpload, options: { takeOver?: boolean } = {}) =>
     call<TurnResult>(`/api/stories/${id}/turns`, {
       method: "POST",
-      body: JSON.stringify({ kind, ...photo, takeOver: options.takeOver === true, walk: options.walk }),
+      body: JSON.stringify({ kind, ...photo, takeOver: options.takeOver === true }),
     }),
 
   /** A two-player chapter's ending, once both leads are done. Safe to ask more than once. */

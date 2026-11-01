@@ -24,8 +24,8 @@ A case is a question with a hidden answer, like where a bakery's sourdough start
 
 1. Pick a theme for the story, and how long you want to walk: 15 minutes, 30 minutes or an hour.
 2. Take a photo of where you are. Wren writes the opening of the case around it, then leads you outside if you aren't already.
-3. Follow the quests to find evidence. A quest asks for a closer look at something in your last photo, or sends you to find something further on: 5, 10 or 15 minutes' walk away, depending on how long your walk is. The screen shows how far you have left, and what you photograph on the way still goes into the story. A photo that moves the case forward becomes a piece of evidence.
-4. Collect evidence until it points to the answer. A case has multiple chapters, and finishing one ends your walk. You can stop at any time, and your next photo picks the story up wherever you are.
+3. Follow the quests to find evidence. A quest asks for a closer look at something in your last photo, or sends you on to find something, with 5 minutes of walking counted down on screen before the next evidence can turn up. What you photograph on the way still goes into the story. A photo that moves the case forward becomes a piece of evidence.
+4. Collect evidence until it points to the answer. A longer walk gets a longer case, with more chapters, sized so you can solve it before the walk is over. You can stop at any time, and your next photo picks the story up wherever you are.
 
 To play with a friend, choose "With a friend" and send them the link. The case gets two leads, one for each of you: two trails of evidence that end at the same answer. You each follow yours on your own walk, at the same time or not, and a chapter ends once you have both finished your part.
 
@@ -62,7 +62,7 @@ Every case has one question and a hidden answer that Wren decides at the start. 
 
 Each photo becomes something it could reasonably be in the story. After two side notes in a row, the next photo that can count moves the story whatever it shows. If the evidence stops pointing to the answer, Wren changes the answer to fit everything found so far.
 
-A case moves on foot. When a quest sends you somewhere, its find is 5, 10 or 15 minutes' walk away, for a walk of 15 minutes, 30 minutes or an hour, and the screen counts the minutes down (`WALK_TIMER=off` turns this off). Wren is told the distance, so the story gives the find a reason to be that far. Each quest remembers what its photo showed, so Wren can tell whether the next photo was taken somewhere else. A photo sent on the way, or from the same place, is a side note. After a photo taken indoors, the next quest leads outside. A closer look counts where you stand, and Wren never gives two in a row. Time and the photos stand in for distance, so the game never needs your location.
+A case moves on foot, and fits in one walk. A 15-minute walk gets one chapter of three pieces of evidence, 30 minutes two such chapters, and an hour three chapters of four. When a quest sends you somewhere, its evidence can turn up only after 5 minutes of walking, counted down on screen (`WALK_TIMER=off` turns this off), and the story gives a reason the trail goes on. Each quest remembers what its photo showed, so Wren can tell whether the next photo was taken somewhere else. A photo sent on the way, or from the same place, is a side note. After a photo taken indoors, the next quest leads outside. A closer look counts where you stand, and Wren never gives two in a row. Time and the photos stand in for distance, so the game never needs your location.
 
 Wren's memory of a case has three layers, saved after every photo:
 

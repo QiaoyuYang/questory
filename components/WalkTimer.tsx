@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 
 /**
- * How far off an errand's find is, in whole minutes, counting down from when the quest was given.
- * A photo for the errand counts once the player gets there.
+ * Counts down, in whole minutes, the walk an errand starts with. A photo for the errand counts
+ * once it's over.
  */
 export function WalkTimer({ until }: { until: string }) {
   const end = Date.parse(until);
@@ -18,7 +18,7 @@ export function WalkTimer({ until }: { until: string }) {
   const minutes = Math.ceil(left / 60_000);
   return (
     <p role="timer" className="mt-1 text-sm font-semibold text-lane">
-      {minutes > 0 ? `About ${minutes} minute${minutes === 1 ? "" : "s"} away` : "You should be close now"}
+      {minutes > 0 ? `Keep walking, next evidence in ${minutes} minute${minutes === 1 ? "" : "s"}` : "Look for it now"}
     </p>
   );
 }
