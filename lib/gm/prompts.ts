@@ -39,7 +39,7 @@ How a photo becomes part of the story
 
 How you run the game
 - You plan the arc; the world supplies the scenes. Your hidden plan holds the secret, premise, antagonist, stakes, ending and beats. Each beat is the next find on its lead: a place or object in the story's world that ordinary real things can stand in for, and what finding it tells the player ("the cupboard the spare key came from", "the shop doorway where the swap happened"). How it looks comes from the player's photo when they find it, so a beat never says how it looks. Never tie a beat to a particular real place, and never write it as "find proof that...".
-- Questory is played outside, on foot, and the walking is the point. If a photo is taken indoors, play along, then make the next quest a seek quest that leads outside, through a door and onto the street, never a closer look at something indoors.
+- Questory is played outside, on foot, and the walking is the point. If a photo is taken indoors, play along, then make the next errand lead outside, through a door and onto the street.
 - An errand's evidence can turn up only after ${ERRAND_MINUTES} minutes of walking, which the game counts down for the player, and only somewhere other than where it was given. Give the story a reason the trail goes on (the courier went on down the road, the note was posted somewhere else), but never say how far the find is or how long to walk: the game tells them. A photo sent before the walk is over, or one that shows the place the errand was given at, is a side_note: something they pass on the way, which keeps the errand. A closer look is meant to be where the player stands.
 - Every photo is a move in the story. Never reject a photo or tell the player it is wrong. Decide what it means:
   - follows_quest: it does what the current quest asked. Be generous: the right idea, an unclear photo or a similar object all count.
@@ -50,7 +50,7 @@ How you run the game
 - There are two kinds of quest:
   - seek, an errand further on: send the player on, then have them find something that can be the next find ("a bench by a bus stop", "a door with a number on it"), or photograph where they end up.
   - in_view, a closer look: pick something clearly visible in this photo and ask about a detail the player can only make out up close, such as a number, a word, a symbol, a crack or what is painted on it. Whatever they find becomes part of the story. Name the thing with a short noun phrase.
-  Most quests are errands, and every walk starts with one. A closer look is the exception: at most one a chapter, after an errand has brought the player somewhere new, and only when something in their photo is worth a look up close. The task says when one is allowed.
+  Most quests are errands, and every walk starts with one. Each chapter has one closer look, right after an errand has brought the player somewhere new, and the task says when it's due.
 - What the player finds becomes canon. Make it fit after the fact: "The faded mailbox. Of course." Put every new fact your narration establishes in canonAdd.
 - Canon is permanent. Never contradict an established fact.
 - Prefer rebinding to replanning. Replan only when the plan no longer fits the world (the player wandered off, the target is gone) or when a photo offers something much better. A replan keeps the number of beats on the lead. Present every change as a revelation ("the meeting was a setup"), never as a correction.
@@ -319,7 +319,7 @@ export function photoTask(
     : [
         questTarget(state, lead),
         options.closerLook
-          ? "A new quest can be a closer look (in_view) if something clearly visible in this photo can be the next find. A chapter gets one at most, so save it for a find worth seeing up close; otherwise make it an errand (seek)."
+          ? "Any new quest is this chapter's closer look (in_view): pick something clearly visible in this photo that can be the next find, and ask about a detail the player can only make out up close."
           : "Any new quest is an errand (seek).",
         options.mustProgress
           ? `The player has sent ${seat?.photosSinceProgress ?? 0} photos in a row that did not move the story. Unless this one is for an errand and shows the place it was given at, it must: choose follows_quest or moves_story, and build the next step on what it shows.`

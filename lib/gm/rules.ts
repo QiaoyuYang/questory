@@ -17,9 +17,9 @@ import type { QuestState, Seat, StoryState, TurnRecord } from "./state";
 export type CaseSize = { chapters: number; steps: number };
 
 /**
- * The case for each length of walk, small enough to solve on it: most steps take an errand
- * of ERRAND_MINUTES, and a chapter has at most one closer look on the spot. An hour gets the
- * full case.
+ * The case for each length of walk, small enough to solve on it: each step takes an errand
+ * of ERRAND_MINUTES, except a chapter's one closer look on the spot. An hour gets the full
+ * case.
  */
 export const CASE_SIZES: Record<WalkLength, CaseSize> = {
   15: { chapters: 1, steps: 3 },
@@ -56,11 +56,26 @@ export function onTheWay(quest: QuestState | null, at: string): boolean {
 }
 
 /**
- * True when the player's next quest can be a closer look. Every walk starts with an errand, and
- * a closer look only follows one, once a chapter at most, so most of a case is found on foot.
+ * The step on `lead` whose quest is the chapter's closer look. Never the first, which is always
+ * an errand; otherwise it moves around, picked from the story, the chapter and the lead.
  */
-export function closerLookOpen(state: StoryState, seat: Seat): boolean {
-  return seat.quest?.targetMode === "seek" && seat.closerLookChapter !== state.chapter;
+export function closerLookStep(state: StoryState, lead: Lead): number {
+  let hash = 0;
+  for (const char of `${state.id}:${state.chapter}:${lead}`) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  return 2 + (hash % Math.max(1, state.size.steps - 1));
+}
+
+/**
+ * True when the player's next quest has to be the chapter's closer look: their errand is for the
+ * step before it, and they haven't had one this chapter. So every chapter gets exactly one, right
+ * after an errand, and the rest of the case is found on foot.
+ */
+export function closerLookDue(state: StoryState, seat: Seat): boolean {
+  return (
+    seat.quest?.targetMode === "seek" &&
+    seat.closerLookChapter !== state.chapter &&
+    state.progress[seat.lead] === closerLookStep(state, seat.lead) - 2
+  );
 }
 
 export function seatOf(state: StoryState, playerId: string): Seat | null {

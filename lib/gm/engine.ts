@@ -20,7 +20,7 @@ import {
   checked,
   applyPhotoTurn,
   closeDue,
-  closerLookOpen,
+  closerLookDue,
   makeQuest,
   mustMoveStory,
   onTheWay,
@@ -331,7 +331,7 @@ export async function takePhoto(state: StoryState, photo: Photo, playerId: strin
       playerId,
       mustProgress: mustMoveStory(seat),
       onTheWay: onTheWay(seat.quest, clock.at),
-      closerLook: closerLookOpen(state, seat),
+      closerLook: closerLookDue(state, seat),
     }),
   ]);
   const { data, usage } = played;
