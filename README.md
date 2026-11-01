@@ -1,24 +1,19 @@
-<p align="center">
-  <a href="https://questory.run"><img src="docs/banner.webp" alt="Questory: turn your walk into a story. Wren, an AI agent, builds a case from what you photograph, and every case is solved on foot. A street photo sits beside the same photo painted as a piece of evidence."></a>
-</p>
+<div align="center">
 
-<p align="center">
-  <a href="https://questory.run"><img src="https://img.shields.io/badge/play-questory.run-f4bc1c?style=flat-square&labelColor=1e2227" alt="Play at questory.run"></a>
-  <a href="https://github.com/QiaoyuYang/questory/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/QiaoyuYang/questory/ci.yml?branch=main&style=flat-square&label=CI&labelColor=1e2227" alt="CI status"></a>
-  <a href="#how-it-works"><img src="https://img.shields.io/badge/Meta_Model_API-Muse_%2B_SAM_3.1-0866ff?style=flat-square&logo=meta&logoColor=white&labelColor=1e2227" alt="Built on the Meta Model API: Muse and SAM 3.1"></a>
-  <a href="https://nextjs.org"><img src="https://img.shields.io/badge/Next.js-16-edeff1?style=flat-square&logo=nextdotjs&logoColor=white&labelColor=1e2227" alt="Next.js 16"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-9ba2ab?style=flat-square&labelColor=1e2227" alt="MIT License"></a>
-</p>
+# Questory
 
-<p align="center">
-  <a href="https://questory.run">Play</a> ·
-  <a href="#how-to-play">How to play</a> ·
-  <a href="#how-it-works">How it works</a> ·
-  <a href="#privacy">Privacy</a> ·
-  <a href="#run-it-locally">Run it locally</a>
-</p>
+<img src="docs/banner.webp" alt="Turn your walk into a story. Wren, an AI agent, builds a case from what you photograph, and every case is solved on foot. A street photo sits beside the same photo painted as a piece of evidence.">
 
-Questory is made for phones. Open [questory.run](https://questory.run) on your phone, or scan the code it shows on a computer. It was built on the Meta Model API for the Meta Global AI Developer Hackathon. Why it's played on foot, and with a friend, is on the [Impact page](https://questory.run/impact).
+Play at [questory.run](https://questory.run)
+
+[![CI](https://img.shields.io/github/actions/workflow/status/QiaoyuYang/questory/ci.yml?branch=main&label=CI)](https://github.com/QiaoyuYang/questory/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/github/license/QiaoyuYang/questory)](LICENSE)
+[![Next.js 16](https://img.shields.io/badge/Next.js-16-black?logo=nextdotjs)](https://nextjs.org)
+[![Meta Model API](https://img.shields.io/badge/Meta_Model_API-Muse_%2B_SAM_3.1-0866FF?logo=meta&logoColor=white)](#how-it-works)
+
+</div>
+
+Questory is made for phones. Open [questory.run](https://questory.run) on your phone, or scan the code it shows on a computer. It was built on the Meta Model API for the Meta Global AI Developer Hackathon.
 
 <div align="center">
 <table>

@@ -129,7 +129,7 @@ export default function Home() {
         </p>
       </section>
 
-      <SiteFooter current="home">No account to make, and it never asks where you are.</SiteFooter>
+      <SiteFooter current="home" />
     </main>
   );
 }
