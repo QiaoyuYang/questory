@@ -37,7 +37,7 @@ export function useWalkLength(): [WalkLength, (length: WalkLength) => void] {
 
 type Props = { value: WalkLength; onChange: (length: WalkLength) => void; hint?: boolean; className?: string };
 
-/** How long the player wants to walk. Each quest that sends them somewhere starts with a quarter of it. */
+/** How long the player wants to walk, which sets how far away a quest that sends them somewhere is. */
 export function WalkLengthPicker({ value, onChange, hint = false, className = "" }: Props) {
   const selected = String(value) as `${WalkLength}`;
   return (

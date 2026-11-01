@@ -70,8 +70,9 @@ export default function HowItWorks() {
         </ol>
         <p className={TEXT}>
           A photo that moves the case forward becomes a piece of evidence. You choose how long to walk, from 15 minutes to
-          an hour, and a quest that sends you somewhere starts with a quarter of that, counted down on screen. It counts
-          only from somewhere else. The case is solved when the evidence points to the answer, usually over a few walks.
+          an hour, and when a quest sends you somewhere, the next clue is 5 to 15 minutes away. What you photograph on the
+          way still goes into the story. The case is solved when the evidence points to the answer, usually over a few
+          walks.
         </p>
       </section>
 
