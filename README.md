@@ -86,7 +86,7 @@ A shared case has two leads that come at the answer from different sides, such a
 
 ## Run it locally
 
-You need Node.js 20.17 or later.
+You need Node.js 22 or 24.
 
 ```sh
 npm install
