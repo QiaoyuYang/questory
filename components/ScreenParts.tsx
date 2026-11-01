@@ -20,7 +20,7 @@ export function ScreenParts({ className = "" }: { className?: string }) {
       <div className="mx-auto w-[72%] max-w-[17rem] overflow-hidden rounded-[2rem] border-[6px] border-kerb shadow-[0_24px_60px_-24px_rgba(0,0,0,0.8)] md:mx-0 md:w-[17rem]">
         <div className="relative">
           <Image
-            src="/landing/evidence.webp"
+            src="/how-it-works/screen.webp"
             alt="A game screen: a painted evidence picture called The waiting bench, the story under it, and the next step with a small copy of the photo where a door is outlined."
             width={600}
             height={1300}

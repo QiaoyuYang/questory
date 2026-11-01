@@ -10,20 +10,20 @@ import { WALKING_FACTS } from "@/lib/impact";
 /** Three moments from a real case, played on a phone. */
 const MOMENTS = [
   {
-    src: "/landing/opening.webp",
-    alt: "A photo of a bakery on a street corner, with the opening of a case below it: the bakery's sourdough starter has gone, and the next step is a closer look at the bench outside.",
+    src: "/landing/case-opening.webp",
+    alt: "A photo of a bakery on a street corner, with the opening of a case below it: the baker's sourdough starter has gone, and the next step is a walk down the street to a noticeboard, with 5 minutes counted down.",
     title: "Your street starts the case",
     text: "Take a photo of where you are, even indoors. Wren turns it into the start of a case, then leads you outside.",
   },
   {
-    src: "/landing/evidence.webp",
-    alt: "The photo redrawn as an evidence card called The waiting bench, with Wren's note that someone sat there before the bakery opened.",
+    src: "/landing/case-evidence.webp",
+    alt: "A noticeboard photo painted as an evidence card called Spare key list, with Wren's note that a spare key is kept for early deliveries, and the next walk counting down.",
     title: "Follow the quests",
     text: "Each quest asks for a photo of something a few minutes' walk away, or now and then up close. A photo that moves the case forward becomes a piece of evidence.",
   },
   {
-    src: "/landing/case.webp",
-    alt: "The case so far: two pieces of evidence found, and ten more to find before the answer.",
+    src: "/landing/case-so-far.webp",
+    alt: "The case so far: four pieces of evidence found, and eight more to find before the answer.",
     title: "Solve the case",
     text: "Collect evidence until it points to the answer, by the end of your walk.",
   },

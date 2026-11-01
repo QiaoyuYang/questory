@@ -6,10 +6,7 @@
 
 Play at [questory.run](https://questory.run)
 
-[![CI](https://img.shields.io/github/actions/workflow/status/QiaoyuYang/questory/ci.yml?branch=main&label=CI)](https://github.com/QiaoyuYang/questory/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/github/license/QiaoyuYang/questory)](LICENSE)
-[![Next.js 16](https://img.shields.io/badge/Next.js-16-black?logo=nextdotjs)](https://nextjs.org)
-[![Meta Model API](https://img.shields.io/badge/Meta_Model_API-Muse_%2B_SAM_3.1-0866FF?logo=meta&logoColor=white)](#how-it-works)
+[![CI](https://img.shields.io/github/actions/workflow/status/QiaoyuYang/questory/ci.yml?branch=main&label=CI)](https://github.com/QiaoyuYang/questory/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/github/license/QiaoyuYang/questory)](LICENSE) [![Next.js 16](https://img.shields.io/badge/Next.js-16-black?logo=nextdotjs)](https://nextjs.org) [![Meta Model API](https://img.shields.io/badge/Meta_Model_API-Muse_%2B_SAM_3.1-0866FF?logo=meta&logoColor=white)](#how-it-works)
 
 </div>
 
@@ -18,9 +15,9 @@ Questory is made for phones. Open [questory.run](https://questory.run) on your p
 <div align="center">
 <table>
   <tr>
-    <td align="center"><img src="public/landing/opening.webp" width="230" alt="A photo of a bakery on a street corner, with the opening of a case below it"><br>Your street starts the case</td>
-    <td align="center"><img src="public/landing/evidence.webp" width="230" alt="The photo redrawn as an evidence card called The waiting bench"><br>Follow the quests</td>
-    <td align="center"><img src="public/landing/case.webp" width="230" alt="The case so far: two pieces of evidence found, and ten more to find"><br>Solve the case</td>
+    <td align="center"><img src="public/landing/case-opening.webp" width="230" alt="A photo of a bakery on a street corner, with the opening of a case below it and a 5-minute walk to the next step"><br>Your street starts the case</td>
+    <td align="center"><img src="public/landing/case-evidence.webp" width="230" alt="A noticeboard photo painted as an evidence card called Spare key list"><br>Follow the quests</td>
+    <td align="center"><img src="public/landing/case-so-far.webp" width="230" alt="The case so far: four pieces of evidence found, and eight more to find"><br>Solve the case</td>
   </tr>
 </table>
 </div>
