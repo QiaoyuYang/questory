@@ -20,6 +20,7 @@ import {
   checked,
   applyPhotoTurn,
   closeDue,
+  closerLookOpen,
   makeQuest,
   mustMoveStory,
   onTheWay,
@@ -330,6 +331,7 @@ export async function takePhoto(state: StoryState, photo: Photo, playerId: strin
       playerId,
       mustProgress: mustMoveStory(seat),
       onTheWay: onTheWay(seat.quest, clock.at),
+      closerLook: closerLookOpen(state, seat),
     }),
   ]);
   const { data, usage } = played;
@@ -491,6 +493,7 @@ export async function joinStory(state: StoryState, playerId: string): Promise<St
         startedAt: null,
         photosSinceProgress: 0,
         lastNarration: "",
+        closerLookChapter: null,
       });
     }
   });

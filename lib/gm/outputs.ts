@@ -81,6 +81,12 @@ export const QuestOutSchema = z.object({
 });
 export type QuestOut = z.infer<typeof QuestOutSchema>;
 
+/** A quest that has to be an errand: the first of every walk, and any a closer look can't be. */
+const ErrandOutSchema = QuestOutSchema.extend({
+  targetMode: z.enum(["seek"]).describe("seek: an errand a few minutes' walk away that ends in a photo."),
+});
+export type ErrandOut = z.infer<typeof ErrandOutSchema>;
+
 /** A piece of evidence. Muse Image paints it as a card onto the photo that turned it up. */
 const CardSchema = z.object({
   title: text(LABEL).describe(
@@ -153,7 +159,7 @@ const genesisOpening = {
     "Every fact about the case that the opening narration tells the player, such as who is missing or what was seen, at most 12 words each. The player reads these as clues, so nothing from the hidden plan, nothing the narration doesn't say, and nothing about who follows which lead.",
   ),
   bindingsAdd: list(BindingSchema),
-  quest: QuestOutSchema,
+  quest: ErrandOutSchema,
 };
 
 /** The side of the case each lead finds out, in a case for two players. */
@@ -196,8 +202,8 @@ const planFields = {
     ),
 };
 
-/** Any photo the player sends during a walk. */
-export const PhotoTurnSchema = z.object({
+/** What the game master makes of any photo the player sends during a walk, apart from the next quest. */
+const photoTurn = {
   // Decided before the outcome, which depends on it.
   samePlace: z
     .boolean()
@@ -229,11 +235,19 @@ export const PhotoTurnSchema = z.object({
   recap: recapText()
     .nullable()
     .describe(`Only when the task says this step ends the chapter or the story; otherwise null. ${RECAP_RULES}`),
-  quest: QuestOutSchema.nullable().describe(
-    "The next quest. Null keeps the current quest, which only fits after a side_note when the player can still reach it from here. Also null when this step ends the chapter, the player's part of it, or the story.",
-  ),
-});
-export type PhotoTurnOut = z.infer<typeof PhotoTurnSchema>;
+};
+
+/** A photo during a walk. With `closerLook` the next quest can be a closer look; otherwise it's an errand. */
+export function photoTurnSchema(closerLook: boolean) {
+  const quest: z.ZodType<QuestOut> = closerLook ? QuestOutSchema : ErrandOutSchema;
+  return z.object({
+    ...photoTurn,
+    quest: quest.nullable().describe(
+      "The next quest. Null keeps the current quest, which only fits after a side_note when the player can still reach it from here. Also null when this step ends the chapter, the player's part of it, or the story.",
+    ),
+  });
+}
+export type PhotoTurnOut = z.infer<ReturnType<typeof photoTurnSchema>>;
 
 /** A second look at text written about a photo, with anything it claims to see that isn't there taken out. */
 export const CheckSchema = z.object({
@@ -258,7 +272,7 @@ export const ResumeSchema = z.object({
   ),
   bindingsAdd: list(BindingSchema),
   ...planFields,
-  quest: QuestOutSchema,
+  quest: ErrandOutSchema,
 });
 export type ResumeOut = z.infer<typeof ResumeSchema>;
 

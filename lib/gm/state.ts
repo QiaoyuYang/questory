@@ -76,6 +76,8 @@ export const SeatSchema = z.object({
   startedAt: z.string().nullable(),
   /** Photos in a row that left the story where it was. */
   photosSinceProgress: z.number(),
+  /** The chapter the player last got a closer look in, since a chapter has one at most. */
+  closerLookChapter: z.number().nullable().default(null),
   /** The game master's last narration to this player, so the next one can carry on from it without repeating it. */
   lastNarration: z.string(),
 });

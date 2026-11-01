@@ -9,6 +9,7 @@ import {
   applyPhotoTurn,
   checked,
   closeDue,
+  closerLookOpen,
   makeQuest,
   mustMoveStory,
   nounPhrase,
@@ -211,6 +212,20 @@ test("an errand counts only once the walk it starts with is over, and a closer l
   assert.equal(seat(closer).quest?.walkUntil, null);
   // With no minutes set, an errand starts with no walk.
   assert.equal(makeQuest({ ...QUEST, targetMode: "seek" }, null, 1, { ...at(0), walkMinutes: 0 }).walkUntil, null);
+});
+
+test("a closer look follows an errand, once a chapter at most", () => {
+  const state = story();
+  seat(state).quest!.targetMode = "seek";
+  assert.equal(closerLookOpen(state, seat(state)), true);
+  applyPhotoTurn(state, step(), 2, "player");
+  // Never two in a row, and not again this chapter, even after another errand.
+  assert.equal(closerLookOpen(state, seat(state)), false);
+  applyPhotoTurn(state, step({ quest: { ...QUEST, targetMode: "seek" } }), 3, "player");
+  assert.equal(closerLookOpen(state, seat(state)), false);
+  // The next chapter can have one again.
+  state.chapter = 2;
+  assert.equal(closerLookOpen(state, seat(state)), true);
 });
 
 test("a 15-minute case is one chapter of three steps, solved on the walk", () => {
