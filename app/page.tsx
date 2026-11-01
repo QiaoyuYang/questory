@@ -5,7 +5,7 @@ import { SiteFooter, SiteHeader } from "@/components/SiteNav";
 import { StatTiles } from "@/components/StatTiles";
 import { BUTTON } from "@/components/buttons";
 import { CameraIcon } from "@/components/icons";
-import { WALKING_FACTS } from "@/lib/impact";
+import { HEADLINE_FACTS } from "@/lib/impact";
 
 /** Three moments from a real case, played on a phone. */
 const MOMENTS = [
@@ -119,13 +119,13 @@ export default function Home() {
           Why on foot
         </h2>
         <div className="lane-line mt-3 w-24" aria-hidden="true" />
-        <StatTiles facts={WALKING_FACTS} className="mt-8" />
+        <StatTiles facts={HEADLINE_FACTS} className="mt-8" />
         <p className="mt-5 text-concrete">
           More on the{" "}
           <Link href="/impact" className="font-semibold text-paint underline underline-offset-4 hover:text-lane">
             Impact page
           </Link>
-          , including why it&apos;s made for two.
+          .
         </p>
       </section>
 
