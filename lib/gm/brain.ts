@@ -34,7 +34,7 @@ export type Brain = {
   /**
    * Any photo during `playerId`'s walk. `mustProgress` is set when this photo has to move the
    * story, `onTheWay` while the walk their errand started with isn't over, so it can't, and
-   * `closerLook` when the next quest can be a closer look instead of an errand.
+   * `closerLook` when the next quest has to be the chapter's closer look.
    */
   photo(
     state: StoryState,

@@ -9,7 +9,8 @@ import {
   applyPhotoTurn,
   checked,
   closeDue,
-  closerLookOpen,
+  closerLookDue,
+  closerLookStep,
   makeQuest,
   mustMoveStory,
   nounPhrase,
@@ -214,18 +215,37 @@ test("an errand counts only once the walk it starts with is over, and a closer l
   assert.equal(makeQuest({ ...QUEST, targetMode: "seek" }, null, 1, { ...at(0), walkMinutes: 0 }).walkUntil, null);
 });
 
-test("a closer look follows an errand, once a chapter at most", () => {
-  const state = story();
+test("every chapter gets one closer look, right after an errand, at a step that moves around", () => {
+  const where = new Set<number>();
+  for (const id of ["a", "b", "c", "d", "e", "f", "g", "h"]) {
+    const state = story(goals(HOUR.steps));
+    state.id = id;
+    // The walk opens on an errand; each reply gives the kind of quest its reply format allows.
+    seat(state).quest!.targetMode = "seek";
+    const kinds: string[] = [];
+    for (let turn = 2; seat(state).quest && turn < 20; turn++) {
+      const due = closerLookDue(state, seat(state));
+      applyPhotoTurn(state, step({ quest: { ...QUEST, targetMode: due ? "in_view" : "seek" } }), turn, "player");
+      if (seat(state).quest) kinds.push(seat(state).quest!.targetMode);
+    }
+    // The quests for steps 2 on: one closer look, never two in a row, at the chosen step.
+    assert.equal(kinds.filter((kind) => kind === "in_view").length, 1);
+    assert.equal(kinds.indexOf("in_view") + 2, closerLookStep(state, "a"));
+    where.add(closerLookStep(state, "a"));
+  }
+  assert.ok(where.size > 1);
+});
+
+test("a chapter's closer look comes only once, even when a side note brings it early", () => {
+  const state = story(goals(HOUR.steps));
   seat(state).quest!.targetMode = "seek";
-  assert.equal(closerLookOpen(state, seat(state)), true);
-  applyPhotoTurn(state, step(), 2, "player");
-  // Never two in a row, and not again this chapter, even after another errand.
-  assert.equal(closerLookOpen(state, seat(state)), false);
-  applyPhotoTurn(state, step({ quest: { ...QUEST, targetMode: "seek" } }), 3, "player");
-  assert.equal(closerLookOpen(state, seat(state)), false);
-  // The next chapter can have one again.
-  state.chapter = 2;
-  assert.equal(closerLookOpen(state, seat(state)), true);
+  for (let i = 0; closerLookStep(state, "a") !== 2; i++) state.id = `story-${i}`;
+  assert.equal(closerLookDue(state, seat(state)), true);
+  applyPhotoTurn(state, reply({ quest: QUEST }), 2, "player");
+  assert.equal(seat(state).quest?.targetMode, "in_view");
+  // Back on an errand with that step still to find, but this chapter has had its closer look.
+  applyPhotoTurn(state, reply({ quest: { ...QUEST, targetMode: "seek" } }), 3, "player");
+  assert.equal(closerLookDue(state, seat(state)), false);
 });
 
 test("a 15-minute case is one chapter of three steps, solved on the walk", () => {

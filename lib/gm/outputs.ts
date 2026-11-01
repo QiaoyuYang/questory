@@ -81,11 +81,16 @@ export const QuestOutSchema = z.object({
 });
 export type QuestOut = z.infer<typeof QuestOutSchema>;
 
-/** A quest that has to be an errand: the first of every walk, and any a closer look can't be. */
+/** A quest that has to be an errand: the first of every walk, and every other but a chapter's closer look. */
 const ErrandOutSchema = QuestOutSchema.extend({
   targetMode: z.enum(["seek"]).describe("seek: an errand a few minutes' walk away that ends in a photo."),
 });
 export type ErrandOut = z.infer<typeof ErrandOutSchema>;
+
+/** The chapter's one closer look, at something in the photo the player just sent. */
+const CloserLookOutSchema = QuestOutSchema.extend({
+  targetMode: z.enum(["in_view"]).describe("in_view: a closer look at something clearly visible in this photo."),
+});
 
 /** A piece of evidence. Muse Image paints it as a card onto the photo that turned it up. */
 const CardSchema = z.object({
@@ -237,9 +242,9 @@ const photoTurn = {
     .describe(`Only when the task says this step ends the chapter or the story; otherwise null. ${RECAP_RULES}`),
 };
 
-/** A photo during a walk. With `closerLook` the next quest can be a closer look; otherwise it's an errand. */
+/** A photo during a walk. With `closerLook` any new quest is the chapter's closer look; otherwise it's an errand. */
 export function photoTurnSchema(closerLook: boolean) {
-  const quest: z.ZodType<QuestOut> = closerLook ? QuestOutSchema : ErrandOutSchema;
+  const quest: z.ZodType<QuestOut> = closerLook ? CloserLookOutSchema : ErrandOutSchema;
   return z.object({
     ...photoTurn,
     quest: quest.nullable().describe(

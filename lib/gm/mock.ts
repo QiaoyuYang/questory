@@ -200,7 +200,7 @@ export const mockBrain: Brain = {
           : one && partEnds
             ? `You followed the bell thief's trail for another chapter. The latest find: ${card.title.toLowerCase()}.`
             : null,
-        // A side note keeps the open quest; a step forward brings the next one, a closer look when it can.
+        // A side note keeps the open quest; a step forward brings the next one, the chapter's closer look when it's due.
         quest: partEnds || !moved ? null : closerLook ? CLOSER_LOOK : errandAfter(done + 1),
       },
     };
