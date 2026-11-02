@@ -2,15 +2,15 @@
 
 # Questory
 
-<img src="docs/banner.webp" alt="Turn your walk into a story. Wren, an AI agent, builds a case from what you photograph, and every case is solved on foot. A street photo sits beside the same photo painted as a piece of evidence.">
-
 Play at [questory.run](https://questory.run)
+
+<img src="docs/banner.webp" alt="Turn your walk into a story. Wren, an AI agent, builds a case from what you photograph, and every case is solved on foot. A street photo sits beside the same photo painted as a piece of evidence.">
 
 [![CI](https://img.shields.io/github/actions/workflow/status/QiaoyuYang/questory/ci.yml?branch=main&label=CI)](https://github.com/QiaoyuYang/questory/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/github/license/QiaoyuYang/questory)](LICENSE) [![Next.js 16](https://img.shields.io/badge/Next.js-16-black?logo=nextdotjs)](https://nextjs.org) [![Meta Model API](https://img.shields.io/badge/Meta_Model_API-Muse_%2B_SAM_3.1-0866FF?logo=meta&logoColor=white)](#how-it-works)
 
 </div>
 
-Questory is made for phones. Open [questory.run](https://questory.run) on your phone, or scan the code it shows on a computer. It was built on the Meta Model API for the Meta Global AI Developer Hackathon.
+Questory is ready to play on phones, coming to Meta Glasses later this year. It was built on the Meta Model API for the Meta Global AI Developer Hackathon.
 
 <div align="center">
 <table>
@@ -39,7 +39,7 @@ To play with a friend, choose "With a friend" and send them the link. The case g
 
 Wren plans each case, reads every photo with what it remembers of the story, writes what happens and sets the next quest. When your photos stop fitting its plan, it changes the plan. Wren can't walk, so you do, and its quests say where to look.
 
-Questory is built with Next.js 16 and the Meta Model API. Wren runs on Muse Wonder and has three subagents, each doing a specific job in the gameplay:
+Questory is built with the Meta Model API. Wren runs on Muse Wonder and has three subagents, each doing a specific job in the gameplay:
 
 | Model | Role | What it does |
 | :--- | :--- | :--- |
@@ -68,7 +68,9 @@ Every case has one question and a hidden answer that Wren decides at the start. 
 
 Each photo becomes something it could reasonably be in the story. After two side notes in a row, the next photo that can count moves the story whatever it shows. If the evidence stops pointing to the answer, Wren changes the answer to fit everything found so far.
 
-A case moves on foot, and fits in one walk. A 15-minute walk gets one chapter of three pieces of evidence, 30 minutes two such chapters, and an hour three chapters of four. You need to walk 5 minutes, counted down on screen, to unlock the next quest, and the camera waits until then. The story gives a reason the trail goes on, and quests ask for things common where you said you'd walk. Each quest remembers what its photo showed, so Wren can tell whether the next photo was taken somewhere else, and a photo from the same place is a side note. Sometimes the photo where a quest brings you shows the place, not the find: Wren asks for a closer look at something in it, and the close-up turns up the evidence. If the first photo is taken indoors, the next quest in the story will lead the player outside, with no countdown. Distance is estimated with walking time and photo dissimilarity, so the game never needs your location.
+A case moves on foot, and fits in one walk. A 15-minute walk gets one chapter of three pieces of evidence, 30 minutes two such chapters, and an hour three chapters of four. You need to walk 5 minutes, counted down on screen, to unlock the next quest, and the camera waits until then. If the first photo is taken indoors, the next quest in the story will lead the player outside, with no countdown.
+
+The story gives a reason the trail goes on, and quests ask for things common where you said you'd walk. Each quest remembers what its photo showed, so Wren can tell whether the next photo was taken somewhere else, and a photo from the same place is a side note. Sometimes the photo a quest leads you to only shows the place, and Wren asks for a closer look at something in it. Distance is estimated with walking time and photo dissimilarity, so the game never needs your location.
 
 Wren's memory of a case has three layers, saved after every photo:
 
