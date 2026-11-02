@@ -19,7 +19,7 @@ const MOMENTS = [
     src: "/landing/case-evidence.webp",
     alt: "A noticeboard photo painted as an evidence card called Spare key list, with Wren's note that a spare key is kept for early deliveries, and the next walk counting down.",
     title: "Follow the quests",
-    text: "Each quest asks for a photo of something a few minutes' walk away, or now and then up close. A photo that moves the case forward becomes a piece of evidence.",
+    text: "Each quest asks for a photo of something a few minutes' walk away, or up close. A photo that moves the case forward becomes a piece of evidence.",
   },
   {
     src: "/landing/case-so-far.webp",
@@ -35,7 +35,7 @@ const TOGETHER = [
     src: "/landing/join.webp",
     alt: "A friend's phone opening the invite: a case about prize tomato seedlings missing from a shed, with a button to join it.",
     title: "Send a friend the link",
-    text: "They see the case and take the other lead, on their own walk, now or later.",
+    text: "They see the case and take the other lead, on their own walk.",
   },
   {
     src: "/landing/together.webp",

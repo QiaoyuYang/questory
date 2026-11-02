@@ -38,7 +38,7 @@ const LAYERS = [
   {
     name: "Canon",
     holds: "Facts already established in play.",
-    changes: "New facts are added, and old ones never change.",
+    changes: "New facts could be added, but old ones never change.",
   },
 ];
 
@@ -71,7 +71,7 @@ export default function HowItWorks() {
         <p className={TEXT}>
           A photo that moves the case forward becomes a piece of evidence. You choose how long to walk, from 15 minutes to
           an hour, and the case is sized so you solve it on that walk. When a quest sends you somewhere, the next evidence
-          comes after 5 minutes of walking, and what you photograph on the way still goes into the story.
+          comes after 5 minutes of walking, and what you photograph on the way can also go into the story.
         </p>
       </section>
 
@@ -115,8 +115,8 @@ export default function HowItWorks() {
         <SectionHeading id="two-title">Two players</SectionHeading>
         <p className={TEXT}>
           A shared case has two leads, one for each player, that come at the answer from different sides. You each follow
-          yours on your own walk, at the same time or not. Wren sees what both of you found and writes each
-          chapter&apos;s ending from all of it. A short lock on each case means two photos sent at once both count.
+          yours on your own walk. Wren sees what both of you found and writes each chapter&apos;s ending from all of
+          it. A short lock on each case means two photos sent at once both count.
         </p>
       </section>
 

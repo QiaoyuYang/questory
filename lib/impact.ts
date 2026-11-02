@@ -20,14 +20,14 @@ export const INACTIVITY_FACTS: Fact[] = [
     },
   },
   {
-    value: "81%",
-    label: "of adolescents aged 11 to 17 aren't active enough.",
-    source: { name: "The Lancet Child & Adolescent Health, 2020", url: doi("10.1016/S2352-4642(19)30323-2") },
+    value: "4,961",
+    label: "steps a day on average, counted by the phones of nearly 700,000 people in 46 countries.",
+    source: { name: "Nature, 2017", url: doi("10.1038/nature23018") },
   },
   {
-    value: "5.3 million",
-    label: "deaths a year are caused by physical inactivity, on the scale of smoking.",
-    source: { name: "The Lancet, 2012", url: doi("10.1016/S0140-6736(12)61031-9") },
+    value: "7.2%",
+    label: "of deaths worldwide are due to physical inactivity.",
+    source: { name: "British Journal of Sports Medicine, 2022", url: doi("10.1136/bjsports-2020-103640") },
   },
 ];
 
@@ -51,5 +51,5 @@ export const WALKING_FACTS: Fact[] = [
   },
 ];
 
-/** The two the landing page leads with: how many people don't move enough, and what walking does. */
-export const HEADLINE_FACTS: Fact[] = [INACTIVITY_FACTS[0], WALKING_FACTS[0]];
+/** The two the landing page leads with, from different journals: how many people don't move enough, and what walking does. */
+export const HEADLINE_FACTS: Fact[] = [INACTIVITY_FACTS[0], WALKING_FACTS[1]];

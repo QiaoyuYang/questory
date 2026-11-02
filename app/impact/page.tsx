@@ -35,8 +35,8 @@ export default function Impact() {
         <SectionHeading id="less-title">We&apos;re moving less</SectionHeading>
         <StatTiles facts={INACTIVITY_FACTS} className="mt-8" />
         <p className={TEXT}>
-          Questory starts small. You choose how long to walk, from a 15-minute break to an hour, and Wren plans the case
-          so you solve it on that walk.
+          Questory starts small. You choose how long to walk, from a 15-minute break to an hour, gradually building a
+          habit of outdoor exercise.
         </p>
       </section>
 
@@ -44,8 +44,8 @@ export default function Impact() {
         <SectionHeading id="walk-title">A walk outside helps</SectionHeading>
         <StatTiles facts={WALKING_FACTS} className="mt-8" />
         <p className={TEXT}>
-          Every case is solved outside, on foot, with new evidence every few minutes along the way. When it&apos;s
-          solved, there&apos;s a new case for next time.
+          Every case is solved outside, on foot, with new evidence every few minutes along the way. The engaging story
+          gives players a reason to keep walking.
         </p>
       </section>
 
