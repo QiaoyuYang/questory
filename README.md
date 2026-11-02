@@ -15,8 +15,8 @@ Questory is ready to play on phones, coming to Meta Glasses later this year. It 
 <div align="center">
 <table>
   <tr>
-    <td align="center"><img src="public/landing/case-opening.webp" width="230" alt="A photo of a bakery on a street corner, with the opening of a case below it and a 5-minute walk to the next step"><br>Your street starts the case</td>
-    <td align="center"><img src="public/landing/case-evidence.webp" width="230" alt="A noticeboard photo painted as an evidence card called Spare key list"><br>Follow the quests</td>
+    <td align="center"><img src="public/landing/case-start.webp" width="230" alt="A photo of a bakery on a street corner, with the opening of a case below it and 5 minutes to walk before the next quest"><br>Your street starts the case</td>
+    <td align="center"><img src="public/landing/case-find.webp" width="230" alt="A noticeboard photo painted as an evidence card called Spare key list, with the next quest below it"><br>Follow the quests</td>
     <td align="center"><img src="public/landing/case-so-far.webp" width="230" alt="The case so far: four pieces of evidence found, and eight more to find"><br>Solve the case</td>
   </tr>
 </table>
@@ -87,7 +87,7 @@ A shared case has two leads that come at the answer from different sides, such a
 <div align="center">
 <table>
   <tr>
-    <td align="center"><img src="public/landing/join.webp" width="230" alt="A friend's phone opening the invite: a case about prize tomato seedlings missing from a shed, with a button to join it"><br>Send a friend the link</td>
+    <td align="center"><img src="public/landing/case-invite.webp" width="230" alt="A friend's phone opening the invite: a case about prize tomato seedlings missing from a shed, a choice of city streets or a park or suburb, and a button to join it"><br>Send a friend the link</td>
     <td align="center"><img src="public/landing/together.webp" width="230" alt="The shared case: one piece of evidence found by you and one by your partner, with 22 more to find"><br>Solve it together</td>
   </tr>
 </table>

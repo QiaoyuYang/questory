@@ -10,14 +10,14 @@ import { HEADLINE_FACTS } from "@/lib/impact";
 /** Three moments from a real case, played on a phone. */
 const MOMENTS = [
   {
-    src: "/landing/case-opening.webp",
-    alt: "A photo of a bakery on a street corner, with the opening of a case below it: the baker's sourdough starter has gone, and the next step is a walk down the street to a noticeboard, with 5 minutes counted down.",
+    src: "/landing/case-start.webp",
+    alt: "A photo of a bakery on a street corner, with the opening of a case below it: the baker's sourdough starter has gone. Below that, the next quest comes in 5 minutes, and the camera button is greyed until then.",
     title: "Your street starts the case",
     text: "Take a photo of where you are, even indoors. Wren turns it into the start of a case, then leads you outside.",
   },
   {
-    src: "/landing/case-evidence.webp",
-    alt: "A noticeboard photo painted as an evidence card called Spare key list, with Wren's note that a spare key is kept for early deliveries, and the next walk counting down.",
+    src: "/landing/case-find.webp",
+    alt: "A noticeboard photo painted as an evidence card called Spare key list, with Wren's note that a spare key is kept for early deliveries. Its walk is over, so the next quest shows: find a small wall cupboard.",
     title: "Follow the quests",
     text: "Each quest asks for a photo of something a few minutes' walk away, or a closer look. A photo that moves the case forward becomes a piece of evidence.",
   },
@@ -32,8 +32,8 @@ const MOMENTS = [
 /** The same case for two, from the friend's phone. */
 const TOGETHER = [
   {
-    src: "/landing/join.webp",
-    alt: "A friend's phone opening the invite: a case about prize tomato seedlings missing from a shed, with a button to join it.",
+    src: "/landing/case-invite.webp",
+    alt: "A friend's phone opening the invite: a case about prize tomato seedlings missing from a shed, a choice of city streets or a park or suburb, and a button to join it.",
     title: "Send a friend the link",
     text: "They see the case and take the other lead, on their own walk.",
   },
