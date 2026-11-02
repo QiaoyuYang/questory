@@ -23,11 +23,6 @@ export const GENRES = [
     blurb: "Old magic hiding in plain sight.",
   },
   {
-    id: "scifi",
-    name: "Sci-fi",
-    blurb: "Signals, glitches, and something that doesn't belong here.",
-  },
-  {
     id: "comedy",
     name: "Comedy",
     blurb:
@@ -37,6 +32,12 @@ export const GENRES = [
     id: "custom",
     name: "Your own",
     blurb: "",
+  },
+  {
+    id: "scifi",
+    name: "Sci-fi",
+    blurb: "Signals, glitches, and something that doesn't belong here.",
+    retired: true,
   },
   {
     id: "everyday",
