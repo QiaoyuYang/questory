@@ -89,14 +89,6 @@ A shared case has two leads that come at the answer from different sides, such a
 </table>
 </div>
 
-## Privacy
-
-- There is no account. A random ID in a cookie links your stories to your browser.
-- The app never asks for your location. Photos are re-encoded on the phone before upload, which removes their location data, and walk times come from when photos were sent.
-- An invite link shows only its own case, and a case has room for one friend, so a forwarded link can't let a third person in.
-- Deleting a story also deletes its photos and evidence cards.
-- Photos go to the Meta Model API, and Meta may use what it receives to improve its products. They are then stored in an encrypted private bucket, served only through unguessable links.
-
 ## Deployment
 
 The live game at [questory.run](https://questory.run) runs on [Vercel](https://vercel.com), and every merge to `main` deploys it. Stories, photos and evidence cards are stored in [Appwrite Cloud](https://appwrite.io). To deploy your own copy:
@@ -105,8 +97,6 @@ The live game at [questory.run](https://questory.run) runs on [Vercel](https://v
 2. Clone this repo and run `npm install`. Put the Appwrite endpoint, project ID and key in `.env.local`, then run `npm run setup:appwrite` once. It creates the database, its tables and a private bucket for photos and evidence cards.
 3. Import the repo into Vercel. Under environment variables, add your Meta Model API key as `MODEL_API_KEY`, and the same three Appwrite values. The optional settings, such as the daily call limits, are listed in [`.env.example`](.env.example).
 4. Deploy, then open `/api/health` on your domain. It should show `live` mode and `appwrite` storage.
-
-A turn can take up to two minutes, and painting an evidence card up to three, so those routes raise their time limit with `maxDuration`. With fluid compute, which Vercel turns on by default, even the free Hobby plan allows five minutes.
 
 ## Run it locally
 
@@ -142,6 +132,14 @@ lib/*.ts            Settings, the player cookie, shared types, walk times and th
 scripts/            Appwrite setup
 docs/               Images for this README
 ```
+
+## Privacy
+
+- There is no account. A random ID in a cookie links your stories to your browser.
+- The app never asks for your location. Photos are re-encoded on the phone before upload, which removes their location data, and walk times come from when photos were sent.
+- An invite link shows only its own case, and a case has room for one friend, so a forwarded link can't let a third person in.
+- Deleting a story also deletes its photos and evidence cards.
+- Photos go to the Meta Model API, and Meta may use what it receives to improve its products. They are then stored in an encrypted private bucket, served only through unguessable links.
 
 ## License
 

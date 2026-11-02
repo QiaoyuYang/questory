@@ -12,7 +12,9 @@ test("retired genres can't start a story, but their stories still have a name", 
   assert.equal(isGenre("mystery"), true);
   assert.equal(isGenre("custom"), true);
   assert.equal(isGenre("everyday"), false);
+  assert.equal(isGenre("scifi"), false);
   assert.equal(genreLabel("everyday", null), "Cozy");
+  assert.equal(genreLabel("scifi", null), "Sci-fi");
   assert.equal(genreLabel("custom", "a haunted bakery"), "A haunted bakery");
 });
 
