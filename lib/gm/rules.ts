@@ -18,8 +18,7 @@ export type CaseSize = { chapters: number; steps: number };
 
 /**
  * The case for each length of walk, small enough to solve on it: each step takes an errand
- * of ERRAND_MINUTES, except a chapter's one closer look on the spot. An hour gets the full
- * case.
+ * of ERRAND_MINUTES, and once a chapter a close-up where it ends. An hour gets the full case.
  */
 export const CASE_SIZES: Record<WalkLength, CaseSize> = {
   15: { chapters: 1, steps: 3 },
@@ -64,8 +63,8 @@ export function onTheWay(quest: QuestState | null, at: string): boolean {
 }
 
 /**
- * The step on `lead` whose quest is the chapter's closer look. Never the first, which is always
- * an errand; otherwise it moves around, picked from the story, the chapter and the lead.
+ * The step on `lead` that ends in the chapter's closer look. Never the first; otherwise it
+ * moves around, picked from the story, the chapter and the lead.
  */
 export function closerLookStep(state: StoryState, lead: Lead): number {
   let hash = 0;
@@ -74,15 +73,16 @@ export function closerLookStep(state: StoryState, lead: Lead): number {
 }
 
 /**
- * True when the player's next quest has to be the chapter's closer look: their errand is for the
- * step before it, and they haven't had one this chapter. So every chapter gets exactly one, right
- * after an errand, and the rest of the case is found on foot.
+ * True when the player's errand is for the step that ends in the chapter's closer look, and they
+ * haven't had one this chapter. The photo where the errand brings them shows the place, not the
+ * find: the next quest is the closer look, and the close-up turns up the evidence. So every
+ * chapter gets exactly one.
  */
 export function closerLookDue(state: StoryState, seat: Seat): boolean {
   return (
     seat.quest?.targetMode === "seek" &&
     seat.closerLookChapter !== state.chapter &&
-    state.progress[seat.lead] === closerLookStep(state, seat.lead) - 2
+    state.progress[seat.lead] === closerLookStep(state, seat.lead) - 1
   );
 }
 
@@ -287,7 +287,7 @@ export function startWalk(state: StoryState, playerId: string, plan: WalkPlan, a
   let seat = seatOf(state, playerId);
   if (seat) Object.assign(seat, walk);
   else {
-    seat = { playerId, ...walk, lastNarration: "", closerLookChapter: null };
+    seat = { playerId, ...walk, lastNarration: "", closerLookChapter: null, scenery: null };
     state.seats.push(seat);
   }
   state.skeleton.beats = activateNextBeat(state.skeleton.beats);
@@ -350,14 +350,17 @@ export function applyPhotoTurn(
   if (!counts) outcome = "side_note";
   else if (outcome === "side_note" && mustMoveStory(seat)) outcome = "moves_story";
   const moved = outcome !== "side_note";
-  const card = moved ? evidenceCard(data.card) : null;
+  // Where the errand that ends in the chapter's closer look brings the player is the place, not
+  // the find: it sets up the closer look, and the close-up turns up the evidence.
+  const arrived = moved && closerLookDue(state, seat) && data.quest?.targetMode === "in_view";
+  const card = moved && !arrived ? evidenceCard(data.card) : null;
 
   const canonAdded = addCanon(state, data.canonAdd, turn);
   state.bindings.push(...data.bindingsAdd.map((binding) => ({ ...binding, turn })));
   state.inventory = updateInventory(state.inventory, data.inventoryAdd, data.inventoryRemove);
   state.skeleton.beats = updateBeats(state.skeleton.beats, lead, {
-    // Every step forward finishes a beat on the player's lead; a side note finishes nothing.
-    beatComplete: moved,
+    // Every piece of evidence finishes a beat on the player's lead; a side note finishes nothing.
+    beatComplete: card !== null,
     replanWith: data.planChange === "replan" ? data.revisedBeats : null,
   });
   reviseSecret(state, data.revisedSecret);
@@ -367,15 +370,13 @@ export function applyPhotoTurn(
     state.evidence.push({ title: card.title, caption: card.caption, turn, by: playerId });
     state.questsCompleted += 1;
     state.progress[lead] += 1;
-    seat.photosSinceProgress = 0;
-  } else {
-    seat.photosSinceProgress += 1;
   }
+  seat.photosSinceProgress = moved ? 0 : seat.photosSinceProgress + 1;
 
   // The step that finishes a player's part of a chapter ends their walk. With one lead it
   // ends the chapter, or the story, and the game master was told in advance so it could
   // write the hook or the ending. A two-player chapter waits for both leads (see closeDue).
-  if (moved && leadPartDone(state, lead)) {
+  if (card && leadPartDone(state, lead)) {
     seat.quest = null;
     seat.walking = false;
     if (singleLead(state)) {

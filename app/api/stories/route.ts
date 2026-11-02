@@ -5,7 +5,7 @@ import { BadRequestError, readPhoto } from "@/lib/photo";
 import { getPlayerId, readJsonBody, respond } from "@/lib/server";
 import { getStore } from "@/lib/store";
 import { GAME_MASTER, cleanTheme, isGenre, readNewInvite, type PhotoUpload } from "@/lib/types";
-import { WALK_LENGTHS, isWalkLength } from "@/lib/walk";
+import { WALK_LENGTHS, isScenery, isWalkLength } from "@/lib/walk";
 
 export const maxDuration = 120;
 
@@ -38,12 +38,13 @@ export async function GET(request: Request) {
 /**
  * Start a new story from the player's first photo. A custom story brings the player's
  * own `theme`; mode "team" makes it a two-player case, with the `invite` its link was
- * made with if the owner sent that before starting.
+ * made with if the owner sent that before starting. `walk` is how long they'll walk, and
+ * `scenery` where.
  */
 export async function POST(request: Request) {
   return respond(async () => {
     const body = await readJsonBody<
-      PhotoUpload & { genre: string; theme: string; mode: string; invite: unknown; walk: unknown }
+      PhotoUpload & { genre: string; theme: string; mode: string; invite: unknown; walk: unknown; scenery: unknown }
     >(request);
     if (!isGenre(body.genre)) throw new BadRequestError("Pick a kind of story.");
     const theme = body.genre === "custom" ? cleanTheme(body.theme) : "";
@@ -53,9 +54,10 @@ export async function POST(request: Request) {
     const mode = body.mode === "team" ? "team" : "solo";
     const invite = mode === "team" ? readNewInvite(body.invite) : null;
     const walkLength = isWalkLength(body.walk) ? body.walk : WALK_LENGTHS[0];
+    const scenery = isScenery(body.scenery) ? body.scenery : null;
     const { state, turn } = await startStory(
       playerId,
-      { genre: body.genre, theme: theme || null, mode, invite, walkLength },
+      { genre: body.genre, theme: theme || null, mode, invite, walkLength, scenery },
       photo,
     );
     return { story: storyView(state, playerId), turn: turnView(turn, playerId, playerId) };

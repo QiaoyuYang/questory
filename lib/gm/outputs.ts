@@ -231,7 +231,7 @@ const photoTurn = {
   ),
   // Always required: when it was optional, the game master often left it out of real steps.
   card: CardSchema.describe(
-    'The piece of evidence this photo turns up, painted onto it as a card, even when the find rules something out ("The empty room": "Nothing was sold here"). After a side_note it is set aside, so it only counts on a step forward.',
+    'The piece of evidence this photo turns up, painted onto it as a card, even when the find rules something out ("The empty room": "Nothing was sold here"). After a side_note, or when the task says this photo only shows the place, it is set aside.',
   ),
   observations: list(text(SENTENCE)).describe("Concrete things you see in the photo."),
   canonAdd: list(text(SENTENCE)).describe(

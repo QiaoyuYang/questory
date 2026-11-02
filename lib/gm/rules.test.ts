@@ -224,23 +224,26 @@ test("a walk that starts indoors goes outside with no walk first, and every othe
   assert.equal(makeQuest(errand, null, 1, errandClock(at, false)).walkUntil, null);
 });
 
-test("every chapter gets one closer look, right after an errand, at a step that moves around", () => {
+test("once a chapter, an errand ends in a closer look, and the close-up is the evidence", () => {
   const where = new Set<number>();
   for (const id of ["a", "b", "c", "d", "e", "f", "g", "h"]) {
     const state = story(goals(HOUR.steps));
     state.id = id;
     // The walk opens on an errand; each reply gives the kind of quest its reply format allows.
     seat(state).quest!.targetMode = "seek";
-    const kinds: string[] = [];
+    const photos: string[] = [];
     for (let turn = 2; seat(state).quest && turn < 20; turn++) {
+      const kind = seat(state).quest!.targetMode;
       const due = closerLookDue(state, seat(state));
-      applyPhotoTurn(state, step({ quest: { ...QUEST, targetMode: due ? "in_view" : "seek" } }), turn, "player");
-      if (seat(state).quest) kinds.push(seat(state).quest!.targetMode);
+      const { card } = applyPhotoTurn(state, step({ quest: { ...QUEST, targetMode: due ? "in_view" : "seek" } }), turn, "player");
+      photos.push(card ? `${kind}: evidence` : kind);
     }
-    // The quests for steps 2 on: one closer look, never two in a row, at the chosen step.
-    assert.equal(kinds.filter((kind) => kind === "in_view").length, 1);
-    assert.equal(kinds.indexOf("in_view") + 2, closerLookStep(state, "a"));
-    where.add(closerLookStep(state, "a"));
+    // Every errand's photo is evidence, but at the chosen step the photo shows the place and the close-up is.
+    const at = closerLookStep(state, "a");
+    const steps = Array.from({ length: HOUR.steps }, (_, i) => (i + 1 === at ? ["seek", "in_view: evidence"] : ["seek: evidence"]));
+    assert.deepEqual(photos, steps.flat());
+    assert.equal(state.evidence.length, HOUR.steps);
+    where.add(at);
   }
   assert.ok(where.size > 1);
 });
@@ -249,12 +252,22 @@ test("a chapter's closer look comes only once, even when a side note brings it e
   const state = story(goals(HOUR.steps));
   seat(state).quest!.targetMode = "seek";
   for (let i = 0; closerLookStep(state, "a") !== 2; i++) state.id = `story-${i}`;
+  applyPhotoTurn(state, step({ quest: { ...QUEST, targetMode: "seek" } }), 2, "player");
   assert.equal(closerLookDue(state, seat(state)), true);
-  applyPhotoTurn(state, reply({ quest: QUEST }), 2, "player");
+  applyPhotoTurn(state, reply({ quest: QUEST }), 3, "player");
   assert.equal(seat(state).quest?.targetMode, "in_view");
   // Back on an errand with that step still to find, but this chapter has had its closer look.
-  applyPhotoTurn(state, reply({ quest: { ...QUEST, targetMode: "seek" } }), 3, "player");
+  applyPhotoTurn(state, reply({ quest: { ...QUEST, targetMode: "seek" } }), 4, "player");
   assert.equal(closerLookDue(state, seat(state)), false);
+});
+
+test("a place that comes back without its closer look counts as the evidence", () => {
+  const state = story(goals(HOUR.steps));
+  seat(state).quest!.targetMode = "seek";
+  for (let i = 0; closerLookStep(state, "a") !== 2; i++) state.id = `story-${i}`;
+  applyPhotoTurn(state, step({ quest: { ...QUEST, targetMode: "seek" } }), 2, "player");
+  assert.notEqual(applyPhotoTurn(state, step({ quest: null }), 3, "player").card, null);
+  assert.equal(state.progress.a, 2);
 });
 
 test("a 15-minute case is one chapter of three steps, solved on the walk", () => {

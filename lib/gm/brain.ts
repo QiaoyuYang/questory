@@ -1,6 +1,7 @@
 import "server-only";
 import type { Config } from "@/lib/config";
 import { respondJson, type ContentPart, type Usage } from "@/lib/meta/structured";
+import type { Scenery } from "@/lib/walk";
 import { mockBrain } from "./mock";
 import {
   CheckSchema,
@@ -23,12 +24,16 @@ export type Result<T> = { data: T; usage: Usage };
 
 /** The game master's decisions. One implementation calls the Meta Model API; the other is scripted. */
 export type Brain = {
-  /** `theme` is the player's own idea, for a custom story. A "team" case gets a lead for each player. */
+  /**
+   * `theme` is the player's own idea, for a custom story, and `scenery` where they said they'd
+   * walk. A "team" case gets a lead for each player.
+   */
   genesis(
     genre: string,
     theme: string | null,
     mode: "solo" | "team",
     size: CaseSize,
+    scenery: Scenery | null,
     photo: string,
   ): Promise<Result<GenesisOut>>;
   /**
@@ -74,10 +79,10 @@ export function liveBrain(config: Config): Brain {
   };
 
   return {
-    genesis: (genre, theme, mode, size, photo) =>
+    genesis: (genre, theme, mode, size, scenery, photo) =>
       respondJson({
         ...gm,
-        content: withPhoto(genesisTask(genre, theme, mode, size), photo),
+        content: withPhoto(genesisTask(genre, theme, mode, size, scenery), photo),
         schema: genesisSchema(mode === "team", size),
         schemaName: "questory_genesis",
       }),

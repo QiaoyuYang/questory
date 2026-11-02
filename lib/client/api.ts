@@ -7,7 +7,7 @@ import type {
   StoryView,
   TurnView,
 } from "@/lib/types";
-import type { WalkLength } from "@/lib/walk";
+import type { Scenery, WalkLength } from "@/lib/walk";
 import { BUILD_HEADER, requestSettled, requestStarted } from "./deploys";
 
 /** A request the server turned down, with its status. */
@@ -69,7 +69,14 @@ export const api = {
   /** A two-player case brings the `invite` its link was made with (see lib/client/share.ts). */
   /** `walk` is how long the player wants to walk, in minutes, which sets how big the case is. */
   startStory: (
-    story: { genre: GenreId; theme: string; mode: "solo" | "team"; invite: NewInvite | null; walk: WalkLength },
+    story: {
+      genre: GenreId;
+      theme: string;
+      mode: "solo" | "team";
+      invite: NewInvite | null;
+      walk: WalkLength;
+      scenery: Scenery;
+    },
     photo: PhotoUpload,
   ) =>
     call<TurnResult>("/api/stories", { method: "POST", body: JSON.stringify({ ...story, ...photo }) }),

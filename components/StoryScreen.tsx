@@ -11,7 +11,7 @@ import { BottomBar } from "./BottomBar";
 import { BUTTON } from "./buttons";
 import { CaptureButton, usePhotoVerb } from "./CaptureButton";
 import { CameraIcon, ChevronLeftIcon, MagnifierIcon } from "./icons";
-import { NextStep } from "./NextStep";
+import { NextStep, useWalking } from "./NextStep";
 import { PhotoViewer, type Zoomed } from "./PhotoViewer";
 import { Scene } from "./Scene";
 import { Sheet } from "./Sheet";
@@ -121,6 +121,8 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
   }, [storyId, initial]);
 
   const story = data?.story ?? null;
+  // On the walk an errand starts with, its quest stays hidden and the camera waits.
+  const walking = useWalking(story?.stage === "walking" ? (story.quest?.walkUntil ?? null) : null);
   const turns = useMemo(() => data?.turns ?? [], [data]);
   // The partner's new evidence shows up once its picture is drawn on their phone.
   const shown = useMemo(() => turns.filter((turn) => turn.playedBy === "you" || !awaitsPicture(turn)), [turns]);
@@ -360,7 +362,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
             {scene && <Scene turn={scene} onRepaint={() => repaint(scene)} onZoom={setZoomed} />}
             {lastFind && lastFind.kind !== "close" && <Telling turn={lastFind} />}
             {latest && <Telling turn={latest} solved={story.status === "complete"} />}
-            {story.status === "complete" && <Solution story={story} turns={turns} onZoom={setZoomed} />}
+            {story.status === "complete" && <Solution turns={turns} onZoom={setZoomed} />}
           </>
         )}
       </div>
@@ -371,7 +373,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
 
           {stage === "walking" &&
             (quest ? (
-              <NextStep key={quest.id} quest={quest} lookTurn={lookTurn} onZoom={setZoomed} />
+              <NextStep key={quest.id} quest={quest} walking={walking} lookTurn={lookTurn} onZoom={setZoomed} />
             ) : (
               <p className="py-1 text-pretty">
                 Take a photo of whatever catches your eye. {GAME_MASTER} will work it into the story.
@@ -443,7 +445,7 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
               Evidence
             </button>
             {stage === "walking" && (
-              <CaptureButton onPhoto={takePhoto} onError={photoError} className="flex-1">
+              <CaptureButton onPhoto={takePhoto} onError={photoError} disabled={walking} className="flex-1">
                 <CameraIcon />
                 {verb} a photo
               </CaptureButton>

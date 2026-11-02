@@ -7,7 +7,7 @@ import type { Photo } from "@/lib/photo";
 import { getStore } from "@/lib/store";
 import { GAME_MASTER, type NewInvite, type TargetOverlay } from "@/lib/types";
 import { visitorKey } from "@/lib/visitor";
-import type { WalkLength } from "@/lib/walk";
+import type { Scenery, WalkLength } from "@/lib/walk";
 import { activateNextBeat, activeBeatId, makeBeats, replan } from "./beats";
 import { getBrain } from "./brain";
 import { storyCardPrompt } from "./card";
@@ -207,6 +207,8 @@ type NewStory = {
   invite: NewInvite | null;
   /** How long the player chose to walk, in minutes. */
   walkLength: WalkLength;
+  /** Where they said they'd walk, if they did. */
+  scenery: Scenery | null;
 };
 
 
@@ -230,7 +232,7 @@ export async function startStory(playerId: string, story: NewStory, photo: Photo
   await spendCall(config, playerId);
   const [photoId, genesis] = await Promise.all([
     store.putImage({ bytes: photo.bytes, mime: photo.mime }),
-    getBrain(config).genesis(genre, theme, mode, size, photo.dataUrl),
+    getBrain(config).genesis(genre, theme, mode, size, story.scenery, photo.dataUrl),
   ]);
   const { data, usage } = genesis;
   logUsage("genesis", usage);
@@ -286,6 +288,7 @@ export async function startStory(playerId: string, story: NewStory, photo: Photo
     status: "active",
   };
   const seat = startWalk(state, playerId, { lead: "a", joining: false, newChapter: false }, createdAt);
+  seat.scenery = story.scenery;
 
   const turn = newTurn(state, "genesis", playerId, photoId, photo);
   turn.narration = check.text.narration.trim();
@@ -489,6 +492,7 @@ export async function joinStory(state: StoryState, playerId: string): Promise<St
         photosSinceProgress: 0,
         lastNarration: "",
         closerLookChapter: null,
+        scenery: null,
       });
     }
   });
