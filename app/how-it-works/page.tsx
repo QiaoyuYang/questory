@@ -70,9 +70,8 @@ export default function HowItWorks() {
         </ol>
         <p className={TEXT}>
           A photo that moves the case forward becomes a piece of evidence. You choose how long to walk, from 15 minutes to
-          an hour, and the case is sized so you solve it on that walk. When a quest sends you somewhere, you walk for 5
-          minutes before it says what to find. Once a chapter, Wren asks for a closer look where you end up, and the
-          close-up is the evidence.
+          an hour, and the case is sized so you solve it on that walk. You need to walk 5 minutes to unlock the next
+          quest. Sometimes, Wren also asks for a closer look at something in the photo you took.
         </p>
       </section>
 

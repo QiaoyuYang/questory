@@ -28,7 +28,7 @@ Wren, the AI game agent, builds a case from your street. A case is a question wi
 
 1. Pick a theme for the story, where you're walking (city streets, or a park or suburb), and how long: 15 minutes, 30 minutes or an hour.
 2. Take a photo of where you are. Wren writes the opening of the case around it, then leads you outside if you aren't already.
-3. Follow the quests to find evidence. Most quests start with 5 minutes of walking, counted down on screen, and only then say what to find. Once a chapter, Wren also asks for a closer look at something where you end up, and the close-up is the evidence. A photo that moves the case forward becomes a piece of evidence.
+3. Follow the quests to find evidence. You need to walk 5 minutes to unlock the next quest. Sometimes, Wren also asks for a closer look at something in the photo you took. A photo that moves the case forward becomes a piece of evidence.
 4. Collect evidence until it points to the answer. A longer walk gets a longer case, with more chapters, sized so you can solve it before the walk is over. You can stop at any time, and your next photo picks the story up wherever you are.
 
 To play with a friend, choose "With a friend" and send them the link. The case gets two leads, one for each of you: two trails of evidence that end at the same answer. You each follow yours on your own walk, and a chapter ends once you have both finished your part.

@@ -19,7 +19,7 @@ const MOMENTS = [
     src: "/landing/case-evidence.webp",
     alt: "A noticeboard photo painted as an evidence card called Spare key list, with Wren's note that a spare key is kept for early deliveries, and the next walk counting down.",
     title: "Follow the quests",
-    text: "Each quest asks for a photo of something a few minutes' walk away, and once a chapter for a closer look. A photo that moves the case forward becomes a piece of evidence.",
+    text: "Each quest asks for a photo of something a few minutes' walk away, or a closer look. A photo that moves the case forward becomes a piece of evidence.",
   },
   {
     src: "/landing/case-so-far.webp",
