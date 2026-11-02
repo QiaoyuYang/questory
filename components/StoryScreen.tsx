@@ -11,14 +11,13 @@ import { BottomBar } from "./BottomBar";
 import { BUTTON } from "./buttons";
 import { CaptureButton, usePhotoVerb } from "./CaptureButton";
 import { CameraIcon, ChevronLeftIcon, MagnifierIcon } from "./icons";
+import { NextStep } from "./NextStep";
 import { PhotoViewer, type Zoomed } from "./PhotoViewer";
-import { QuestThumb } from "./QuestThumb";
 import { Scene } from "./Scene";
 import { Sheet } from "./Sheet";
 import { Solution } from "./Solution";
 import { StorySheet } from "./StorySheet";
 import { WalkSummary } from "./WalkSummary";
-import { WalkTimer } from "./WalkTimer";
 import { Working } from "./Working";
 
 type Loaded = { story: StoryView; turns: TurnView[] };
@@ -370,25 +369,9 @@ export function StoryScreen({ storyId, initial, onHome }: Props) {
         <BottomBar>
           {error && <Alert message={error.message} retry={error.retry} />}
 
-          {/* The next step is spelled out here, with where to look for a closer look. A new one pulses. */}
           {stage === "walking" &&
             (quest ? (
-              <div
-                key={quest.id}
-                className="callout flex w-full items-center gap-3 rounded-[14px] border border-lane/50 bg-kerb px-3.5 py-2.5"
-              >
-                {lookTurn && <QuestThumb turn={lookTurn} onZoom={setZoomed} />}
-                <div className="min-w-0 flex-1">
-                  <p className="flex min-h-6 items-center gap-2 text-sm">
-                    <span className="shrink-0 text-xs font-bold tracking-wider text-lane uppercase">Next step</span>
-                    <span className="min-w-0 truncate font-semibold text-concrete">{quest.title}</span>
-                  </p>
-                  <p className="mt-0.5 line-clamp-3 font-sign text-lg leading-snug font-semibold text-pretty">
-                    {quest.objective}
-                  </p>
-                  {quest.walkUntil && <WalkTimer until={quest.walkUntil} />}
-                </div>
-              </div>
+              <NextStep key={quest.id} quest={quest} lookTurn={lookTurn} onZoom={setZoomed} />
             ) : (
               <p className="py-1 text-pretty">
                 Take a photo of whatever catches your eye. {GAME_MASTER} will work it into the story.

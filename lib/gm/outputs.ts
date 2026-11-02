@@ -65,7 +65,7 @@ export const QuestOutSchema = z.object({
       "in_view: a closer look at something clearly visible in this photo. seek: an errand a few minutes' walk away that ends in a photo.",
     ),
   objective: text(SENTENCE).describe(
-    'One sentence of at most 16 words naming the real thing to find. For seek, send them on first, e.g. "Walk on down the street, then find a bench or a bus stop." For in_view, ask about a detail they can only make out up close.',
+    'One sentence of at most 16 words naming the real thing to find. For seek, the player reads it once their walk is over, so just name what to find, e.g. "Find a bench or a bus stop." When a walk starts indoors, send them outside first, e.g. "Head outside, then find a door with a number on it." For in_view, ask about a detail they can only make out up close.',
   ),
 
   targetPhrase: text(LABEL).describe(
@@ -86,6 +86,11 @@ const ErrandOutSchema = QuestOutSchema.extend({
   targetMode: z.enum(["seek"]).describe("seek: an errand a few minutes' walk away that ends in a photo."),
 });
 export type ErrandOut = z.infer<typeof ErrandOutSchema>;
+
+/** Decided before a walk's first quest: going outside isn't timed, so that errand has no walk. */
+const indoors = z
+  .boolean()
+  .describe("Whether this photo was taken indoors. If it was, the quest takes the player outside, with no walk first.");
 
 /** The chapter's one closer look, at something in the photo the player just sent. */
 const CloserLookOutSchema = QuestOutSchema.extend({
@@ -164,6 +169,7 @@ const genesisOpening = {
     "Every fact about the case that the opening narration tells the player, such as who is missing or what was seen, at most 12 words each. The player reads these as clues, so nothing from the hidden plan, nothing the narration doesn't say, and nothing about who follows which lead.",
   ),
   bindingsAdd: list(BindingSchema),
+  indoors,
   quest: ErrandOutSchema,
 };
 
@@ -277,6 +283,7 @@ export const ResumeSchema = z.object({
   ),
   bindingsAdd: list(BindingSchema),
   ...planFields,
+  indoors,
   quest: ErrandOutSchema,
 });
 export type ResumeOut = z.infer<typeof ResumeSchema>;

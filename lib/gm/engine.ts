@@ -13,7 +13,6 @@ import { getBrain } from "./brain";
 import { storyCardPrompt } from "./card";
 import {
   CASE_SIZES,
-  ERRAND_MINUTES,
   TEAM_SIZE,
   addCanon,
   applyClose,
@@ -21,6 +20,7 @@ import {
   applyPhotoTurn,
   closeDue,
   closerLookDue,
+  errandClock,
   makeQuest,
   mustMoveStory,
   onTheWay,
@@ -32,7 +32,6 @@ import {
   startWalk,
   targetPhrases,
   unclaimedLead,
-  type Clock,
   type WalkPlan,
 } from "./rules";
 import type { CheckIn } from "./outputs";
@@ -210,10 +209,6 @@ type NewStory = {
   walkLength: WalkLength;
 };
 
-/** When a photo was sent, and how long an errand given then has to be walked. */
-function clockFor(config: Config, at: string): Clock {
-  return { at, walkMinutes: config.walkTimer ? ERRAND_MINUTES : 0 };
-}
 
 /** First photo of a new story: the game master invents the plan and the first quest. */
 export async function startStory(playerId: string, story: NewStory, photo: Photo) {
@@ -302,7 +297,7 @@ export async function startStory(playerId: string, story: NewStory, photo: Photo
     data.quest,
     activeBeatId(state.skeleton.beats, "a"),
     turn.number,
-    clockFor(config, turn.createdAt),
+    errandClock(turn.createdAt, config.walkTimer, data.indoors),
     data.observations,
   );
   seat.lastNarration = turn.narration;
@@ -324,7 +319,7 @@ export async function takePhoto(state: StoryState, photo: Photo, playerId: strin
   const config = getConfig();
   const store = getStore();
   await spendCall(config, playerId);
-  const clock = clockFor(config, now());
+  const clock = errandClock(now(), config.walkTimer);
   const [photoId, played] = await Promise.all([
     store.putImage({ bytes: photo.bytes, mime: photo.mime }),
     getBrain(config).photo(state, photo.dataUrl, {
@@ -426,7 +421,7 @@ export async function resumeStory(
       data.quest,
       activeBeatId(fresh.skeleton.beats, seat.lead),
       number,
-      clockFor(config, turn.createdAt),
+      errandClock(turn.createdAt, config.walkTimer, data.indoors),
       data.observations,
     );
     seat.lastNarration = turn.narration;

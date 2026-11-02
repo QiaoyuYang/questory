@@ -156,6 +156,7 @@ export const mockBrain: Brain = {
         observations: ["(mock mode: the scripted game master can't see photos)"],
         canonAdd: ["Someone took the brass bell from Rosa's bakery door last night."],
         bindingsAdd: [{ abstract: "the first chalk arrow", concrete: "the place in your first photo" }],
+        indoors: false,
         quest: errandAfter(0),
       },
     };
@@ -226,6 +227,7 @@ export const mockBrain: Brain = {
         planReason: "",
         revisedBeats: null,
         revisedSecret: null,
+        indoors: false,
         quest: errandAfter(stepsOn(state, lead)),
       },
     };

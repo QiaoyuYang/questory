@@ -97,7 +97,7 @@ export type QuestView = {
   title: string;
   objective: string;
   targetMode: TargetMode;
-  /** For an errand, when the walk it starts with is over. */
+  /** For an errand, when the walk it starts with is over. Until then the player sees only the countdown. */
   walkUntil: string | null;
 };
 
