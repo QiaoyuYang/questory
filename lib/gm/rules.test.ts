@@ -11,6 +11,7 @@ import {
   closeDue,
   closerLookDue,
   closerLookStep,
+  errandClock,
   makeQuest,
   mustMoveStory,
   nounPhrase,
@@ -213,6 +214,14 @@ test("an errand counts only once the walk it starts with is over, and a closer l
   assert.equal(seat(closer).quest?.walkUntil, null);
   // With no minutes set, an errand starts with no walk.
   assert.equal(makeQuest({ ...QUEST, targetMode: "seek" }, null, 1, { ...at(0), walkMinutes: 0 }).walkUntil, null);
+});
+
+test("a walk that starts indoors goes outside with no walk first, and every other errand starts with one", () => {
+  const errand: QuestOut = { ...QUEST, targetMode: "seek" };
+  const at = "2026-10-26T00:00:00.000Z";
+  assert.equal(makeQuest(errand, null, 1, errandClock(at, true)).walkUntil, "2026-10-26T00:05:00.000Z");
+  assert.equal(makeQuest(errand, null, 1, errandClock(at, true, true)).walkUntil, null);
+  assert.equal(makeQuest(errand, null, 1, errandClock(at, false)).walkUntil, null);
 });
 
 test("every chapter gets one closer look, right after an errand, at a step that moves around", () => {

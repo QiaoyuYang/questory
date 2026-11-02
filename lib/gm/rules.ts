@@ -27,7 +27,7 @@ export const CASE_SIZES: Record<WalkLength, CaseSize> = {
   60: { chapters: 3, steps: 4 },
 };
 
-/** Minutes of walking before an errand's evidence can turn up. Time stands in for distance. */
+/** Minutes of walking before an errand's quest shows and its evidence can turn up. Time stands in for distance. */
 export const ERRAND_MINUTES = 5;
 
 /** Players a case takes when its owner invites a friend. */
@@ -49,6 +49,14 @@ export function mustMoveStory(seat: Seat): boolean {
  * for distance, so the game never needs the player's location.
  */
 export type Clock = { at: string; walkMinutes: number };
+
+/**
+ * The clock for an errand given at `at`: ERRAND_MINUTES of walking, or none with the walk timer
+ * off. A walk that starts indoors opens with going outside, which isn't timed.
+ */
+export function errandClock(at: string, walkTimer: boolean, indoors = false): Clock {
+  return { at, walkMinutes: walkTimer && !indoors ? ERRAND_MINUTES : 0 };
+}
 
 /** True while the player is still on the walk their errand started with, so a photo for it can't count yet. */
 export function onTheWay(quest: QuestState | null, at: string): boolean {

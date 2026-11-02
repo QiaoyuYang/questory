@@ -39,16 +39,16 @@ How a photo becomes part of the story
 
 How you run the game
 - You plan the arc; the world supplies the scenes. Your hidden plan holds the secret, premise, antagonist, stakes, ending and beats. Each beat is the next find on its lead: a place or object in the story's world that ordinary real things can stand in for, and what finding it tells the player ("the cupboard the spare key came from", "the shop doorway where the swap happened"). How it looks comes from the player's photo when they find it, so a beat never says how it looks. Never tie a beat to a particular real place, and never write it as "find proof that...".
-- Questory is played outside, on foot, and the walking is the point. If a photo is taken indoors, play along, then make the next errand lead outside, through a door and onto the street.
-- An errand's evidence can turn up only after ${ERRAND_MINUTES} minutes of walking, which the game counts down for the player, and only somewhere other than where it was given. Give the story a reason the trail goes on (the courier went on down the road, the note was posted somewhere else), but never say how far the find is or how long to walk: the game tells them. A photo sent before the walk is over, or one that shows the place the errand was given at, is a side_note: something they pass on the way, which keeps the errand. A closer look is meant to be where the player stands.
+- Questory is played outside, on foot, and the walking is the point. If a photo is taken indoors, play along, then lead the player outside, through a door and onto the street.
+- An errand starts with ${ERRAND_MINUTES} minutes of walking, which the game counts down for the player, and they see its quest only once the walk is over, wherever they have got to. So ask for something common enough to turn up almost anywhere, and in the narration give the trail a reason to go on (the courier went on down the road, the note was posted somewhere else) without naming the next find or saying how far it is or how long to walk: the game tells them when to look. Its evidence turns up only after the walk, and only somewhere other than where it was given. A photo sent before the walk is over, or one that shows the place the errand was given at, is a side_note: something they pass on the way, which keeps the errand. The one exception is a walk that starts indoors: its first errand has no walk, and the player sees it straight away. A closer look is meant to be where the player stands.
 - Every photo is a move in the story. Never reject a photo or tell the player it is wrong. Decide what it means:
   - follows_quest: it does what the current quest asked. Be generous: the right idea, an unclear photo or a similar object all count.
   - moves_story: it does not match the quest, but it shows something you can build the next step on. Use it.
   - side_note: it adds atmosphere or a small detail but nothing new about the case, and the current step stays open. A side note turns up no evidence, so if your narration reveals something new about the case, the photo moved the story.
 - After every photo, leave the player one quest: a next step that ends in a photo. Keep the current quest (quest null) only after a side_note, and only if the player can still reach it from where they are now. Otherwise write a new one.
-- Each quest goes where the last find pointed. Its title says what the player is looking for in the story ("The bus stop bench", "Where the bag went"), and its objective says what real thing to find and photograph ("Walk on down the street, then find a bench or a bus stop.").
+- Each quest goes where the last find pointed. Its title says what the player is looking for in the story ("The bus stop bench", "Where the bag went"), and its objective says what real thing to find and photograph ("Find a bench or a bus stop.").
 - There are two kinds of quest:
-  - seek, an errand further on: send the player on, then have them find something that can be the next find ("a bench by a bus stop", "a door with a number on it"), or photograph where they end up.
+  - seek, an errand further on: once the walk is over, the player finds something that can be the next find ("a bench by a bus stop", "a door with a number on it"), or photographs where they end up.
   - in_view, a closer look: pick something clearly visible in this photo and ask about a detail the player can only make out up close, such as a number, a word, a symbol, a crack or what is painted on it. Whatever they find becomes part of the story. Name the thing with a short noun phrase.
   Most quests are errands, and every walk starts with one. Each chapter has one closer look, right after an errand has brought the player somewhere new, and the task says when it's due.
 - What the player finds becomes canon. Make it fit after the fact: "The faded mailbox. Of course." Put every new fact your narration establishes in canonAdd.
@@ -264,7 +264,7 @@ export function genesisTask(
       ? `This case is for two players: this one and a friend they're bringing in, who plays on their own streets, at the same time or not. Give each a lead of their own that finds out one side of the case, such as how it was done and who could have done it: \`focus\` and each chapter's \`steps\` for this player, \`partnerFocus\` and each chapter's \`partnerSteps\` for the friend. No beat on either lead needs anything found on the other. In the opening, tell this player in a few words which side is theirs and that their partner has the other, the way a friend would put it ("You'll work out how the notice got under the door, and your partner will find out who wanted it there.").`
       : "",
     `The opening, at most 50 words, tells the player what happened, who wants it solved, and what to find out. ${style} Everything else can wait for later steps. Introduce anyone you name, unless everyone knows them from a famous story.`,
-    "The first quest is an errand (seek) for the first beat on this player's lead: send them on, then ask for a real thing that can be that find. If the photo is indoors, the errand takes them outside first.",
+    "The first quest is an errand (seek) for the first beat on this player's lead: ask for a real thing that can be that find. If the photo is indoors, set indoors: the errand takes them outside, with no walk first, to find it just outside the door.",
     "Put every fact the opening establishes in canonAdd.",
   ]
     .filter(Boolean)
@@ -314,7 +314,7 @@ export function photoTask(
   // Until an errand's walk is over, a photo can only be something the player passes on the way.
   const step = options.onTheWay
     ? [
-        "The walk this errand started with isn't over yet, so this photo can't move the story. It is a side_note, something the player passes on the way, and keeps the current quest (quest null). You may say the trail goes on, but never hurry them or say how long is left.",
+        "The walk this errand started with isn't over yet, so this photo can't move the story. It is a side_note, something the player passes on the way, and keeps the current quest (quest null). You may say the trail goes on, but never hurry them, say how long is left, or hint at what the quest asks for: they can't see it until the walk is over.",
       ]
     : [
         questTarget(state, lead),
@@ -359,7 +359,7 @@ export function resumeTask(
     describeState(state, { includePlan: true, playerId: options.playerId }),
     "",
     situation,
-    `Issue the next quest, an errand (seek), for the active beat on the player's lead${active ? `, ${active.id}, "${active.goal}": send them on, then ask for a real thing that can be that find` : ""}. If the photo is indoors, the errand takes them outside first.`,
+    `Issue the next quest, an errand (seek), for the active beat on the player's lead${active ? `, ${active.id}, "${active.goal}": ask for a real thing that can be that find` : ""}. If the photo is indoors, set indoors: the errand takes them outside, with no walk first, to find it just outside the door.`,
     'Never say "chapter" in the narration.',
     "Put every new fact in canonAdd.",
   ].join("\n");
