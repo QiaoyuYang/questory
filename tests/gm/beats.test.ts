@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { activateNextBeat, completeActiveBeat, makeBeats, openBeats, replan, updateBeats } from "./beats";
-import type { Beat } from "./state";
+import { activateNextBeat, completeActiveBeat, makeBeats, openBeats, replan, updateBeats } from "@/lib/gm/beats";
+import type { Beat } from "@/lib/gm/state";
 
 const summary = (beats: Beat[]) => beats.map((beat) => `${beat.id}:${beat.status}`).join(" ");
 

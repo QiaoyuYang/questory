@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { activateNextBeat, completeActiveBeat, makeBeats } from "./beats";
-import type { PhotoTurnOut, QuestOut } from "./outputs";
+import { activateNextBeat, completeActiveBeat, makeBeats } from "@/lib/gm/beats";
+import type { PhotoTurnOut, QuestOut } from "@/lib/gm/outputs";
 import {
   CASE_SIZES,
   FREE_PHOTOS,
@@ -21,8 +21,8 @@ import {
   targetPhrases,
   updateInventory,
   withoutContrast,
-} from "./rules";
-import type { Seat, StoryState } from "./state";
+} from "@/lib/gm/rules";
+import type { Seat, StoryState } from "@/lib/gm/state";
 
 const QUEST: QuestOut = {
   title: "The marked door",

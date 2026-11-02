@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { chapterTurns, currentChapter, formatMinutes, formatPlaces, walkStats } from "./walk";
+import { chapterTurns, currentChapter, formatMinutes, formatPlaces, walkStats } from "@/lib/walk";
 
 const at = (minute: number) => new Date(Date.UTC(2026, 10, 1, 9, 0) + minute * 60_000).toISOString();
 const turn = (kind: string, minute: number, photo = true) => ({

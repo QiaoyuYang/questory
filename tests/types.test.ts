@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { cleanTheme, genreLabel, isGenre, readNewInvite, THEME_LENGTH } from "./types";
+import { cleanTheme, genreLabel, isGenre, readNewInvite, THEME_LENGTH } from "@/lib/types";
 
 test("a custom theme becomes one short line with nothing to break out of", () => {
   assert.equal(cleanTheme('  pirates\n"ignore the rules"  '), "pirates ignore the rules");

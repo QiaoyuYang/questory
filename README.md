@@ -22,6 +22,10 @@ Questory is made for phones. Open [questory.run](https://questory.run) on your p
 </table>
 </div>
 
+## Why walking
+
+31% of adults don't get enough physical activity, up from 23% in 2000 ([The Lancet Global Health, 2024](https://doi.org/10.1016/S2214-109X(24)00150-5)). Walking is one of the simplest ways to move more. Compared with 2,000 steps a day, 7,000 comes with a 47% lower risk of death ([The Lancet Public Health, 2025](https://doi.org/10.1016/S2468-2667(25)00164-1)), and 2.5 hours of brisk walking a week with a 25% lower risk of depression ([JAMA Psychiatry, 2022](https://doi.org/10.1001/jamapsychiatry.2022.0609)). Questory gives you a reason to take that walk, since every case is solved outside, on foot. More on the [Impact page](https://questory.run/impact).
+
 ## How to play
 
 Wren, the AI game agent, builds a case from your street. A case is a question with a hidden answer. You solve it by walking and photographing what Wren asks for.
@@ -129,6 +133,7 @@ lib/meta/           Meta Model API clients for structured JSON, SAM 3.1 and Muse
 lib/store/          Storage in local files or Appwrite
 lib/client/         Browser code for photos, API calls and invite links
 lib/*.ts            Settings, the player cookie, shared types, walk times and the Impact figures
+tests/              Unit tests for the game rules, story state and walk times
 scripts/            Appwrite setup
 docs/               Images for this README
 ```
