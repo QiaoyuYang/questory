@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { fromSingleWalk } from "./migrate";
+import { fromSingleWalk } from "@/lib/gm/migrate";
 
 const quest = { id: "q", title: "The door" };
 
