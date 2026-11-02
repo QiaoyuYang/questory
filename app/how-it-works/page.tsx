@@ -19,8 +19,8 @@ export const metadata: Metadata = {
 /** What the player does, over and over, until the case is solved. */
 const LOOP = [
   "You take a photo of where you are.",
-  "Wren tells you what it means for the case and gives you a quest.",
-  "You walk to what the quest asks for and take the next photo.",
+  "Wren tells you what it means for the case, and you walk on.",
+  "The quest says what to find, and you take the next photo.",
 ];
 
 /** The three layers of Wren's memory of a case, as in the README. */
@@ -71,7 +71,8 @@ export default function HowItWorks() {
         <p className={TEXT}>
           A photo that moves the case forward becomes a piece of evidence. You choose how long to walk, from 15 minutes to
           an hour, and the case is sized so you solve it on that walk. When a quest sends you somewhere, you walk for 5
-          minutes before it says what to find, and what you photograph on the way can also go into the story.
+          minutes before it says what to find. Once a chapter, Wren asks for a closer look where you end up, and the
+          close-up is the evidence.
         </p>
       </section>
 

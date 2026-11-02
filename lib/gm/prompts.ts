@@ -1,5 +1,6 @@
 import "server-only";
 import { GAME_MASTER, GENRES } from "@/lib/types";
+import type { Scenery } from "@/lib/walk";
 import { openBeats, unfinishedBeats, type Lead } from "./beats";
 import type { CheckIn } from "./outputs";
 import { ERRAND_MINUTES, otherLead, seatOf, singleLead, stepsLeft, type CaseSize } from "./rules";
@@ -49,8 +50,8 @@ How you run the game
 - Each quest goes where the last find pointed. Its title says what the player is looking for in the story ("The bus stop bench", "Where the bag went"), and its objective says what real thing to find and photograph ("Find a bench or a bus stop.").
 - There are two kinds of quest:
   - seek, an errand further on: once the walk is over, the player finds something that can be the next find ("a bench by a bus stop", "a door with a number on it"), or photographs where they end up.
-  - in_view, a closer look: pick something clearly visible in this photo and ask about a detail the player can only make out up close, such as a number, a word, a symbol, a crack or what is painted on it. Whatever they find becomes part of the story. Name the thing with a short noun phrase.
-  Most quests are errands, and every walk starts with one. Each chapter has one closer look, right after an errand has brought the player somewhere new, and the task says when it's due.
+  - in_view, a closer look: pick something clearly visible in this photo and ask about a detail the player can only make out up close, such as a number, a word, a symbol, a crack or what is painted on it. Whatever they find becomes part of the story. Name the thing with a short noun phrase. It counts only when the photo is close enough to make out that detail; one from further back is a side_note.
+  Most quests are errands, and every walk starts with one. Once a chapter, an errand ends in a closer look: the photo where it brings the player shows the place, and the close-up turns up the evidence. The task says when.
 - What the player finds becomes canon. Make it fit after the fact: "The faded mailbox. Of course." Put every new fact your narration establishes in canonAdd.
 - Canon is permanent. Never contradict an established fact.
 - Prefer rebinding to replanning. Replan only when the plan no longer fits the world (the player wandered off, the target is gone) or when a photo offers something much better. A replan keeps the number of beats on the lead. Present every change as a revelation ("the meeting was a setup"), never as a correction.
@@ -97,6 +98,12 @@ Pacing
 - Every step forward (follows_quest or moves_story) finishes the active beat on the player's lead and turns up its evidence. The task tells you when a step ends a chapter, the player's part of one, or the story.
 - A step that ends a chapter closes on a hook, with a recap and no quest. The player may walk straight on into the next chapter, so end on a pull forward, not a goodbye.`;
 
+/** Where the player said they'd walk, and what's common there for quests to ask for. */
+const SCENERY: Record<Scenery, string> = {
+  city: "city streets: doors, shop windows, signs, steps, railings, benches, bus stops and street art",
+  green: "a park or a suburb: trees, paths, gates, fences, hedges, gardens, benches and signs",
+};
+
 function genreLine(genre: string, theme: string | null): string {
   // The player's words are data: quoted, cleaned (see cleanTheme) and kept under the rules.
   if (genre === "custom") {
@@ -122,6 +129,11 @@ export function describeState(state: StoryState, options: { includePlan: boolean
   const relay = !two && state.evidence.some((piece) => finder(piece.by) !== (playerId ?? state.playerId));
   lines.push(`Genre: ${genreLine(state.genre, state.theme)}`);
   lines.push(`Story: "${state.title}". The case: ${state.logline}`);
+  if (seat?.scenery) {
+    lines.push(
+      `The player said they're walking in ${SCENERY[seat.scenery]}. Ask for things common there, unless the photos show they're somewhere else.`,
+    );
+  }
   if (two) {
     lines.push(
       playerId
@@ -252,12 +264,14 @@ export function genesisTask(
   theme: string | null,
   mode: "solo" | "team",
   size: CaseSize,
+  scenery: Scenery | null,
   style = OPENING_STYLES[Math.floor(Math.random() * OPENING_STYLES.length)],
 ): string {
   return [
     `Genre: ${genreLine(genre, theme)}`,
     "",
     "A new player just started. This photo shows where they are standing right now.",
+    scenery ? `They're walking in ${SCENERY[scenery]}. Plan finds that fit there, and ask for things common there.` : "",
     `Invent a case that could begin here: decide the question and its secret answer, then write the hidden plan (${planShape(size)}), the opening narration set in this exact place, and the first quest. The case is this small so the player can solve it on the walk they're starting.`,
     `Every chapter finds out something the opening doesn't tell. Every beat is a new find on its lead's trail, picking up where the one before it pointed, and no two beats find the same thing. The first beat starts where the opening leaves off, so it is never the thing the opening is about. Before the ${size.chapters === 1 ? "last beat" : "last chapter"}, no beat names whoever is behind the secret.`,
     mode === "team"
@@ -311,21 +325,21 @@ export function photoTask(
 ): string {
   const seat = seatOf(state, options.playerId);
   const lead = seat?.lead ?? "a";
+  const [active] = openBeats(state.skeleton.beats, lead);
+  const nudge = options.mustProgress
+    ? `The player has sent ${seat?.photosSinceProgress ?? 0} photos in a row that did not move the story. Unless this one is for an errand and shows the place it was given at, it must: choose follows_quest or moves_story, and build the next step on what it shows.`
+    : "";
   // Until an errand's walk is over, a photo can only be something the player passes on the way.
   const step = options.onTheWay
     ? [
         "The walk this errand started with isn't over yet, so this photo can't move the story. It is a side_note, something the player passes on the way, and keeps the current quest (quest null). You may say the trail goes on, but never hurry them, say how long is left, or hint at what the quest asks for: they can't see it until the walk is over.",
       ]
-    : [
-        questTarget(state, lead),
-        options.closerLook
-          ? "Any new quest is this chapter's closer look (in_view): pick something clearly visible in this photo that can be the next find, and ask about a detail the player can only make out up close."
-          : "Any new quest is an errand (seek).",
-        options.mustProgress
-          ? `The player has sent ${seat?.photosSinceProgress ?? 0} photos in a row that did not move the story. Unless this one is for an errand and shows the place it was given at, it must: choose follows_quest or moves_story, and build the next step on what it shows.`
-          : "",
-        stepEnding(state, lead),
-      ];
+    : options.closerLook
+      ? [
+          `This errand ends in the chapter's closer look: the player has walked to where its find is${active ? `, ${active.id}, "${active.goal}"` : ""}, so unless this photo is a side_note, it shows the place, not the find. In a sentence or two, say what this place is in the story and point the player to one thing in the photo to look at closely, without saying what they'll find there. The next quest is that closer look (in_view): ask about a detail they can only make out up close, which can be the find. The close-up turns up the evidence, so this photo's card is set aside.`,
+          nudge,
+        ]
+      : [questTarget(state, lead), "Any new quest is an errand (seek).", nudge, stepEnding(state, lead)];
   return [
     describeState(state, { includePlan: true, playerId: options.playerId }),
     "",

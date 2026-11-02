@@ -11,6 +11,14 @@ export function isWalkLength(value: unknown): value is WalkLength {
   return WALK_LENGTHS.includes(value as WalkLength);
 }
 
+/** Where the player walks: city streets, or somewhere greener like a park or a suburb. */
+export const SCENERIES = ["city", "green"] as const;
+export type Scenery = (typeof SCENERIES)[number];
+
+export function isScenery(value: unknown): value is Scenery {
+  return SCENERIES.includes(value as Scenery);
+}
+
 /** A longer gap between two turns means the player stopped and came back later. */
 export const BREAK_MINUTES = 45;
 

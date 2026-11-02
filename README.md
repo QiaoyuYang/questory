@@ -26,9 +26,9 @@ Questory is made for phones. Open [questory.run](https://questory.run) on your p
 
 Wren, the AI game agent, builds a case from your street. A case is a question with a hidden answer. You solve it by walking and photographing what Wren asks for.
 
-1. Pick a theme for the story, and how long you want to walk: 15 minutes, 30 minutes or an hour.
+1. Pick a theme for the story, where you're walking (city streets, or a park or suburb), and how long: 15 minutes, 30 minutes or an hour.
 2. Take a photo of where you are. Wren writes the opening of the case around it, then leads you outside if you aren't already.
-3. Follow the quests to find evidence. Most quests start with 5 minutes of walking, counted down on screen, and only then say what to find. Some quests ask for a closer look at something in your last photo. What you photograph on the way can also go into the story. A photo that moves the case forward becomes a piece of evidence.
+3. Follow the quests to find evidence. Most quests start with 5 minutes of walking, counted down on screen, and only then say what to find. Once a chapter, Wren also asks for a closer look at something where you end up, and the close-up is the evidence. A photo that moves the case forward becomes a piece of evidence.
 4. Collect evidence until it points to the answer. A longer walk gets a longer case, with more chapters, sized so you can solve it before the walk is over. You can stop at any time, and your next photo picks the story up wherever you are.
 
 To play with a friend, choose "With a friend" and send them the link. The case gets two leads, one for each of you: two trails of evidence that end at the same answer. You each follow yours on your own walk, and a chapter ends once you have both finished your part.
@@ -66,7 +66,7 @@ Every case has one question and a hidden answer that Wren decides at the start. 
 
 Each photo becomes something it could reasonably be in the story. After two side notes in a row, the next photo that can count moves the story whatever it shows. If the evidence stops pointing to the answer, Wren changes the answer to fit everything found so far.
 
-A case moves on foot, and fits in one walk. A 15-minute walk gets one chapter of three pieces of evidence, 30 minutes two such chapters, and an hour three chapters of four. When a quest sends you somewhere, you walk for 5 minutes, counted down on screen, before it says what to find, and the story gives a reason the trail goes on. Each quest remembers what its photo showed, so Wren can tell whether the next photo was taken somewhere else. A photo sent on the way, or from the same place, is a side note. If the first photo is taken indoors, the next quest in the story will lead the player outside, with no countdown. Distance is estimated with walking time and photo dissimilarity, so the game never needs your location.
+A case moves on foot, and fits in one walk. A 15-minute walk gets one chapter of three pieces of evidence, 30 minutes two such chapters, and an hour three chapters of four. When a quest sends you somewhere, you walk for 5 minutes, counted down on screen, before it says what to find, and the camera waits until then. The story gives a reason the trail goes on, and quests ask for things common where you said you'd walk. Each quest remembers what its photo showed, so Wren can tell whether the next photo was taken somewhere else, and a photo from the same place is a side note. Once a chapter, the photo where a quest brings you shows the place, not the find: Wren asks for a closer look, and the close-up turns up the evidence. If the first photo is taken indoors, the next quest in the story will lead the player outside, with no countdown. Distance is estimated with walking time and photo dissimilarity, so the game never needs your location.
 
 Wren's memory of a case has three layers, saved after every photo:
 

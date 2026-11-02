@@ -107,6 +107,7 @@ const STEPS: Record<Lead, Step[]> = {
 
 const SIDE_NOTE = "You file it away. It isn't a chalk arrow, but now you're looking twice at every wall.";
 const ON_THE_WAY = "Rosa walks past here every morning on her way to the market. The arrows lead further on.";
+const ARRIVAL = "This is where the arrows were heading. Something on the nearest door is worth a closer look.";
 
 function errandAfter(found: number): ErrandOut {
   return ERRANDS[found % ERRANDS.length];
@@ -174,21 +175,23 @@ export const mockBrain: Brain = {
           ? "follows_quest"
           : "side_note";
     const moved = outcome !== "side_note";
+    // Where the errand that ends in the closer look brings the player is the place, not the find yet.
+    const arriving = moved && closerLook;
     const done = stepsOn(state, lead);
     const { card, narration, fact } = STEPS[lead][Math.min(done, STEPS[lead].length - 1)];
-    const partEnds = moved && stepsLeft(state, lead) <= 1;
+    const partEnds = moved && !arriving && stepsLeft(state, lead) <= 1;
     // With one lead, the step that ends the chapter or the story tells it; with two, closeChapter does.
     const one = singleLead(state);
-    const storyEnds = one && moved && unfinishedBeats(state.skeleton.beats) <= 1;
+    const storyEnds = one && partEnds && unfinishedBeats(state.skeleton.beats) <= 1;
     return {
       usage,
       data: {
         samePlace: false,
         outcome,
-        narration: moved ? narration : onTheWay ? ON_THE_WAY : SIDE_NOTE,
+        narration: arriving ? ARRIVAL : moved ? narration : onTheWay ? ON_THE_WAY : SIDE_NOTE,
         card,
         observations: ["(mock mode)"],
-        canonAdd: moved ? [fact] : [],
+        canonAdd: moved && !arriving ? [fact] : [],
         bindingsAdd: [],
         inventoryAdd: [],
         inventoryRemove: [],
@@ -201,8 +204,8 @@ export const mockBrain: Brain = {
           : one && partEnds
             ? `You followed the bell thief's trail for another chapter. The latest find: ${card.title.toLowerCase()}.`
             : null,
-        // A side note keeps the open quest; a step forward brings the next one, the chapter's closer look when it's due.
-        quest: partEnds || !moved ? null : closerLook ? CLOSER_LOOK : errandAfter(done + 1),
+        // A side note keeps the open quest; reaching the place brings the closer look, and a find the next errand.
+        quest: arriving ? CLOSER_LOOK : partEnds || !moved ? null : errandAfter(done + 1),
       },
     };
   },

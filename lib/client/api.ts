@@ -7,7 +7,7 @@ import type {
   StoryView,
   TurnView,
 } from "@/lib/types";
-import type { WalkLength } from "@/lib/walk";
+import type { Scenery, WalkLength } from "@/lib/walk";
 import { BUILD_HEADER, requestSettled, requestStarted } from "./deploys";
 
 /** A request the server turned down, with its status. */
@@ -69,7 +69,14 @@ export const api = {
   /** A two-player case brings the `invite` its link was made with (see lib/client/share.ts). */
   /** `walk` is how long the player wants to walk, in minutes, which sets how big the case is. */
   startStory: (
-    story: { genre: GenreId; theme: string; mode: "solo" | "team"; invite: NewInvite | null; walk: WalkLength },
+    story: {
+      genre: GenreId;
+      theme: string;
+      mode: "solo" | "team";
+      invite: NewInvite | null;
+      walk: WalkLength;
+      scenery: Scenery;
+    },
     photo: PhotoUpload,
   ) =>
     call<TurnResult>("/api/stories", { method: "POST", body: JSON.stringify({ ...story, ...photo }) }),
@@ -85,8 +92,8 @@ export const api = {
   closeChapter: (id: string) => call<TurnResult>(`/api/stories/${id}/close`, { method: "POST" }),
 
   /** A friend joins a shared case from its link, and takes the other lead. */
-  joinStory: (id: string, code: string) =>
-    call<{ story: StoryView }>(`/api/stories/${id}/join`, { method: "POST", body: JSON.stringify({ code }) }),
+  joinStory: (id: string, code: string, scenery: Scenery) =>
+    call<{ story: StoryView }>(`/api/stories/${id}/join`, { method: "POST", body: JSON.stringify({ code, scenery }) }),
 
   inviteInfo: (id: string, code: string) =>
     call<{ invite: InviteView | null }>(`/api/stories/${id}/invite?code=${encodeURIComponent(code)}`),
