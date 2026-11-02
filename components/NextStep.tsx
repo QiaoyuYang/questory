@@ -35,7 +35,7 @@ function Countdown({ until }: { until: string }) {
   const minutes = Math.max(1, Math.ceil(left / 60_000));
   return (
     <p role="timer" className="py-1 font-sign text-lg leading-snug font-semibold">
-      Next quest in {minutes} minute{minutes === 1 ? "" : "s"}
+      Continue walking. Next quest comes in {minutes} minute{minutes === 1 ? "" : "s"}.
     </p>
   );
 }
