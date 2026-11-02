@@ -471,8 +471,11 @@ export async function closeChapter(state: StoryState, playerId: string) {
 
 class ToldAlready extends Error {}
 
-/** A friend takes a two-player case's second seat through its link, and follows it from then on. */
-export async function joinStory(state: StoryState, playerId: string): Promise<StoryState> {
+/**
+ * A friend takes a two-player case's second seat through its link, and follows it from then on.
+ * `scenery` is where they said they'd walk.
+ */
+export async function joinStory(state: StoryState, playerId: string, scenery: Scenery | null = null): Promise<StoryState> {
   if (state.playerId === playerId || state.partners.includes(playerId)) return state;
   if (state.status === "complete") throw new GameRuleError("This case is already solved.");
   const size = state.invite?.size ?? TEAM_SIZE;
@@ -492,7 +495,7 @@ export async function joinStory(state: StoryState, playerId: string): Promise<St
         photosSinceProgress: 0,
         lastNarration: "",
         closerLookChapter: null,
-        scenery: null,
+        scenery,
       });
     }
   });

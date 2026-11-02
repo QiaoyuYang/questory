@@ -92,8 +92,8 @@ export const api = {
   closeChapter: (id: string) => call<TurnResult>(`/api/stories/${id}/close`, { method: "POST" }),
 
   /** A friend joins a shared case from its link, and takes the other lead. */
-  joinStory: (id: string, code: string) =>
-    call<{ story: StoryView }>(`/api/stories/${id}/join`, { method: "POST", body: JSON.stringify({ code }) }),
+  joinStory: (id: string, code: string, scenery: Scenery) =>
+    call<{ story: StoryView }>(`/api/stories/${id}/join`, { method: "POST", body: JSON.stringify({ code, scenery }) }),
 
   inviteInfo: (id: string, code: string) =>
     call<{ invite: InviteView | null }>(`/api/stories/${id}/invite?code=${encodeURIComponent(code)}`),

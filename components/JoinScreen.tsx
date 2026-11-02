@@ -7,6 +7,7 @@ import type { InviteView } from "@/lib/types";
 import { Alert } from "./Alert";
 import { BottomBar } from "./BottomBar";
 import { BUTTON } from "./buttons";
+import { SceneryPicker, useScenery } from "./SceneryPicker";
 import { Wordmark } from "./Wordmark";
 
 type Props = {
@@ -29,6 +30,7 @@ export function JoinScreen({ storyId, code, onJoined, onOpen, onHome }: Props) {
   const [notStarted, setNotStarted] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
+  const [scenery, setScenery] = useScenery();
   const [error, setError] = useState<string | null>(null);
 
   // A story this browser already plays opens straight away.
@@ -67,7 +69,7 @@ export function JoinScreen({ storyId, code, onJoined, onOpen, onHome }: Props) {
     setError(null);
     setJoining(true);
     try {
-      await api.joinStory(storyId, code);
+      await api.joinStory(storyId, code, scenery);
       onJoined();
     } catch (err) {
       setError(err instanceof Error ? err.message : "That didn't work. Try again.");
@@ -128,12 +130,21 @@ export function JoinScreen({ storyId, code, onJoined, onOpen, onHome }: Props) {
               ? "This case is already solved."
               : invite.full
                 ? "This case already has both its players."
-                : `Your friend follows one lead, and the other is yours, on your own walk, now or whenever suits you. ${
+                : `Your friend follows one lead, and the other is yours, on your own walk. ${
                     invite.questsCompleted > 0
                       ? `They've found ${invite.questsCompleted} ${invite.questsCompleted === 1 ? "piece" : "pieces"} of evidence so far.`
                       : "They've just started."
                   }`}
           </p>
+
+          {open && (
+            <section className="mt-7" aria-labelledby="scenery-title">
+              <h2 id="scenery-title" className="font-sign text-xl font-bold">
+                Where are you walking?
+              </h2>
+              <SceneryPicker value={scenery} onChange={setScenery} className="mt-3" />
+            </section>
+          )}
 
           {!open && (
             <button type="button" onClick={onHome} className={`${BUTTON.secondary} mt-6 w-full`}>
