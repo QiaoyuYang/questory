@@ -65,7 +65,7 @@ export const QuestOutSchema = z.object({
       "in_view: a closer look at something clearly visible in this photo. seek: an errand a few minutes' walk away that ends in a photo.",
     ),
   objective: text(SENTENCE).describe(
-    'One sentence of at most 16 words naming the real thing to find. For seek, the player reads it once their walk is over, so just name what to find, e.g. "Find a bench or a bus stop." When a walk starts indoors, send them outside first, e.g. "Head outside, then find a door with a number on it." For in_view, ask about a detail they can only make out up close.',
+    'One sentence of at most 18 words: the real thing to find, then why the story sends the player there, as a guess from what they have been told, never from the hidden plan and never what finding it will tell them. For seek, the player reads it once their walk is over, e.g. "Find a bench or a bus stop, where the courier could have waited." When a walk starts indoors, send them outside first, e.g. "Head outside, then find a door with a number on it, where the letter could have gone." For in_view, ask about a detail they can only make out up close.',
   ),
 
   targetPhrase: text(LABEL).describe(
@@ -227,7 +227,7 @@ const photoTurn = {
       "follows_quest: the photo does what the current quest asked; be generous. moves_story: it does not, but you use what it shows to move the story forward anyway. side_note: it adds atmosphere or a small detail but nothing new about the case, and the story waits for more. Always side_note when samePlace is true for a seek quest.",
     ),
   narration: prose(NARRATION).describe(
-    "2 or 3 short sentences, at most 40 words: what the player found here and the one new thing it tells them. For a side_note, 1 or 2 sentences: a moment at this place, and nothing about what is still to find.",
+    "2 or 3 short sentences, at most 40 words: what the player found here, the one new thing it tells them, and what in this thing shows it. For a side_note, 1 or 2 sentences: a moment at this place, and nothing about what is still to find.",
   ),
   // Always required: when it was optional, the game master often left it out of real steps.
   card: CardSchema.describe(
