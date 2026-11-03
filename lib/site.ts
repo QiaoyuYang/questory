@@ -3,13 +3,13 @@ import type { Metadata } from "next";
 export const GITHUB_URL = "https://github.com/QiaoyuYang/questory";
 
 export const SITE_DESCRIPTION =
-  "Turn your walk into a story. An AI agent builds a case from what you photograph, and every case is solved on foot.";
+  "Walk outside with a story. An AI agent builds a case from what you photograph, and every case is solved on foot.";
 
 const PREVIEW_IMAGE = {
   url: "/link-preview.png",
   width: 1200,
   height: 630,
-  alt: "Questory: turn your walk into a story. A street photo, and beside it the same photo painted as a piece of evidence.",
+  alt: "Questory: walk outside with a story. A street photo, and beside it the same photo painted as a piece of evidence.",
 };
 
 /**
