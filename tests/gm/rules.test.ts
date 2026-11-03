@@ -439,12 +439,13 @@ test("every step forward turns up a piece of evidence, painted as a card", () =>
     title: "The marked door",
     caption: "Number 14, freshly painted",
   });
-  // A reply that left the evidence blank still gets a card, so the count stays true.
+  // A reply that left the evidence blank still gets a card, named for the quest it answered, so the count stays true.
   const blank = { title: ".", proves: "." };
-  assert.equal(applyPhotoTurn(state, reply({ outcome: "moves_story", card: blank }), 3, "player").card?.title, "New evidence");
+  state.seats[0].quest = makeQuest({ ...QUEST, title: "The bus stop bench" }, "b2", 2);
+  assert.equal(applyPhotoTurn(state, reply({ outcome: "moves_story", card: blank }), 3, "player").card?.title, "The bus stop bench");
   assert.deepEqual(state.evidence, [
     { title: "The marked door", caption: "Number 14, freshly painted", turn: 2, by: "player" },
-    { title: "New evidence", caption: "", turn: 3, by: "player" },
+    { title: "The bus stop bench", caption: "", turn: 3, by: "player" },
   ]);
 });
 
