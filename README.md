@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/banner.webp" alt="Walk outside with a story. Wren, an AI agent, builds a case from what you photograph, and every case is solved on foot. A street photo sits beside the same photo painted as a piece of evidence.">
+<img src="docs/banner.webp" alt="Walk outside with a story. Wren, an AI agent, builds a case from what you photograph during the walk. Follow Wren to solve the case. A street photo sits beside the same photo painted as a piece of evidence.">
 
 # Questory
 

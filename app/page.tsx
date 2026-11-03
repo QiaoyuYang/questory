@@ -74,7 +74,7 @@ export default function Home() {
             Walk outside with a story
           </h1>
           <p className="mt-5 max-w-xl font-story text-lg leading-relaxed md:text-xl">
-            Wren, an AI agent, builds a case from what you photograph. Every case is solved on foot.
+            Wren, an AI agent, builds a case from what you photograph during the walk. Follow Wren to solve the case.
           </p>
           <Link href="/play" className={`${BUTTON.primary} mt-7 w-full md:hidden`}>
             <CameraIcon className="h-6 w-6" />
