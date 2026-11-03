@@ -65,7 +65,7 @@ export const QuestOutSchema = z.object({
       "in_view: a closer look at something clearly visible in this photo. seek: an errand a few minutes' walk away that ends in a photo.",
     ),
   objective: text(SENTENCE).describe(
-    'One sentence of at most 16 words naming the real thing to find. For seek, the player reads it once their walk is over, so just name what to find, e.g. "Find a bench or a bus stop." When a walk starts indoors, send them outside first, e.g. "Head outside, then find a door with a number on it." For in_view, ask about a detail they can only make out up close.',
+    'One sentence of at most 18 words: the real thing to find, then why the story sends the player there, as a guess from what they have been told, never from the hidden plan and never what finding it will tell them. For seek, the player reads it once their walk is over, e.g. "Find a bench or a bus stop, where the courier could have waited." When a walk starts indoors, send them outside first, e.g. "Head outside, then find a door with a number on it, where the letter could have gone." For in_view, ask about a detail they can only make out up close.',
   ),
 
   targetPhrase: text(LABEL).describe(
@@ -115,12 +115,12 @@ const BindingSchema = z.object({
 
 // The plan comes before the opening, so the opening can be written to it.
 const genesisPlan = {
-  title: text(LABEL).describe("The story's title, 2 to 5 words."),
+  title: text(LABEL).describe("The story's title, 2 to 5 words. Never empty."),
   question: text(SENTENCE).describe(
-    'The case: the one question the whole story answers, at most 12 words, e.g. "Who forged the eviction notice under your door?". The player sees it all story long.',
+    'The case: the one question the whole story answers, at most 12 words, asking who, how or where. The player sees it all story long.',
   ),
   secret: text(SENTENCE).describe(
-    'Private until the last step: the answer to the case in one sentence, e.g. "Mara, the landlord\'s niece, forged it to buy the flat cheap."',
+    'Private until the last step: the answer to the case in one sentence: who did it, how and why.',
   ),
   premise: text(PLAN).describe("Private: the hidden truth behind the story."),
   antagonist: text(PLAN).describe("Private: who or what opposes the player, and why."),
@@ -135,7 +135,7 @@ function chapterSteps(whose: string, steps: number) {
   return z
     .object(shape)
     .describe(
-      `Private: ${whose} ${steps} beats in this chapter, in order, one per step forward. Each is the next find on the trail and what it tells the player: a place or object in the story's world that ordinary real things can stand in for, e.g. "The office stamp, so the notice came from inside". How it looks comes from the player's photo. Never something the player already knows.`,
+      `Private: ${whose} ${steps} beats in this chapter, in order, one per step forward. Each is the next find on the trail and what it tells the player: a place or object in the story's world that ordinary real things can stand in for, e.g. "The muddy step, so they came in through the garden". How it looks comes from the player's photo. Never something the player already knows.`,
     );
 }
 
@@ -143,7 +143,7 @@ function chapterSteps(whose: string, steps: number) {
 function chapterPlan(team: boolean, size: CaseSize) {
   const own = z.object({
     findsOut: text(SENTENCE).describe(
-      'What this chapter finds out on the way to the answer, never something the opening tells, e.g. "How the notice got onto the door". The last chapter finds out the answer.',
+      'What this chapter finds out on the way to the answer, never something the opening tells, e.g. "How it got out of the building". The last chapter finds out the answer.',
     ),
     steps: chapterSteps(team ? "this player's lead:" : "the", size.steps),
   });
@@ -159,10 +159,10 @@ function chapterPlan(team: boolean, size: CaseSize) {
 
 const genesisOpening = {
   characters: list(z.object({ name: text(LABEL), role: text(LABEL), notes: text(SENTENCE) })).describe(
-    "Private: the whole cast, at most 2, including whoever is behind the secret. Nobody else appears in the story.",
+    "Private: the whole cast, the one or two people in the story, including whoever is behind the secret. Never empty, and nobody else appears in the story.",
   ),
   narration: prose(NARRATION).describe(
-    "The opening: 2 to 4 short sentences, at most 50 words, set in the place in the photo and shaped the way the task asks. It says what happened, who wants it solved, and what to find out.",
+    "The opening: 2 to 4 short sentences, at most 50 words, starting where the player is and shaped the way the task asks: what happened, and who needs their help. Never the partner or how the case is split.",
   ),
   observations: list(text(SENTENCE)).describe("Concrete things you see in the photo."),
   canonAdd: list(text(SENTENCE)).describe(
@@ -176,7 +176,7 @@ const genesisOpening = {
 /** The side of the case each lead finds out, in a case for two players. */
 const leadFocus = {
   focus: text(LABEL).describe(
-    'Private: the side of the case this player\'s lead finds out, 3 to 8 words, e.g. "how the deed was swapped".',
+    'Private: the side of the case this player\'s lead finds out, 3 to 8 words, e.g. "how it was taken".',
   ),
   partnerFocus: text(LABEL).describe(
     'Private: the side the partner\'s lead finds out, 3 to 8 words, e.g. "who could have done it". No beat on either lead needs anything found on the other.',
@@ -219,7 +219,7 @@ const photoTurn = {
   samePlace: z
     .boolean()
     .describe(
-      "Whether this photo shows the same place as the photo the current quest was given at, or a closer look at part of it. When you can't tell, false.",
+      "Whether this photo shows the very spot the current quest was given at, the same things seen again, or a closer look at part of it. Another stretch of the same park or street that only looks alike is a different place. When you can't tell, false.",
     ),
   outcome: z
     .enum(["follows_quest", "moves_story", "side_note"])
@@ -227,7 +227,7 @@ const photoTurn = {
       "follows_quest: the photo does what the current quest asked; be generous. moves_story: it does not, but you use what it shows to move the story forward anyway. side_note: it adds atmosphere or a small detail but nothing new about the case, and the story waits for more. Always side_note when samePlace is true for a seek quest.",
     ),
   narration: prose(NARRATION).describe(
-    "2 or 3 short sentences, at most 40 words: what the player found here and the one new thing it tells them. For a side_note, 1 or 2 sentences: a moment at this place, and nothing about what is still to find.",
+    "2 or 3 short sentences, at most 40 words: what the player found here, the one new thing it tells them, and what really in this thing, or what someone saw here, shows it. For a side_note, 1 or 2 sentences: a moment at this place, and nothing about what is still to find.",
   ),
   // Always required: when it was optional, the game master often left it out of real steps.
   card: CardSchema.describe(

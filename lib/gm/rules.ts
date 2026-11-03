@@ -207,8 +207,9 @@ export function makeQuest(
     targetMode: out.targetMode,
     targetPhrase: nounPhrase(out.targetPhrase),
     targetLandmark: nounPhrase(out.targetLandmark),
-    targetDescription: out.targetDescription.trim(),
-    successCriteria: out.successCriteria.trim(),
+    // A reply sometimes leaves what counts blank, as a friend's first quest often did, and the objective says it too.
+    targetDescription: out.targetDescription.trim() || out.objective.trim(),
+    successCriteria: out.successCriteria.trim() || out.objective.trim(),
     beatId,
     issuedTurn: turn,
     walkUntil: walks ? new Date(Date.parse(clock.at) + clock.walkMinutes * 60_000).toISOString() : null,
@@ -310,9 +311,9 @@ export function withoutContrast(text: string): string {
   return text.replace(/,\s*(?:not|rather than|instead of)\b.*$/i, "").trim();
 }
 
-/** The evidence a step forward turns up. A reply that left it blank still gets a card. */
-function evidenceCard(card: PhotoTurnOut["card"]): NonNullable<TurnRecord["card"]> {
-  if (!named(card.title)) return { title: "New evidence", caption: "" };
+/** The evidence a step forward turns up. A reply that left it blank still gets a card, named for the quest it answered. */
+function evidenceCard(card: PhotoTurnOut["card"], answered: QuestState | null): NonNullable<TurnRecord["card"]> {
+  if (!named(card.title)) return { title: answered?.title.trim() || "New evidence", caption: "" };
   const caption = withoutContrast(card.proves);
   return { title: card.title.trim(), caption: named(caption) ? caption : "" };
 }
@@ -353,7 +354,7 @@ export function applyPhotoTurn(
   // Where the errand that ends in the chapter's closer look brings the player is the place, not
   // the find: it sets up the closer look, and the close-up turns up the evidence.
   const arrived = moved && closerLookDue(state, seat) && data.quest?.targetMode === "in_view";
-  const card = moved && !arrived ? evidenceCard(data.card) : null;
+  const card = moved && !arrived ? evidenceCard(data.card, seat.quest) : null;
 
   const canonAdded = addCanon(state, data.canonAdd, turn);
   state.bindings.push(...data.bindingsAdd.map((binding) => ({ ...binding, turn })));

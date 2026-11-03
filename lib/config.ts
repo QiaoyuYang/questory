@@ -36,8 +36,9 @@ export function getConfig() {
       apiKey,
       baseURL: env("META_BASE_URL", "https://api.meta.ai/v1").replace(/\/$/, ""),
       gmModel: env("GM_MODEL", "muse-wonder-1.0"),
-      // "minimal" answers about a fifth faster than "low" and wrote stories just as well in testing.
-      gmEffort: env("GM_REASONING_EFFORT", "minimal") as ReasoningEffort,
+      // "low" follows the writing rules much better than "minimal", openings most of all, for a
+      // few seconds more per reply.
+      gmEffort: env("GM_REASONING_EFFORT", "low") as ReasoningEffort,
       imageModel: env("IMAGE_MODEL", "muse-image-1.0"),
       imageReasoning: env("IMAGE_REASONING_STRENGTH"), // "low" | "high" | "" (API default)
       samModel: env("SAM_MODEL", "sam-3.1"),

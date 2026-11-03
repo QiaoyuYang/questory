@@ -216,6 +216,13 @@ test("an errand counts only once the walk it starts with is over, and a closer l
   assert.equal(makeQuest({ ...QUEST, targetMode: "seek" }, null, 1, { ...at(0), walkMinutes: 0 }).walkUntil, null);
 });
 
+test("a quest that leaves what counts blank is judged by its objective", () => {
+  const blank = makeQuest({ ...QUEST, targetMode: "seek", targetDescription: " ", successCriteria: "" }, null, 1);
+  assert.equal(blank.targetDescription, QUEST.objective);
+  assert.equal(blank.successCriteria, QUEST.objective);
+  assert.equal(makeQuest(QUEST, null, 1).targetDescription, "the green door on the left");
+});
+
 test("a walk that starts indoors goes outside with no walk first, and every other errand starts with one", () => {
   const errand: QuestOut = { ...QUEST, targetMode: "seek" };
   const at = "2026-10-26T00:00:00.000Z";
@@ -439,12 +446,13 @@ test("every step forward turns up a piece of evidence, painted as a card", () =>
     title: "The marked door",
     caption: "Number 14, freshly painted",
   });
-  // A reply that left the evidence blank still gets a card, so the count stays true.
+  // A reply that left the evidence blank still gets a card, named for the quest it answered, so the count stays true.
   const blank = { title: ".", proves: "." };
-  assert.equal(applyPhotoTurn(state, reply({ outcome: "moves_story", card: blank }), 3, "player").card?.title, "New evidence");
+  state.seats[0].quest = makeQuest({ ...QUEST, title: "The bus stop bench" }, "b2", 2);
+  assert.equal(applyPhotoTurn(state, reply({ outcome: "moves_story", card: blank }), 3, "player").card?.title, "The bus stop bench");
   assert.deepEqual(state.evidence, [
     { title: "The marked door", caption: "Number 14, freshly painted", turn: 2, by: "player" },
-    { title: "New evidence", caption: "", turn: 3, by: "player" },
+    { title: "The bus stop bench", caption: "", turn: 3, by: "player" },
   ]);
 });
 

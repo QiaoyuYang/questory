@@ -257,7 +257,7 @@ export async function startStory(playerId: string, story: NewStory, photo: Photo
     size,
     createdAt,
     updatedAt: createdAt,
-    title: data.title.trim(),
+    title: data.title.trim() || data.question.trim().replace(/\?$/, ""),
     logline: data.question.trim(),
     skeleton: {
       secret: data.secret.trim(),
