@@ -291,7 +291,7 @@ export type ResumeOut = z.infer<typeof ResumeSchema>;
 /** The ending of a two-player chapter, told once both leads are done. Both players read it. */
 export const CloseSchema = z.object({
   narration: prose(NARRATION).describe(
-    "2 to 4 short sentences, at most 50 words, read by both players together: what this chapter's finds from both leads add up to, bringing in one or two of them by name, ending on a hook, or on the answer when this solves the case.",
+    "Read by both players together. A chapter's ending is 2 to 4 short sentences, at most 50 words: what its finds from both leads add up to, bringing in one or two of them by name, ending on a hook. When this solves the case, at most 60 words: who did it, how the evidence shows it, and how it ends.",
   ),
   recap: recapText().describe(RECAP_RULES),
   revisedSecret: planFields.revisedSecret,
