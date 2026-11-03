@@ -219,7 +219,7 @@ const photoTurn = {
   samePlace: z
     .boolean()
     .describe(
-      "Whether this photo shows the same place as the photo the current quest was given at, or a closer look at part of it. When you can't tell, false.",
+      "Whether this photo shows the very spot the current quest was given at, the same things seen again, or a closer look at part of it. Another stretch of the same park or street that only looks alike is a different place. When you can't tell, false.",
     ),
   outcome: z
     .enum(["follows_quest", "moves_story", "side_note"])

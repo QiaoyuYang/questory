@@ -207,8 +207,9 @@ export function makeQuest(
     targetMode: out.targetMode,
     targetPhrase: nounPhrase(out.targetPhrase),
     targetLandmark: nounPhrase(out.targetLandmark),
-    targetDescription: out.targetDescription.trim(),
-    successCriteria: out.successCriteria.trim(),
+    // A reply sometimes leaves what counts blank, as a friend's first quest often did, and the objective says it too.
+    targetDescription: out.targetDescription.trim() || out.objective.trim(),
+    successCriteria: out.successCriteria.trim() || out.objective.trim(),
     beatId,
     issuedTurn: turn,
     walkUntil: walks ? new Date(Date.parse(clock.at) + clock.walkMinutes * 60_000).toISOString() : null,

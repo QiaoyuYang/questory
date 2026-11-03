@@ -216,6 +216,13 @@ test("an errand counts only once the walk it starts with is over, and a closer l
   assert.equal(makeQuest({ ...QUEST, targetMode: "seek" }, null, 1, { ...at(0), walkMinutes: 0 }).walkUntil, null);
 });
 
+test("a quest that leaves what counts blank is judged by its objective", () => {
+  const blank = makeQuest({ ...QUEST, targetMode: "seek", targetDescription: " ", successCriteria: "" }, null, 1);
+  assert.equal(blank.targetDescription, QUEST.objective);
+  assert.equal(blank.successCriteria, QUEST.objective);
+  assert.equal(makeQuest(QUEST, null, 1).targetDescription, "the green door on the left");
+});
+
 test("a walk that starts indoors goes outside with no walk first, and every other errand starts with one", () => {
   const errand: QuestOut = { ...QUEST, targetMode: "seek" };
   const at = "2026-10-26T00:00:00.000Z";

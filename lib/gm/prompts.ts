@@ -394,8 +394,8 @@ export function resumeTask(
 export function closeTask(state: StoryState): string {
   const together =
     state.partners.length > 0
-      ? 'Both players read this together, so talk to both of them ("you two", "between you") and never say "your partner". In at most 50 words, tell them what the finds add up to, the way a friend would sum up a case so far, bringing in one or two of them by name rather than running through everything that happened.'
-      : "Only the player who walked both leads reads this, so talk to them alone. In at most 50 words, tell them what the finds add up to, the way a friend would sum up a case so far, bringing in one or two of them by name rather than running through everything that happened.";
+      ? 'Both players read this together, so talk to both of them ("you two", "between you") and never say "your partner". In at most 50 words, tell them what the finds add up to, the way a friend would sum up a case so far, bringing in one or two of them by name rather than running through everything that happened. Call a find what the story calls it ("the spare key"), never by the title on its card.'
+      : "Only the player who walked both leads reads this, so talk to them alone. In at most 50 words, tell them what the finds add up to, the way a friend would sum up a case so far, bringing in one or two of them by name rather than running through everything that happened. Call a find what the story calls it (\"the spare key\"), never by the title on its card.";
   return [
     describeState(state, { includePlan: true, playerId: null }),
     "",
