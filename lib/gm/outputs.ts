@@ -159,7 +159,7 @@ function chapterPlan(team: boolean, size: CaseSize) {
 
 const genesisOpening = {
   characters: list(z.object({ name: text(LABEL), role: text(LABEL), notes: text(SENTENCE) })).describe(
-    "Private: the whole cast, at most 2, including whoever is behind the secret. Nobody else appears in the story.",
+    "Private: the whole cast, the one or two people in the story, including whoever is behind the secret. Never empty, and nobody else appears in the story.",
   ),
   narration: prose(NARRATION).describe(
     "The opening: 2 to 4 short sentences, at most 50 words, starting where the player is and shaped the way the task asks: what happened, and who needs their help. Never the partner or how the case is split.",
