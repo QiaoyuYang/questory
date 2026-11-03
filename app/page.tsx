@@ -71,7 +71,7 @@ export default function Home() {
       <section className="mt-10 grid gap-8 md:mt-14 md:grid-cols-[1fr_auto] md:items-center md:gap-16">
         <div>
           <h1 className="max-w-2xl font-sign text-[2.5rem] leading-[1.05] font-bold text-balance md:text-6xl">
-            Turn your walk into a story
+            Walk outside with a story
           </h1>
           <p className="mt-5 max-w-xl font-story text-lg leading-relaxed md:text-xl">
             Wren, an AI agent, builds a case from what you photograph. Every case is solved on foot.
