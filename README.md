@@ -4,7 +4,7 @@
 
 # Questory
 
-Play at [questory.run](https://questory.run) · Watch the [demo](https://youtu.be/6eSItLhW_d0)
+Play at [questory.run](https://questory.run) · Watch the [demo](https://youtu.be/mcRfO3-KtPE)
 
 [![CI](https://img.shields.io/github/actions/workflow/status/QiaoyuYang/questory/ci.yml?branch=main&label=CI)](https://github.com/QiaoyuYang/questory/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/github/license/QiaoyuYang/questory)](LICENSE) [![Next.js 16](https://img.shields.io/badge/Next.js-16-black?logo=nextdotjs)](https://nextjs.org) [![Meta Model API](https://img.shields.io/badge/Meta_Model_API-Muse_%2B_SAM_3.1-0866FF?logo=meta&logoColor=white)](#how-it-works)
 
