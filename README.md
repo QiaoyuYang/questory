@@ -4,17 +4,13 @@
 
 # Questory
 
-Play at [questory.run](https://questory.run)
+Play at [questory.run](https://questory.run) · Watch the [demo](https://youtu.be/6eSItLhW_d0)
 
 [![CI](https://img.shields.io/github/actions/workflow/status/QiaoyuYang/questory/ci.yml?branch=main&label=CI)](https://github.com/QiaoyuYang/questory/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/github/license/QiaoyuYang/questory)](LICENSE) [![Next.js 16](https://img.shields.io/badge/Next.js-16-black?logo=nextdotjs)](https://nextjs.org) [![Meta Model API](https://img.shields.io/badge/Meta_Model_API-Muse_%2B_SAM_3.1-0866FF?logo=meta&logoColor=white)](#how-it-works)
 
 </div>
 
 Questory is ready to play on phones, coming to Meta Glasses later this year. It was built on the Meta Model API for the Meta Global AI Developer Hackathon.
-
-<div align="center">
-<a href="https://youtu.be/6eSItLhW_d0"><img src="docs/demo.webp" width="640" alt="Watch the 3-minute demo on YouTube. A woman walks down a sunny street."></a>
-</div>
 
 <div align="center">
 <table>
