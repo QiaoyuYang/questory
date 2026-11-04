@@ -13,6 +13,10 @@ Play at [questory.run](https://questory.run)
 Questory is ready to play on phones, coming to Meta Glasses later this year. It was built on the Meta Model API for the Meta Global AI Developer Hackathon.
 
 <div align="center">
+<a href="https://youtu.be/6eSItLhW_d0"><img src="docs/demo.webp" width="640" alt="Watch the 3-minute demo on YouTube. A woman walks down a sunny street."></a>
+</div>
+
+<div align="center">
 <table>
   <tr>
     <td align="center"><img src="public/landing/case-start.webp" width="230" alt="A photo of a bakery on a street corner, with the opening of a case below it and 5 minutes to walk before the next quest"><br>Your street starts the case</td>
