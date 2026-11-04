@@ -25,7 +25,7 @@ The shape of a story
 - The finds on a lead make one trail: each turns up where the last one pointed (the bus stop leads to the alley, and the alley to the shed where it was hidden). Every piece points toward the secret without giving it away, so a sharp player could guess the answer before the end. Nothing is a dead end.
 - Keep the cast small: two characters at most, including whoever is behind the secret, and nobody else, named or not. The player reads you a few lines at a time and can't keep track of more.
 - Play fair: whoever is behind the secret is one of the two and appears in the first chapter, without giving themselves away. Until the last chapter (in a one-chapter case, the last step), evidence narrows down who did it by something they own, wore or had time for, never by name, so the answer stays a guess.
-- The last step solves the case: say the answer outright and tie it to two of the pieces found.
+- The last step solves the case the way a mystery ends: who did it, how the evidence shows it, and how it ends.
 
 Two players
 - Two friends can share a case, each on their own streets, at the same time or not. Each follows a lead of their own, and the two leads come at the answer from different sides. No beat needs anything found on the other lead, so the story works whichever player finds what first.
@@ -103,6 +103,10 @@ The difference, in a step from another case. The quest asked for the way the thi
 And in an opening, for a photo of a living room with its front door in view:
 - Machine-made: "This cozy living room is where your case begins. Ines, who teaches at the school, needs your help: the time capsule her class buried has vanished, and Ines wants you to find who took it. You'll trace how it was dug up."
 - Human: "Someone's knocking. It's Ines from the school down the road, still holding a spade. The time capsule her class buried thirty years ago was meant to come up today, and someone has dug it up first."
+
+And at the end of a case:
+- Machine-made: "Between you, it fits. Ilya waited on the bench, used the spare key, slipped out through the side gate and hid the jar in his shed to win the show."
+- Human: "It was Ilya. He's the only one with a key to the side gate, and the jar was in his shed the whole time, still bubbling under a sack. Nina has her starter back in time to bake."
 
 Pacing
 - Every step forward (follows_quest or moves_story) finishes the active beat on the player's lead and turns up its evidence. The task tells you when a step ends a chapter, the player's part of one, or the story.
@@ -303,12 +307,17 @@ function planShape(size: CaseSize): string {
     : `${size.chapters} chapters, each with what it finds out and ${size.steps} beats, ${size.chapters * size.steps} in all`;
 }
 
+const STORY_NAMES = 'Call a find what the story calls it ("the spare key"), never by the title on its card.';
+
+/** How the last reply of a case solves it, for one player or two. */
+const SOLVE = `solve it the way a mystery ends, in at most 60 words: say plainly who did it, then how the evidence shows it, with one or two of the finds and no more, then how it ends, such as where the missing thing is now. Give a reason only if the story has already set one up. Never retell what they did step by step, or add a step nobody found. ${STORY_NAMES}`;
+
 /** What the coming step means for the chapter and the story, if it's the last of either. */
 function stepEnding(state: StoryState, lead: Lead): string {
   const left = stepsLeft(state, lead);
   if (singleLead(state)) {
     if (unfinishedBeats(state.skeleton.beats) <= 1) {
-      return "This is the last step. If this photo moves the story, it solves the case. First check that the secret explains every piece of evidence found; if it doesn't, set revisedSecret to one that does. Then say it outright in the narration, tied to two of the pieces, and end the story. Write the recap and leave quest null.";
+      return `This is the last step. If this photo moves the story, it solves the case. First check that the secret explains every piece of evidence found; if it doesn't, set revisedSecret to one that does. Then, in the narration, ${SOLVE} Write the recap and leave quest null.`;
     }
     return left <= 1 ? "If this photo moves the story, it ends the chapter: close on a hook, write the recap and leave quest null." : "";
   }
@@ -392,16 +401,16 @@ export function resumeTask(
 
 /** The ending of a two-player chapter, once both leads are done. */
 export function closeTask(state: StoryState): string {
-  const together =
+  const readers =
     state.partners.length > 0
-      ? 'Both players read this together, so talk to both of them ("you two", "between you") and never say "your partner". In at most 50 words, tell them what the finds add up to, the way a friend would sum up a case so far, bringing in one or two of them by name rather than running through everything that happened. Call a find what the story calls it ("the spare key"), never by the title on its card.'
-      : "Only the player who walked both leads reads this, so talk to them alone. In at most 50 words, tell them what the finds add up to, the way a friend would sum up a case so far, bringing in one or two of them by name rather than running through everything that happened. Call a find what the story calls it (\"the spare key\"), never by the title on its card.";
+      ? 'Both players read this together, so talk to both of them ("you two", "between you") and never say "your partner".'
+      : "Only the player who walked both leads reads this, so talk to them alone.";
   return [
     describeState(state, { includePlan: true, playerId: null }),
     "",
     unfinishedBeats(state.skeleton.beats) === 0
-      ? `Both players have finished their leads, and together their evidence solves the case. ${together} First check that the secret explains every piece of evidence found; if it doesn't, set revisedSecret to one that does. Then say the answer outright, tied to a piece from each lead, and end the story. Write the recap.`
-      : `Both players have finished their part of chapter ${state.chapter}. Write the chapter's ending. ${together} Say what this chapter's finds from both leads add up to, whichever came first, without giving away the answer, then end on a hook into chapter ${state.chapter + 1}. If the evidence no longer fits the secret, set revisedSecret to an answer that explains every piece. Write the recap.`,
+      ? `Both players have finished their leads, and together their evidence solves the case. ${readers} First check that the secret explains every piece of evidence found; if it doesn't, set revisedSecret to one that does. Then ${SOLVE} Bring in a find from each lead. Write the recap.`
+      : `Both players have finished their part of chapter ${state.chapter}. Write the chapter's ending. ${readers} In at most 50 words, tell them what the finds add up to, the way a friend would sum up a case so far, bringing in one or two of them by name rather than running through everything that happened. ${STORY_NAMES} Say what this chapter's finds from both leads add up to, whichever came first, without giving away the answer, then end on a hook into chapter ${state.chapter + 1}. If the evidence no longer fits the secret, set revisedSecret to an answer that explains every piece. Write the recap.`,
     'Never say "chapter" in the narration or the recap.',
   ].join("\n");
 }
